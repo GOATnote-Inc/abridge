@@ -7,7 +7,7 @@
 
 | Check | Result | Reproduce |
 |---|---|---|
-| Gold-set regression (23 synthetic cases) | 23/23, **FN = 0** | `make goldset` |
+| Gold-set regression (23 synthetic cases) | 23/23, **FN = 0/23** — 95% CI upper bound **12.2%** (Clopper–Pearson; a regression gate, not a precision claim) | `make goldset` |
 | Full suite | 180+ passed (venv; gateway tests included) | `make test` |
 | **Mutation: all 15 safety mechanisms load-bearing** | 15/15 CAUGHT — 8 comms gates **and** 7 decision-side mechanisms (independent ESI assessment, red-flag matching, requirement-group AND, all four detectors); clean run green | `make mutation` (in CI) |
 | Red-flag matcher on 156 KB pathological text | 0.049 s (was 64 s pre-fix) | `tests/test_knowledge.py` |
@@ -18,7 +18,15 @@
 | Audience fail-closed (`"Patient"`, `"caregiver"`) | patient gates apply | `tests/test_comms.py` |
 | Critical result acknowledged **by name** (generic "results are back" insufficient for critical) | enforced | `tests/test_gates.py` |
 | Seeded invariant fuzz (300 adversarial pairs) | all invariants hold | `tests/test_invariants.py` |
+| Boundary-adversarial suite (injection-in-content, order spoofing, Unicode lexicon evasion, demographic invariance, consent-waiver) | **22 automated attacks, 0 gate bypasses** (no human red-team hours yet — stated plainly) | `tests/test_adversarial.py` |
+| Evidence-linked verdicts | every red-flag/claim finding quotes source field + character span | `attending.esi.RedFlagHit.evidence_ref` |
 | Doc/artifact drift (transcript + this report vs. code ruleset) | guarded in CI | `tests/test_docs.py` |
+
+Catches split by harm class (NOHARM: ~76.6% of clinical LLM harm is omission):
+**omission-class** — under-triage, missing requirement groups, dropped escalation
+acknowledgment, information blocking; **commission-class** — false reassurance,
+interpretation/advice, ungrounded numeric claims, record-contradicting denials.
+Full evidence document: [`docs/SYSTEM_CARD.md`](../docs/SYSTEM_CARD.md).
 
 ## Live-model evidence (committed raw artifacts, not prose)
 

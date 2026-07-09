@@ -12,10 +12,21 @@ Severity tiers mirror a dual-layer safety-gated rubric:
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass, field
 from enum import Enum
 
 from sitrep.state import EncounterState
+
+_ZERO_WIDTH = dict.fromkeys(map(ord, "\u200b\u200c\u200d\u2060\ufeff"))
+
+
+def fold_text(text: str) -> str:
+    """Adversarial-normalization for ALL gate text matching: NFKC (fullwidth/
+    compatibility forms), zero-width character removal, casefold. Without
+    this, "f\u200bine" trivially evades every phrase lexicon."""
+    return unicodedata.normalize("NFKC", str(text)).translate(_ZERO_WIDTH).casefold()
+
 
 # Known staff audiences — the ONLY ones exempt from patient-pane gates.
 # Anything else ("patient", "Patient", "caregiver", a typo, a novel pane)
@@ -136,7 +147,7 @@ RED_FLAG_PHRASES = [
 
 
 def contains_red_flag(patient_msg: str) -> str | None:
-    low = patient_msg.lower()
+    low = fold_text(patient_msg)
     for phrase in RED_FLAG_PHRASES:
         if phrase in low:
             return phrase
@@ -151,7 +162,7 @@ def gate_no_interpretation(r: Rendering, s: EncounterState) -> list[Violation]:
     """F1 + F8: no interpretation, no prognosis, no false reassurance (patient pane)."""
     if not is_patient_facing(r.audience):
         return []
-    low = r.text.lower()
+    low = fold_text(r.text)
     out: list[Violation] = []
     for phrase in INTERPRETATION_PHRASES:
         if phrase in low:
@@ -179,12 +190,12 @@ def gate_info_blocking(r: Rendering, s: EncounterState) -> list[Violation]:
     disclosure, is the violation (Cures Act information-blocking rule)."""
     if not is_patient_facing(r.audience):
         return []
-    low = r.text.lower()
+    low = fold_text(r.text)
     out: list[Violation] = []
     for res in s.results.values():
         if res.status not in ("final", "amended") or not res.released:
             continue
-        named = res.name.lower() in low
+        named = fold_text(res.name) in low
         generic = any(m in low for m in AVAILABILITY_MARKERS)
         # CRITICAL results must be acknowledged BY NAME: a generic "your
         # results are back" can gloss the one result that matters, especially
@@ -225,7 +236,7 @@ def gate_compliance(r: Rendering, s: EncounterState) -> list[Violation]:
     (CA AB 3030 pattern, applied everywhere by default)."""
     if not is_patient_facing(r.audience):
         return []
-    low = r.text.lower()
+    low = fold_text(r.text)
     out: list[Violation] = []
     if not any(m in low for m in AI_DISCLOSURE_MARKERS):
         out.append(Violation(
@@ -252,10 +263,10 @@ def gate_grounding(r: Rendering, s: EncounterState) -> list[Violation]:
                 detail=f"Reference '{ref}' does not resolve to any chart element.",
                 detail_ref=ref,
             ))
-    low = r.text.lower()
+    low = fold_text(r.text)
     supplied = set(r.refs)
     for entity_id, name in s.entity_names().items():
-        if name.lower() in low:
+        if fold_text(name) in low:
             acceptable = s.refs_for_name(name) | {entity_id}
             if not (supplied & acceptable):
                 out.append(Violation(
@@ -272,7 +283,7 @@ def gate_escalation(r: Rendering, s: EncounterState) -> list[Violation]:
     acknowledge that the care team was notified. Silence = dropped escalation."""
     if not is_patient_facing(r.audience) or not s.escalations:
         return []
-    low = r.text.lower()
+    low = fold_text(r.text)
     if not any(m in low for m in ESCALATION_ACK_MARKERS):
         return [Violation(
             gate="escalation", severity=Severity.BLOCK,

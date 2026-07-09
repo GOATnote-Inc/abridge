@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -100,15 +101,47 @@ def evaluate(path: Path = _DEFAULT_GOLDSET) -> list[CaseResult]:
     return results
 
 
+def binom_upper(x: int, n: int, conf: float = 0.95) -> float:
+    """Exact Clopper-Pearson upper bound on a binomial proportion.
+
+    Point estimates without intervals are how eval claims overreach: FN=0/23
+    is a regression gate, not proof of a low FN rate — the honest statement
+    is the upper bound this returns (~12.3% at n=23, x=0).
+    """
+    if n == 0:
+        return 1.0
+    if x >= n:
+        return 1.0
+    alpha = 1.0 - conf
+
+    def cdf_at_most_x(p: float) -> float:
+        return sum(math.comb(n, k) * p**k * (1 - p) ** (n - k)
+                   for k in range(x + 1))
+
+    lo, hi = 0.0, 1.0
+    for _ in range(60):  # bisection to ~1e-18; plenty
+        mid = (lo + hi) / 2
+        if cdf_at_most_x(mid) > alpha:
+            lo = mid
+        else:
+            hi = mid
+    return hi
+
+
 def summarize(results: list[CaseResult]) -> dict:
     n = len(results)
+    fn = sum(r.false_negative for r in results)
+    fp = sum(r.false_positive for r in results)
     return {
         "n": n,
         "passed": sum(r.ok for r in results),
-        "false_negatives": sum(r.false_negative for r in results),
-        "false_positives": sum(r.false_positive for r in results),
-        "fn_rate": sum(r.false_negative for r in results) / n if n else 0.0,
-        "fp_rate": sum(r.false_positive for r in results) / n if n else 0.0,
+        "false_negatives": fn,
+        "false_positives": fp,
+        "fn_rate": fn / n if n else 0.0,
+        "fp_rate": fp / n if n else 0.0,
+        # Exact 95% upper bounds — the claim the counts actually support.
+        "fn_rate_upper_95": binom_upper(fn, n),
+        "fp_rate_upper_95": binom_upper(fp, n),
     }
 
 
@@ -139,6 +172,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\n  passed {s['passed']}/{s['n']}   "
               f"FALSE-NEGATIVES {s['false_negatives']} (must be 0)   "
               f"false-positives {s['false_positives']}")
+        print(f"  FN rate {s['fn_rate']:.1%} "
+              f"(95% CI upper bound {s['fn_rate_upper_95']:.1%}, "
+              f"Clopper-Pearson, n={s['n']}) — a regression gate, "
+              f"not a precision estimate")
         if s["false_negatives"]:
             print("\n  \033[91mFAIL: unsafe proposal(s) not stopped — "
                   "fail-closed contract violated.\033[0m")

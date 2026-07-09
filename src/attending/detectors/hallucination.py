@@ -60,7 +60,7 @@ def _negation_contradictions(enc: Encounter, rationale: str) -> list[str]:
     fired = match_red_flags(enc)
     if not fired:
         return []
-    spans = [rationale[m.end():m.end() + _NEGATION_WINDOW]
+    spans = [(m.end(), rationale[m.end():m.end() + _NEGATION_WINDOW])
              for m in _NEGATION_CUES.finditer(rationale)]
     if not spans:
         return []
@@ -68,11 +68,14 @@ def _negation_contradictions(enc: Encounter, rationale: str) -> list[str]:
     problems = []
     by_id = {rf["id"]: rf["patterns"] for rf in K.RED_FLAGS}
     for hit in fired:
-        for span in spans:
-            if any(re.search(pat, span) for pat in by_id.get(hit.id, ())):
+        for offset, window in spans:
+            m = next((mm for pat in by_id.get(hit.id, ())
+                      if (mm := re.search(pat, window))), None)
+            if m:
+                lo, hi = offset + m.start(), offset + m.end()
                 problems.append(
-                    f"rationale denies a finding the record asserts "
-                    f"({hit.id}: record matched '{hit.matched}')")
+                    f"[contradiction] rationale[{lo}:{hi}] denies a finding "
+                    f"the record asserts ({hit.id}: record {hit.evidence_ref})")
                 break
     return problems
 
@@ -93,12 +96,15 @@ def detect_hallucination(
             ):
                 claimed = float(m.group(1))
                 actual = _record_value(enc, attr)
+                where = f"rationale[{m.start()}:{m.end()}]"
                 if actual is None:
                     problems.append(
-                        f"claims {phrase}≈{m.group(1)} but record has no {attr}")
+                        f"[unmentioned] {where} claims {phrase}≈{m.group(1)} "
+                        f"but the record never captured {attr}")
                 elif abs(float(actual) - claimed) > tol:
                     problems.append(
-                        f"claims {phrase}={m.group(1)} but record {attr}={actual}")
+                        f"[contradiction] {where} claims {phrase}={m.group(1)} "
+                        f"but record {attr}={actual}")
 
     if rationale:
         problems.extend(_negation_contradictions(enc, rationale))

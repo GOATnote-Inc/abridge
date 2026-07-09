@@ -58,7 +58,7 @@
               "message": "proposed ESI 3 is less acute than the ESI 2 the tree assigns (Decision B)",
               "criterion_id": "ATT-UT1",
               "citation": "ACEP Clinical Policy: Suspected NSTE-ACS (Ann Emerg Med 2018)",
-              "evidence": "RF-ACS: Chest pain suggestive of acute coronary syndrome (matched 'chest pressure')"
+              "evidence": "RF-ACS: Chest pain suggestive of acute coronary syndrome (evidence: chief_complaint[0:14] \"chest pressure\")"
             },
             {
               "kind": "workup_incomplete",
@@ -82,7 +82,7 @@
               "message": "proposal rationale asserts values not grounded in the record",
               "criterion_id": "ATT-hallucination",
               "citation": null,
-              "evidence": "claims spo2=99 but record spo2=97"
+              "evidence": "[contradiction] rationale[15:22] claims spo2=99 but record spo2=97"
             }
           ],
           "detections": [
@@ -115,12 +115,12 @@
               "fired": true,
               "severity": "block",
               "message": "proposal rationale asserts values not grounded in the record",
-              "evidence": "claims spo2=99 but record spo2=97",
+              "evidence": "[contradiction] rationale[15:22] claims spo2=99 but record spo2=97",
               "citation": null
             }
           ],
           "esi_reasons": [
-            "RF-ACS: Chest pain suggestive of acute coronary syndrome (matched 'chest pressure')"
+            "RF-ACS: Chest pain suggestive of acute coronary syndrome (evidence: chief_complaint[0:14] \"chest pressure\")"
           ],
           "ruleset_version": "esi-v4-attending-0.3.1"
         }
@@ -185,7 +185,7 @@
             }
           ],
           "esi_reasons": [
-            "RF-ACS: Chest pain suggestive of acute coronary syndrome (matched 'chest pressure')"
+            "RF-ACS: Chest pain suggestive of acute coronary syndrome (evidence: chief_complaint[0:14] \"chest pressure\")"
           ],
           "ruleset_version": "esi-v4-attending-0.3.1"
         }

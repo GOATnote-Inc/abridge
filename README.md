@@ -22,8 +22,10 @@ where an ED "what's next" agent can harm a patient:
   the disclosure gap (a patient alone with a viewed critical result). Failure
   ledger: [`INVERSION.md`](INVERSION.md), F1–F13.
 
-Both surfaces speak one verdict vocabulary (`Decision`/`Finding`/`Severity`) and
-fail closed — "not evaluated" never reads as "safe."
+Both surfaces speak one verdict vocabulary (`Decision`/`Finding`/`Severity`),
+fail closed — "not evaluated" never reads as "safe" — and every verdict is
+**evidence-linked**: it quotes the exact source field and character span it
+acted on (trust and verify). Evidence document: [`docs/SYSTEM_CARD.md`](docs/SYSTEM_CARD.md).
 
 Built on [HealthCraft](https://github.com/GOATnote-Inc/healthcraft)
 (Apache 2.0, arXiv:2605.21496), whose fail-closed grader, FHIR R4 world state,
@@ -183,10 +185,12 @@ blank template for the next round regenerates via `make review-packet` →
 `docs/CLINICAL_REVIEW_PACKET.md`). What is **not** validated yet — the honest product
 blockers: hospital-governance sign-off, false-positive burden measured against
 real ED workflow, clinician-labeled (non-synthetic) cases, and adversarial
-paraphrase coverage beyond the current lexicons. Next: (1) an adversarial eval
-round (paraphrases, multi-condition presentations, model-generated failures)
-with published FN/FP, (2) FHIR-native chart ingestion so grounding checks run
-against real structures, (3) multi-reviewer/board governance.
+paraphrase coverage beyond the current lexicons. Next (full list with rationale in `docs/SYSTEM_CARD.md` §6): (1) a held-out
+independently-authored eval set (~300 cases for a ~1% FN upper bound) with
+blinded multi-physician adjudication, (2) a discontinuous-encounter state
+machine — ED encounters fragment as the *normal case*; verdicts should pend
+per episode and adjudicate the stitched whole, (3) FHIR-native chart
+ingestion, (4) human red-team hours against the gates.
 
 ## Status
 

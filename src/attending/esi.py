@@ -36,7 +36,20 @@ class RedFlagHit:
     requires_orders: tuple[tuple[str, ...], ...]
     citation: str
     rationale: str
-    matched: str  # the phrase that triggered it
+    matched: str                 # the exact source text that triggered it
+    # Evidence link: which encounter field and character span produced the
+    # match, so every verdict can quote its source verbatim ("trust and
+    # verify" — the pattern ambient-documentation vendors set with
+    # evidence-linked notes, applied here to safety verdicts).
+    source: str = ""             # "chief_complaint" | "transcript" | "history"
+    span: tuple[int, int] | None = None
+
+    @property
+    def evidence_ref(self) -> str:
+        quoted = f'"{self.matched}"'
+        if self.span is None:
+            return quoted
+        return f"{self.source}[{self.span[0]}:{self.span[1]}] {quoted}"
 
 
 @dataclass(frozen=True)
@@ -115,25 +128,43 @@ def _life_saving(enc: Encounter) -> list[str]:
     return hits
 
 
+# Encounter fields scanned for red flags, in evidence-priority order. Fields
+# are searched individually (not as a joined blob) so every hit carries an
+# exact source + character span — an evidence-linked verdict.
+_RED_FLAG_SOURCES = ("chief_complaint", "transcript", "history")
+
+
 def match_red_flags(enc: Encounter) -> list[RedFlagHit]:
-    blob = enc.text_blob
+    sources = [(name, (getattr(enc, name) or "").lower())
+               for name in _RED_FLAG_SOURCES]
     hits = []
     for rf in K.RED_FLAGS:
+        found = None
         for pat in rf["patterns"]:
-            m = re.search(pat, blob)
-            if m:
-                hits.append(
-                    RedFlagHit(
-                        id=rf["id"],
-                        label=rf["label"],
-                        esi_floor=rf["esi_floor"],
-                        requires_orders=K.normalize_requires(rf["requires_orders"]),
-                        citation=rf["citation"],
-                        rationale=rf["rationale"],
-                        matched=m.group(0),
-                    )
-                )
+            for name, text in sources:
+                if not text:
+                    continue
+                m = re.search(pat, text)
+                if m:
+                    found = (name, m)
+                    break
+            if found:
                 break
+        if found:
+            name, m = found
+            hits.append(
+                RedFlagHit(
+                    id=rf["id"],
+                    label=rf["label"],
+                    esi_floor=rf["esi_floor"],
+                    requires_orders=K.normalize_requires(rf["requires_orders"]),
+                    citation=rf["citation"],
+                    rationale=rf["rationale"],
+                    matched=m.group(0),
+                    source=name,
+                    span=(m.start(), m.end()),
+                )
+            )
     return hits
 
 
@@ -187,7 +218,7 @@ def compute_esi(enc: Encounter) -> EsiAssessment:
     # danger-zone vitals -> should-not-wait -> ESI 2.
     reasons: list[str] = []
     red = match_red_flags(enc)
-    reasons.extend(f"{h.id}: {h.label} (matched '{h.matched}')" for h in red)
+    reasons.extend(f"{h.id}: {h.label} (evidence: {h.evidence_ref})" for h in red)
     alt = _altered(enc)
     if alt:
         reasons.append(f"Altered mental status: {alt}")

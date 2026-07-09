@@ -17,3 +17,11 @@ def test_full_goldset_passes():
     results = evaluate()
     failed = [r.id for r in results if not r.ok]
     assert not failed, f"gold-set regressions: {failed}"
+
+
+def test_binomial_upper_bound_is_exact():
+    from attending.evaluate import binom_upper
+    # Closed form for x=0: upper = 1 - alpha^(1/n).
+    assert abs(binom_upper(0, 23) - (1 - 0.05 ** (1 / 23))) < 1e-9
+    assert binom_upper(0, 300) < 0.01  # the n needed for a ~1% claim
+    assert binom_upper(23, 23) == 1.0 and binom_upper(0, 0) == 1.0

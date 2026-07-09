@@ -1,6 +1,6 @@
 # Clinical review packet — Attending
 
-*Generated from live code. Ruleset `esi-v4-attending-0.3.0` · status: DRAFT — pending physician / hospital board sign-off*
+*Generated from live code. Ruleset `esi-v4-attending-0.3.1` · status: physician-reviewed (Brandon Dent, MD, EM — 2026-07-09; single-reviewer, demonstration scope — see docs/reviews/) — hospital board governance PENDING*
 
 **How to review:** mark each item ACCEPT or MODIFY (say what changes). Modifications land as versioned changes (RULESET_VERSION bump, export regen, gold-set updates), then the sign-off block below is completed and `approval_status` flips to physician-reviewed.
 

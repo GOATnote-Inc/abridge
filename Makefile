@@ -28,7 +28,7 @@ format:
 typecheck:
 	$(PY) -m mypy src/attending
 
-# Safety gate: synthetic gold set (physician sign-off pending). Exits 1 on ANY false-negative.
+# Safety gate: synthetic gold set (physician-reviewed; board governance pending). Exits 1 on ANY false-negative.
 goldset:
 	PYTHONPATH=src $(PY) -m attending.evaluate
 

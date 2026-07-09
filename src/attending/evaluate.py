@@ -1,5 +1,5 @@
 """Fail-closed regression harness over a synthetic triage gold set
-(physician-owned; clinical sign-off pending — see knowledge.APPROVAL_STATUS).
+(physician-reviewed 2026-07-09, demonstration scope — see docs/reviews/).
 
 The cardinal safety metric is the FALSE-NEGATIVE rate: a case the gold set says
 must be stopped (BLOCK/ESCALATE) or up-triaged, that Attending instead ALLOWs

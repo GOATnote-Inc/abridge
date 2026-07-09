@@ -35,7 +35,7 @@ jobs:
       - name: Tests (pytest)
         run: PYTHONPATH=src pytest -q
 
-      # Fail-closed safety gate: exits 1 if the synthetic gold set (physician sign-off pending)
+      # Fail-closed safety gate: exits 1 if the synthetic gold set (physician-reviewed, demo scope)
       # produces ANY false-negative (unsafe proposal allowed through).
       # Runs offline — the optional LLM detector path is never exercised in CI.
       - name: Safety gate (gold set, zero false-negatives)

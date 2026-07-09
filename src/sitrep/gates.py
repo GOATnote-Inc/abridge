@@ -48,8 +48,8 @@ class Rendering:
 
 
 # ---------------------------------------------------------------------------
-# Lexicons — physician-owned and versioned (clinical sign-off pending),
-# deliberately explicit.
+# Lexicons — physician-owned, versioned, reviewed 2026-07-09 (demo scope;
+# see docs/reviews/), deliberately explicit.
 # ---------------------------------------------------------------------------
 
 INTERPRETATION_PHRASES = [

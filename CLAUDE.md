@@ -75,7 +75,7 @@ stdlib-only). Invariants (every one has a test; do not regress):
   earlier one. **The replayer stays pure** (no clock/randomness/network) so the
   demo replays byte-identically.
 - If a gate lexicon misses a phrase seen in the wild, ADD THE PHRASE AND A TEST
-  in the same change. Lexicons are physician-owned and versioned (sign-off pending).
+  in the same change. Lexicons are physician-owned and versioned (reviewed 2026-07-09, demo scope).
 
 ## Day-of build lanes (July 18)
 

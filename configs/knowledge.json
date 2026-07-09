@@ -1,6 +1,6 @@
 {
-  "ruleset_version": "esi-v4-attending-0.3.0",
-  "approval_status": "DRAFT — pending physician / hospital board sign-off",
+  "ruleset_version": "esi-v4-attending-0.3.1",
+  "approval_status": "physician-reviewed (Brandon Dent, MD, EM — 2026-07-09; single-reviewer, demonstration scope — see docs/reviews/) — hospital board governance PENDING",
   "danger_zone_adult": {
     "hr_gt": 100,
     "rr_gt": 20,

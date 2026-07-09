@@ -139,10 +139,12 @@ Stated plainly, because a safety layer that hides its own attack surface isn't o
   the disclosure gap, monotonic escalation, grounding-by-reference, numeric
   claim checking, and the ESI tree — which no wording can bypass. House rule:
   a missed phrase gets added with its test in the same change.
-- **Clinical values are DRAFT.** Every threshold, red flag, and pediatric band
-  carries a citation, a `RULESET_VERSION`, and `approval_status: pending
-  physician/board sign-off`. The gold set is synthetic and physician-owned;
-  formal clinical sign-off has not happened yet. Do not deploy against patients.
+- **Clinical values are physician-reviewed, not board-approved.** Every
+  threshold, red flag, and pediatric band carries a citation and a
+  `RULESET_VERSION`; the full ruleset and gold set were reviewed item-by-item
+  by an EM physician on 2026-07-09 (`docs/reviews/`), single-reviewer and
+  demonstration-scoped. Hospital governance approval has not happened.
+  Do not deploy against patients.
 - **No order-level contraindication checking yet.** Attending blocks
   under-triage and missing workup; it does not yet veto a clinically wrong
   *order* (e.g. anticoagulation with a dissection differential) — that layer
@@ -158,17 +160,18 @@ Stated plainly, because a safety layer that hides its own attack surface isn't o
 ## Validation status & roadmap
 
 What is validated today: regression (23-case synthetic gold set, FN=0 in CI),
-mutation coverage (disabling a gate fails 6+ tests across 5 layers), an
-adversarial pre-publication red-team (secrets/claims/fail-open/ReDoS), and
-live-model runs whose unsafe drafts were blocked by deterministic gates. What
-is **not** validated yet — and is the honest product blocker: physician
-sign-off of every clinical value, false-positive burden measured against real
-ED workflow, clinician-labeled cases, and adversarial paraphrase coverage
-beyond the current lexicons. Next steps in order: (1) EM-physician review of
-the gold set + `configs/knowledge.json` (the export exists precisely to be
-signed), (2) an adversarial eval round (paraphrases, multi-condition
-presentations, model-generated failures) with published FN/FP, (3) FHIR-native
-chart ingestion so grounding checks run against real structures.
+mutation coverage (`make mutation` — all 8 gates load-bearing, enforced in
+CI), an adversarial pre-publication red-team (secrets/claims/fail-open/ReDoS),
+live-model runs whose unsafe drafts were blocked by deterministic gates, and a
+structured **physician review of every clinical value and gold case**
+(2026-07-09, single EM reviewer, `docs/reviews/` — regenerate the packet with
+`make review-packet`). What is **not** validated yet — the honest product
+blockers: hospital-governance sign-off, false-positive burden measured against
+real ED workflow, clinician-labeled (non-synthetic) cases, and adversarial
+paraphrase coverage beyond the current lexicons. Next: (1) an adversarial eval
+round (paraphrases, multi-condition presentations, model-generated failures)
+with published FN/FP, (2) FHIR-native chart ingestion so grounding checks run
+against real structures, (3) multi-reviewer/board governance.
 
 ## Status
 

@@ -40,8 +40,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-RULESET_VERSION = "esi-v4-attending-0.3.0"
-APPROVAL_STATUS = "DRAFT — pending physician / hospital board sign-off"
+RULESET_VERSION = "esi-v4-attending-0.3.1"
+APPROVAL_STATUS = ("physician-reviewed (Brandon Dent, MD, EM — 2026-07-09; "
+                   "single-reviewer, demonstration scope — see docs/reviews/) "
+                   "— hospital board governance PENDING")
 
 # --- Danger-zone vitals (ESI Decision Point D). Adult (> 18 yr) thresholds. ---
 # Presence of any of these up-triages a resource-based ESI 3 to ESI 2.

@@ -122,7 +122,7 @@
           "esi_reasons": [
             "RF-ACS: Chest pain suggestive of acute coronary syndrome (matched 'chest pressure')"
           ],
-          "ruleset_version": "esi-v4-attending-0.3.0"
+          "ruleset_version": "esi-v4-attending-0.3.1"
         }
       },
       {
@@ -187,7 +187,7 @@
           "esi_reasons": [
             "RF-ACS: Chest pain suggestive of acute coronary syndrome (matched 'chest pressure')"
           ],
-          "ruleset_version": "esi-v4-attending-0.3.0"
+          "ruleset_version": "esi-v4-attending-0.3.1"
         }
       }
     ],

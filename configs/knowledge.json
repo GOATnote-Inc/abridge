@@ -1,5 +1,5 @@
 {
-  "ruleset_version": "esi-v4-attending-0.2.1",
+  "ruleset_version": "esi-v4-attending-0.3.0",
   "approval_status": "DRAFT — pending physician / hospital board sign-off",
   "danger_zone_adult": {
     "hr_gt": 100,
@@ -144,8 +144,12 @@
       ],
       "esi_floor": 2,
       "requires_orders": [
-        "ecg",
-        "troponin"
+        [
+          "ecg"
+        ],
+        [
+          "troponin"
+        ]
       ],
       "citation": "ACS",
       "rationale": "Undifferentiated chest pain requires ECG within 10 min to exclude STEMI; ACS cannot be excluded at triage."
@@ -166,9 +170,11 @@
       ],
       "esi_floor": 2,
       "requires_orders": [
-        "ct_head",
-        "stroke_activation",
-        "ct head"
+        [
+          "ct_head",
+          "ct head",
+          "stroke_activation"
+        ]
       ],
       "citation": "STROKE",
       "rationale": "Time-critical: tPA/thrombectomy window depends on last-known-well; needs immediate non-contrast CT head."
@@ -184,9 +190,15 @@
       ],
       "esi_floor": 2,
       "requires_orders": [
-        "lactate",
-        "blood_cultures",
-        "antibiotics"
+        [
+          "lactate"
+        ],
+        [
+          "blood_cultures"
+        ],
+        [
+          "antibiotics"
+        ]
       ],
       "citation": "SEPSIS",
       "rationale": "Suspected sepsis needs lactate + cultures + antibiotics within 1 hour; mortality rises ~4-8%/hour of delay."
@@ -205,9 +217,15 @@
       ],
       "esi_floor": 2,
       "requires_orders": [
-        "1:1_observation",
-        "safety_search",
-        "psych_eval"
+        [
+          "1:1_observation",
+          "safety_search",
+          "sitter"
+        ],
+        [
+          "psych_eval",
+          "psychiatry_consult"
+        ]
       ],
       "citation": "SI/HI",
       "rationale": "Requires 1:1 observation and ligature/means removal; cannot be placed in an unmonitored waiting area."
@@ -224,7 +242,10 @@
       ],
       "esi_floor": 2,
       "requires_orders": [
-        "epinephrine"
+        [
+          "epinephrine",
+          "epi"
+        ]
       ],
       "citation": "ANAPH",
       "rationale": "IM epinephrine is first-line and time-critical; airway compromise can escalate to ESI 1."
@@ -239,9 +260,14 @@
       ],
       "esi_floor": 2,
       "requires_orders": [
-        "bhcg",
-        "pelvic_us",
-        "type_and_screen"
+        [
+          "bhcg",
+          "hcg"
+        ],
+        [
+          "pelvic_us",
+          "pelvic ultrasound"
+        ]
       ],
       "citation": "ESI",
       "rationale": "Ruptured ectopic is life-threatening; needs urgent beta-hCG and pelvic ultrasound."
@@ -256,8 +282,14 @@
       ],
       "esi_floor": 2,
       "requires_orders": [
-        "scrotal_us",
-        "urology_consult"
+        [
+          "scrotal_us",
+          "testicular_us"
+        ],
+        [
+          "urology_consult",
+          "urology"
+        ]
       ],
       "citation": "ESI",
       "rationale": "Testicular torsion is a 6-hour surgical emergency; needs immediate ultrasound and urology."
@@ -273,9 +305,11 @@
       ],
       "esi_floor": 2,
       "requires_orders": [
-        "cta_chest",
-        "ct_angio",
-        "ct angiogram"
+        [
+          "cta_chest",
+          "ct_angio",
+          "ct angiogram"
+        ]
       ],
       "citation": "DISSECT",
       "rationale": "Tearing/ripping chest-to-back pain is the classic dissection descriptor; mortality rises ~1-2%/hour untreated. Needs emergent CT angiography; hemodynamic collapse escalates to ESI 1 via Decision A."
@@ -291,9 +325,10 @@
       ],
       "esi_floor": 2,
       "requires_orders": [
-        "ct_head",
-        "ct head",
-        "lumbar_puncture"
+        [
+          "ct_head",
+          "ct head"
+        ]
       ],
       "citation": "SAH",
       "rationale": "Sudden-onset severe ('worst of life') headache must be evaluated for SAH with urgent non-contrast CT head (+/- LP); misdiagnosis of sentinel bleed is a leading cause of preventable death."
@@ -313,9 +348,12 @@
       ],
       "esi_floor": 2,
       "requires_orders": [
-        "type_and_screen",
-        "iv_access",
-        "gi_consult"
+        [
+          "type_and_screen"
+        ],
+        [
+          "iv_access"
+        ]
       ],
       "citation": "GIB",
       "rationale": "Hematemesis/melena/large rectal bleeding can decompensate rapidly; needs IV access, type & screen, and hemodynamic monitoring before any low-acuity routing."
@@ -334,10 +372,11 @@
       ],
       "esi_floor": 2,
       "requires_orders": [
-        "glucose",
-        "vbg",
-        "bmp",
-        "insulin"
+        [
+          "glucose",
+          "vbg",
+          "bmp"
+        ]
       ],
       "citation": "DKA",
       "rationale": "Diabetic patient with vomiting, markedly elevated sugar, or altered mentation may be in DKA; needs immediate glucose/gas/BMP and cannot wait in a low-acuity queue."
@@ -353,9 +392,12 @@
       ],
       "esi_floor": 2,
       "requires_orders": [
-        "blood_cultures",
-        "antibiotics",
-        "cbc"
+        [
+          "blood_cultures"
+        ],
+        [
+          "antibiotics"
+        ]
       ],
       "citation": "FN-ONC",
       "rationale": "Febrile neutropenia is an oncologic emergency: cultures and empiric broad-spectrum antibiotics within 1 hour; a normal exam does not exclude occult bacteremia."
@@ -372,10 +414,11 @@
       ],
       "esi_floor": 2,
       "requires_orders": [
-        "mri_spine",
-        "mri",
-        "bladder_scan",
-        "neurosurgery_consult"
+        [
+          "mri_spine",
+          "mri",
+          "neurosurgery_consult"
+        ]
       ],
       "citation": "CAUDA",
       "rationale": "Saddle anesthesia, urinary retention/incontinence, or bilateral leg weakness with back pain suggests cauda equina — a time-critical surgical emergency needing urgent MRI."
@@ -393,10 +436,12 @@
       ],
       "esi_floor": 2,
       "requires_orders": [
-        "visual_acuity",
-        "ocular_irrigation",
-        "ophthalmology_consult",
-        "ph_test"
+        [
+          "visual_acuity",
+          "ocular_irrigation",
+          "ophthalmology_consult",
+          "ph_test"
+        ]
       ],
       "citation": "EYE",
       "rationale": "Acute vision loss is potentially reversible only within hours; chemical (especially alkali) exposure needs immediate irrigation before anything else — neither can wait."
@@ -412,11 +457,15 @@
       ],
       "esi_floor": 2,
       "requires_orders": [
-        "analgesia",
-        "opioids",
-        "pain_control",
-        "cbc",
-        "reticulocyte"
+        [
+          "analgesia",
+          "opioids",
+          "pain_control"
+        ],
+        [
+          "cbc",
+          "reticulocyte"
+        ]
       ],
       "citation": "SICKLE",
       "rationale": "ESI v4 explicitly lists sickle cell pain crisis as high-risk (ESI 2): rapid analgesia within 60 min and evaluation for acute chest syndrome / aplastic crisis."
@@ -435,10 +484,13 @@
       ],
       "esi_floor": 2,
       "requires_orders": [
-        "preeclampsia_labs",
-        "magnesium",
-        "ob_consult",
-        "urine_protein"
+        [
+          "preeclampsia_labs",
+          "urine_protein"
+        ],
+        [
+          "ob_consult"
+        ]
       ],
       "citation": "PREE",
       "rationale": "Headache, visual change, or severe-range BP in pregnancy >20 wk may be preeclampsia; progression to eclampsia is abrupt. Needs BP confirmation, labs, and OB involvement — not a waiting room. (Gestational-age gate is textual; board may tighten.)"

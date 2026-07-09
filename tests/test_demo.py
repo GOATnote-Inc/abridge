@@ -69,3 +69,14 @@ def test_stage_a_exhaustion_skips_stage_b(fx):
     assert t["stage_a"]["escalated"] and t["stage_a"]["shipped"] is None
     assert "skipped" in t["stage_b"]
     assert t["summary"]["unsafe_artifacts_shipped"] == 0
+
+
+def test_checked_in_transcript_is_not_stale():
+    """The committed web transcript must match the code's ruleset version —
+    guards the exact staleness Codex caught (0.2.0 artifact vs 0.2.1 code)."""
+    from attending import knowledge as K
+    t = json.loads((Path(__file__).parent.parent / "web" / "demo_transcript.json").read_text())
+    versions = {a["verdict"]["ruleset_version"] for a in t["stage_a"]["attempts"]}
+    assert versions == {K.RULESET_VERSION}, (
+        f"stale demo transcript {versions}; regenerate: "
+        "PYTHONPATH=src python3 -m attending.demo --json > web/demo_transcript.json")

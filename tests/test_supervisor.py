@@ -94,3 +94,33 @@ def test_hallucinated_vital_blocks():
     det = {d.detector: d for d in v.detections}
     assert det["hallucination"].fired  # record spo2=97, claim 99
     assert v.decision is Decision.BLOCK
+
+
+def test_partial_workup_does_not_clear_requirement_groups():
+    # Codex P1: ecg alone must not satisfy [["ecg"], ["troponin"]].
+    e = Encounter("T", "chest pain radiating to left arm", age_years=60,
+                  vitals=Vitals(hr=90, rr=16, spo2=98, sbp=140))
+    v = supervise(e, ProposedTriage(esi_level=2, orders=("ecg",),
+                                    disposition="discharge"))
+    assert v.decision is Decision.BLOCK
+    f = next(f for f in v.findings if f.kind == "workup_incomplete")
+    assert "troponin" in f.message and "ecg" not in f.message.split("missing")[1]
+
+
+def test_synonym_alternative_satisfies_a_group():
+    e = Encounter("T", "sudden facial droop and slurred speech", age_years=70,
+                  vitals=Vitals(hr=88, rr=16, spo2=98, sbp=158))
+    v = supervise(e, ProposedTriage(esi_level=2, orders=("stroke_activation",),
+                                    disposition="main_ed"))
+    assert not any(f.kind == "workup_incomplete" for f in v.findings)
+
+
+def test_partial_engagement_is_not_anchoring():
+    # Ordering the ECG engages the flag: incomplete workup, not anchoring.
+    e = Encounter("T", "chest pain radiating to left arm", age_years=60,
+                  vitals=Vitals(hr=90, rr=16, spo2=98, sbp=140))
+    v = supervise(e, ProposedTriage(esi_level=2, orders=("ecg",),
+                                    disposition="main_ed"))
+    det = {d.detector: d for d in v.detections}
+    assert not det["anchoring_bias"].fired
+    assert any(f.kind == "workup_incomplete" for f in v.findings)

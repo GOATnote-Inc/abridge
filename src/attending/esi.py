@@ -31,7 +31,9 @@ class RedFlagHit:
     id: str
     label: str
     esi_floor: int
-    requires_orders: tuple[str, ...]
+    # Conjunction of disjunction-groups: every group must be satisfied by at
+    # least one of its member order names (see knowledge.normalize_requires).
+    requires_orders: tuple[tuple[str, ...], ...]
     citation: str
     rationale: str
     matched: str  # the phrase that triggered it
@@ -125,7 +127,7 @@ def match_red_flags(enc: Encounter) -> list[RedFlagHit]:
                         id=rf["id"],
                         label=rf["label"],
                         esi_floor=rf["esi_floor"],
-                        requires_orders=tuple(rf["requires_orders"]),
+                        requires_orders=K.normalize_requires(rf["requires_orders"]),
                         citation=rf["citation"],
                         rationale=rf["rationale"],
                         matched=m.group(0),

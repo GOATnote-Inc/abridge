@@ -78,8 +78,8 @@ $ attending examples/chest_pain_undertriage.json
   findings (why Attending acted):
     [block] ATT-UT1  proposed ESI 3 is less acute than the ESI 2 the tree assigns
          cite: ACEP Clinical Policy: Suspected NSTE-ACS (Ann Emerg Med 2018)
-    [block] RF-ACS   Chest pain ... required workup ['ecg','troponin'] not ordered;
-                     disposition 'fast_track' would release the patient
+    [block] RF-ACS   Chest pain ... required workup incomplete — missing
+                     ['ecg','troponin']; disposition 'fast_track' would release the patient
 ```
 
 ## How it works
@@ -115,7 +115,7 @@ can't do. `claude-fable-5` runs natively through HealthCraft's Anthropic client.
 
 ```bash
 make demo          # the two-surface story (replay, deterministic)
-make test          # full suite (152 tests; gold set + mutation-guarded gates)
+make test          # full suite (gold set + mutation-guarded gates)
 make goldset       # the safety gate alone — exits 1 on ANY false-negative
 make serve         # FastAPI gateway; four-pane UI at /ui  (pip install -e ".[gateway]")
 PYTHONPATH=src python3 -m attending.cli examples/chest_pain_undertriage.json
@@ -127,6 +127,13 @@ CLI exit code is a gate: `0` allow, `2` block, `3` escalate.
 
 Stated plainly, because a safety layer that hides its own attack surface isn't one:
 
+- **The fail-closed guarantee has a precise boundary.** It covers the
+  decision pipeline (acuity, requirement-group workups, dispositions), the
+  chart-state gates, numeric claim grounding, and record-contradicting
+  denials ("denies chest pain" on a chest-pressure record is caught
+  deterministically). Broader free-text semantics ("no cardiac history" vs.
+  the medication list) are optional LLM augmentation — additive-only, off by
+  default, and its absence is a disclosed gap, not a silent one.
 - **Text lexicons are floors, not fences.** Paraphrase can evade a phrase list
   (`"nothing that should worry you"`). The load-bearing gates are *structural* —
   the disclosure gap, monotonic escalation, grounding-by-reference, numeric
@@ -147,6 +154,21 @@ Stated plainly, because a safety layer that hides its own attack surface isn't o
   any transport failure degrades to the floor.
 - **All data is synthetic.** No PHI anywhere; scenario loading refuses
   non-attested or identifier-bearing fixtures (INVERSION F13).
+
+## Validation status & roadmap
+
+What is validated today: regression (23-case synthetic gold set, FN=0 in CI),
+mutation coverage (disabling a gate fails 6+ tests across 5 layers), an
+adversarial pre-publication red-team (secrets/claims/fail-open/ReDoS), and
+live-model runs whose unsafe drafts were blocked by deterministic gates. What
+is **not** validated yet — and is the honest product blocker: physician
+sign-off of every clinical value, false-positive burden measured against real
+ED workflow, clinician-labeled cases, and adversarial paraphrase coverage
+beyond the current lexicons. Next steps in order: (1) EM-physician review of
+the gold set + `configs/knowledge.json` (the export exists precisely to be
+signed), (2) an adversarial eval round (paraphrases, multi-condition
+presentations, model-generated failures) with published FN/FP, (3) FHIR-native
+chart ingestion so grounding checks run against real structures.
 
 ## Status
 

@@ -1,11 +1,17 @@
-"""Hallucination detector: numeric claims in the rationale not grounded in record.
+"""Hallucination detector: rationale claims not grounded in the record.
 
-Deterministic first pass: pull numeric vital claims out of the proposer's
-free-text rationale (e.g. "SpO2 was 98%", "afebrile at 37.0") and check them
-against the structured record. A value that contradicts the record -- or that
-is asserted when the record never captured it -- is ungrounded and blocks the
-claim. The `llm_augment` hook lets Fable 5 extend this to non-numeric factual
-claims ("no cardiac history", "denies chest pain") checked against the chart.
+Deterministic floor, two checks (no LLM, no key):
+  1. NUMERIC claims — vital values asserted in the rationale ("SpO2 was 98%")
+     that contradict the record or were never captured.
+  2. NEGATION CONTRADICTIONS — the rationale explicitly denies a finding the
+     record asserts ("denies chest pain" when the chief complaint is chest
+     pressure). Detected by running the SAME red-flag patterns that fired on
+     the encounter over negated spans of the rationale.
+
+The `llm_augment` hook lets Fable 5 extend this floor to broader semantic
+grounding ("no cardiac history" vs. the medication list). Augmentation is
+ADDITIVE-ONLY: it can raise a finding, never suppress one, and its failure
+leaves the deterministic floor untouched.
 """
 
 from __future__ import annotations
@@ -35,6 +41,42 @@ def _record_value(enc: Encounter, attr: str):
     return val
 
 
+# Strong denial cues only ("no further chest pain" is a legitimate clinical
+# course note, not a record contradiction — precision matters here).
+_NEGATION_CUES = re.compile(
+    r"\b(?:denies|denied|no history of|no complaints? of|without any)\b", re.I)
+_NEGATION_WINDOW = 60  # chars of rationale examined after a denial cue
+
+
+def _negation_contradictions(enc: Encounter, rationale: str) -> list[str]:
+    """Rationale spans that DENY a finding the record asserts.
+
+    For every red flag that fired on the encounter, re-run its patterns over
+    the text right after each denial cue in the rationale. A hit means the
+    proposer is denying the very finding that made this patient high-risk.
+    """
+    from ..esi import match_red_flags  # local import; no cycle (esi <- knowledge)
+
+    fired = match_red_flags(enc)
+    if not fired:
+        return []
+    spans = [rationale[m.end():m.end() + _NEGATION_WINDOW]
+             for m in _NEGATION_CUES.finditer(rationale)]
+    if not spans:
+        return []
+    from .. import knowledge as K
+    problems = []
+    by_id = {rf["id"]: rf["patterns"] for rf in K.RED_FLAGS}
+    for hit in fired:
+        for span in spans:
+            if any(re.search(pat, span) for pat in by_id.get(hit.id, ())):
+                problems.append(
+                    f"rationale denies a finding the record asserts "
+                    f"({hit.id}: record matched '{hit.matched}')")
+                break
+    return problems
+
+
 def detect_hallucination(
     enc: Encounter,
     proposed: ProposedTriage,
@@ -57,6 +99,9 @@ def detect_hallucination(
                 elif abs(float(actual) - claimed) > tol:
                     problems.append(
                         f"claims {phrase}={m.group(1)} but record {attr}={actual}")
+
+    if rationale:
+        problems.extend(_negation_contradictions(enc, rationale))
 
     if llm_augment is not None:
         try:

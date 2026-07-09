@@ -77,16 +77,21 @@ def supervise(enc: Encounter, proposed: ProposedTriage) -> Verdict:
     disp = (proposed.disposition or "").lower().replace("-", "_")
     orders = set(proposed.orders_lower)
     for rf in assessment.red_flags:
-        required = {o.lower() for o in rf.requires_orders}
-        if orders & required:
+        # EVERY requirement group must be satisfied by at least one member.
+        # A single ordered item never clears a multi-part workup (an ECG
+        # alone is not an ACS rule-out).
+        missing = [g for g in rf.requires_orders
+                   if not (orders & {o.lower() for o in g})]
+        if not missing:
             continue
+        missing_names = sorted(g[0] for g in missing)
         sev = Severity.BLOCK if disp in _DISCHARGE_DISPOSITIONS else Severity.WARN
         if sev is Severity.BLOCK:
             decision = Decision.BLOCK
             recommended = min(recommended, rf.esi_floor)
         findings.append(Finding(
             "workup_incomplete", sev,
-            f"{rf.label}: required workup {sorted(required)} not ordered"
+            f"{rf.label}: required workup incomplete — missing {missing_names}"
             + (f"; disposition '{proposed.disposition}' would release the patient"
                if sev is Severity.BLOCK else ""),
             criterion_id=rf.id,

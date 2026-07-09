@@ -53,6 +53,7 @@ class Rendering:
 # ---------------------------------------------------------------------------
 
 INTERPRETATION_PHRASES = [
+    "lose sleep over",
     "consistent with",
     "means you have",
     "suggests you have",
@@ -66,6 +67,8 @@ INTERPRETATION_PHRASES = [
 ]
 
 FALSE_REASSURANCE_PHRASES = [
+    "labs are reassuring",
+    "results are reassuring",
     "everything looks fine",
     "everything looks good",
     "everything looks normal",

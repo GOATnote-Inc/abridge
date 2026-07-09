@@ -40,7 +40,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-RULESET_VERSION = "esi-v4-attending-0.2.1"
+RULESET_VERSION = "esi-v4-attending-0.3.0"
 APPROVAL_STATUS = "DRAFT — pending physician / hospital board sign-off"
 
 # --- Danger-zone vitals (ESI Decision Point D). Adult (> 18 yr) thresholds. ---
@@ -108,9 +108,12 @@ LIFE_SAVING_PHRASES = {
 }
 
 # --- Red-flag lexicon (ESI Decision Point B -> high risk -> ESI 2). ---
-# requires_orders: the workup that a *safe* proposal must already include; if a
-# red flag fired and none of these appear in the proposal, Attending flags the
-# workup as incomplete (and blocks a discharge/fast-track disposition).
+# requires_orders: CONJUNCTION OF DISJUNCTION-GROUPS. Each inner list is one
+# requirement; any member of the group (synonyms/equivalents) satisfies it;
+# EVERY group must be satisfied or the workup is incomplete (and a discharge/
+# fast-track disposition is blocked). A flat string entry is normalized to a
+# singleton group. This is deliberately strict: one ordered item must never
+# clear a multi-part workup (e.g. an ECG alone is not an ACS rule-out).
 # esi_floor: most-acute level the flag alone justifies (2 for all current
 # flags; airway/hemodynamic collapse reaches ESI 1 via Decision A vitals).
 # ALL patterns/thresholds DRAFT — pending physician/board review.
@@ -124,7 +127,7 @@ RED_FLAGS: list[dict] = [
             r"jaw pain", r"diaphore", r"crushing chest",
         ],
         "esi_floor": 2,
-        "requires_orders": ["ecg", "troponin"],
+        "requires_orders": [["ecg"], ["troponin"]],
         "citation": "ACS",
         "rationale": "Undifferentiated chest pain requires ECG within 10 min to "
         "exclude STEMI; ACS cannot be excluded at triage.",
@@ -138,7 +141,7 @@ RED_FLAGS: list[dict] = [
             r"arm drift", r"last known well", r"sudden.{0,80}(?:numb|weak)",
         ],
         "esi_floor": 2,
-        "requires_orders": ["ct_head", "stroke_activation", "ct head"],
+        "requires_orders": [["ct_head", "ct head", "stroke_activation"]],
         "citation": "STROKE",
         "rationale": "Time-critical: tPA/thrombectomy window depends on "
         "last-known-well; needs immediate non-contrast CT head.",
@@ -151,7 +154,7 @@ RED_FLAGS: list[dict] = [
             r"(?:confus|letharg).{0,80}fever", r"septic", r"rigors.{0,80}fever",
         ],
         "esi_floor": 2,
-        "requires_orders": ["lactate", "blood_cultures", "antibiotics"],
+        "requires_orders": [["lactate"], ["blood_cultures"], ["antibiotics"]],
         "citation": "SEPSIS",
         "rationale": "Suspected sepsis needs lactate + cultures + antibiotics "
         "within 1 hour; mortality rises ~4-8%/hour of delay.",
@@ -165,7 +168,8 @@ RED_FLAGS: list[dict] = [
             r"self[- ]harm", r"wants? to die",
         ],
         "esi_floor": 2,
-        "requires_orders": ["1:1_observation", "safety_search", "psych_eval"],
+        "requires_orders": [["1:1_observation", "safety_search", "sitter"],
+                            ["psych_eval", "psychiatry_consult"]],
         "citation": "SI/HI",
         "rationale": "Requires 1:1 observation and ligature/means removal; "
         "cannot be placed in an unmonitored waiting area.",
@@ -179,7 +183,7 @@ RED_FLAGS: list[dict] = [
             r"anaphyla",
         ],
         "esi_floor": 2,
-        "requires_orders": ["epinephrine"],
+        "requires_orders": [["epinephrine", "epi"]],
         "citation": "ANAPH",
         "rationale": "IM epinephrine is first-line and time-critical; airway "
         "compromise can escalate to ESI 1.",
@@ -192,7 +196,7 @@ RED_FLAGS: list[dict] = [
             r"pregnan.{0,80}bleed", r"positive pregnancy.{0,80}pain",
         ],
         "esi_floor": 2,
-        "requires_orders": ["bhcg", "pelvic_us", "type_and_screen"],
+        "requires_orders": [["bhcg", "hcg"], ["pelvic_us", "pelvic ultrasound"]],
         "citation": "ESI",
         "rationale": "Ruptured ectopic is life-threatening; needs urgent "
         "beta-hCG and pelvic ultrasound.",
@@ -202,7 +206,7 @@ RED_FLAGS: list[dict] = [
         "label": "Acute testicular pain (torsion risk)",
         "patterns": [r"testic.{0,80}pain", r"scrotal pain", r"testic.{0,80}swell"],
         "esi_floor": 2,
-        "requires_orders": ["scrotal_us", "urology_consult"],
+        "requires_orders": [["scrotal_us", "testicular_us"], ["urology_consult", "urology"]],
         "citation": "ESI",
         "rationale": "Testicular torsion is a 6-hour surgical emergency; needs "
         "immediate ultrasound and urology.",
@@ -218,7 +222,7 @@ RED_FLAGS: list[dict] = [
             r"aortic dissection",
         ],
         "esi_floor": 2,
-        "requires_orders": ["cta_chest", "ct_angio", "ct angiogram"],
+        "requires_orders": [["cta_chest", "ct_angio", "ct angiogram"]],
         "citation": "DISSECT",
         "rationale": "Tearing/ripping chest-to-back pain is the classic "
         "dissection descriptor; mortality rises ~1-2%/hour untreated. Needs "
@@ -235,7 +239,7 @@ RED_FLAGS: list[dict] = [
             r"headache.{0,40}(?:maximal|peak).{0,20}(?:instant|second|minute)",
         ],
         "esi_floor": 2,
-        "requires_orders": ["ct_head", "ct head", "lumbar_puncture"],
+        "requires_orders": [["ct_head", "ct head"]],
         "citation": "SAH",
         "rationale": "Sudden-onset severe ('worst of life') headache must be "
         "evaluated for SAH with urgent non-contrast CT head (+/- LP); "
@@ -252,7 +256,7 @@ RED_FLAGS: list[dict] = [
             r"bright red blood per rectum", r"\bbrbpr\b",
         ],
         "esi_floor": 2,
-        "requires_orders": ["type_and_screen", "iv_access", "gi_consult"],
+        "requires_orders": [["type_and_screen"], ["iv_access"]],
         "citation": "GIB",
         "rationale": "Hematemesis/melena/large rectal bleeding can decompensate "
         "rapidly; needs IV access, type & screen, and hemodynamic monitoring "
@@ -269,7 +273,7 @@ RED_FLAGS: list[dict] = [
             r"ketones",
         ],
         "esi_floor": 2,
-        "requires_orders": ["glucose", "vbg", "bmp", "insulin"],
+        "requires_orders": [["glucose", "vbg", "bmp"]],
         "citation": "DKA",
         "rationale": "Diabetic patient with vomiting, markedly elevated sugar, "
         "or altered mentation may be in DKA; needs immediate glucose/gas/BMP "
@@ -284,7 +288,7 @@ RED_FLAGS: list[dict] = [
             r"neutropeni", r"febrile neutropenia",
         ],
         "esi_floor": 2,
-        "requires_orders": ["blood_cultures", "antibiotics", "cbc"],
+        "requires_orders": [["blood_cultures"], ["antibiotics"]],
         "citation": "FN-ONC",
         "rationale": "Febrile neutropenia is an oncologic emergency: cultures "
         "and empiric broad-spectrum antibiotics within 1 hour; a normal exam "
@@ -303,8 +307,7 @@ RED_FLAGS: list[dict] = [
             r"numb.{0,30}(?:groin|perineum|saddle)",
         ],
         "esi_floor": 2,
-        "requires_orders": ["mri_spine", "mri", "bladder_scan",
-                            "neurosurgery_consult"],
+        "requires_orders": [["mri_spine", "mri", "neurosurgery_consult"]],
         "citation": "CAUDA",
         "rationale": "Saddle anesthesia, urinary retention/incontinence, or "
         "bilateral leg weakness with back pain suggests cauda equina — a "
@@ -322,8 +325,8 @@ RED_FLAGS: list[dict] = [
             r"eye.{0,30}(?:bleach|acid|alkali|lye|chemical)",
         ],
         "esi_floor": 2,
-        "requires_orders": ["visual_acuity", "ocular_irrigation",
-                            "ophthalmology_consult", "ph_test"],
+        "requires_orders": [["visual_acuity", "ocular_irrigation",
+                             "ophthalmology_consult", "ph_test"]],
         "citation": "EYE",
         "rationale": "Acute vision loss is potentially reversible only within "
         "hours; chemical (especially alkali) exposure needs immediate "
@@ -337,8 +340,7 @@ RED_FLAGS: list[dict] = [
             r"sickle cell", r"vaso[- ]?occlusive",
         ],
         "esi_floor": 2,
-        "requires_orders": ["analgesia", "opioids", "pain_control", "cbc",
-                            "reticulocyte"],
+        "requires_orders": [["analgesia", "opioids", "pain_control"], ["cbc", "reticulocyte"]],
         "citation": "SICKLE",
         "rationale": "ESI v4 explicitly lists sickle cell pain crisis as "
         "high-risk (ESI 2): rapid analgesia within 60 min and evaluation for "
@@ -355,8 +357,7 @@ RED_FLAGS: list[dict] = [
             r"(?:headache|hypertens|high blood pressure).{0,60}pregnan",
         ],
         "esi_floor": 2,
-        "requires_orders": ["preeclampsia_labs", "magnesium", "ob_consult",
-                            "urine_protein"],
+        "requires_orders": [["preeclampsia_labs", "urine_protein"], ["ob_consult"]],
         "citation": "PREE",
         "rationale": "Headache, visual change, or severe-range BP in pregnancy "
         ">20 wk may be preeclampsia; progression to eclampsia is abrupt. "
@@ -404,6 +405,18 @@ RESOURCE_ESTIMATES: list[tuple[list[str], int, int]] = [
     (["overdose", "ingestion"], 2, 4),
 ]
 RESOURCE_DEFAULT = (1, 2)
+
+def normalize_requires(seq) -> tuple[tuple[str, ...], ...]:
+    """Normalize requires_orders: strings become singleton groups; groups pass
+    through. Guarantees the conjunction-of-groups shape for all consumers."""
+    groups: list[tuple[str, ...]] = []
+    for item in seq or ():
+        if isinstance(item, str):
+            groups.append((item,))
+        else:
+            groups.append(tuple(str(x) for x in item))
+    return tuple(groups)
+
 
 # Human-readable citation expansions for rendering.
 CITATIONS = {

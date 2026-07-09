@@ -31,3 +31,30 @@ def test_real_ungrounded_claim_still_fires():
         ProposedTriage(esi_level=4, rationale="reassuring, spo2 was 99"),
     )
     assert d.fired
+
+
+def test_denying_the_presenting_red_flag_fires_without_llm():
+    # Codex P1 example: "denies chest pain" on a chest-pressure record must be
+    # caught by the DETERMINISTIC floor (no key, no augmentation).
+    enc = Encounter("T", "chest pressure radiating to left arm", age_years=58,
+                    vitals=Vitals(hr=96, rr=18, spo2=97, sbp=148))
+    d = detect_hallucination(
+        enc, ProposedTriage(esi_level=4, rationale="patient denies chest pain today"))
+    assert d.fired and "denies a finding" in d.evidence
+
+
+def test_legitimate_course_note_is_not_a_contradiction():
+    enc = Encounter("T", "chest pressure radiating to left arm", age_years=58,
+                    vitals=Vitals(hr=96, rr=18, spo2=97, sbp=148))
+    d = detect_hallucination(
+        enc, ProposedTriage(esi_level=2, orders=("ecg", "troponin"),
+                            rationale="no further chest pain since arrival, monitoring"))
+    assert not d.fired
+
+
+def test_denial_without_record_assertion_is_fine():
+    enc = Encounter("T", "twisted ankle", age_years=24,
+                    vitals=Vitals(hr=80, rr=16, spo2=99, sbp=120))
+    d = detect_hallucination(
+        enc, ProposedTriage(esi_level=4, rationale="denies chest pain, denies fever"))
+    assert not d.fired

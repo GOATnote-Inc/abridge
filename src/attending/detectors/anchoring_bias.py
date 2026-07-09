@@ -28,9 +28,13 @@ def detect_anchoring(
     unaddressed = []
     orders = set(proposed.orders_lower)
     for rf in assessment.red_flags:
-        required = {o.lower() for o in rf.requires_orders}
-        if not (orders & required):
-            unaddressed.append(f"{rf.id} ({rf.label}) fired but no {sorted(required)} ordered")
+        # Anchoring = ZERO engagement with the red flag (no item from ANY
+        # requirement group ordered). Partial-but-incomplete workup is not
+        # anchoring — that is Rule 3 (workup_incomplete) territory.
+        engaged = any(orders & {o.lower() for o in g} for g in rf.requires_orders)
+        if not engaged:
+            wanted = sorted(g[0] for g in rf.requires_orders)
+            unaddressed.append(f"{rf.id} ({rf.label}) fired but none of {wanted} ordered")
 
     proposer_low = proposed.esi_level is not None and proposed.esi_level >= 3
     fired = bool(unaddressed) and proposer_low

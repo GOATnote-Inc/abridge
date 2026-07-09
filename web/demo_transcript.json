@@ -63,7 +63,7 @@
             {
               "kind": "workup_incomplete",
               "severity": "block",
-              "message": "Chest pain suggestive of acute coronary syndrome: required workup ['ecg', 'troponin'] not ordered; disposition 'fast_track' would release the patient",
+              "message": "Chest pain suggestive of acute coronary syndrome: required workup incomplete \u2014 missing ['ecg', 'troponin']; disposition 'fast_track' would release the patient",
               "criterion_id": "RF-ACS",
               "citation": "ACEP Clinical Policy: Suspected NSTE-ACS (Ann Emerg Med 2018)",
               "evidence": "Undifferentiated chest pain requires ECG within 10 min to exclude STEMI; ACS cannot be excluded at triage."
@@ -74,7 +74,7 @@
               "message": "proposal appears anchored on the presenting complaint; a red flag is unaddressed at a low acuity",
               "criterion_id": "ATT-anchoring_bias",
               "citation": null,
-              "evidence": "RF-ACS (Chest pain suggestive of acute coronary syndrome) fired but no ['ecg', 'troponin'] ordered"
+              "evidence": "RF-ACS (Chest pain suggestive of acute coronary syndrome) fired but none of ['ecg', 'troponin'] ordered"
             },
             {
               "kind": "detector",
@@ -107,7 +107,7 @@
               "fired": true,
               "severity": "block",
               "message": "proposal appears anchored on the presenting complaint; a red flag is unaddressed at a low acuity",
-              "evidence": "RF-ACS (Chest pain suggestive of acute coronary syndrome) fired but no ['ecg', 'troponin'] ordered",
+              "evidence": "RF-ACS (Chest pain suggestive of acute coronary syndrome) fired but none of ['ecg', 'troponin'] ordered",
               "citation": null
             },
             {
@@ -122,7 +122,7 @@
           "esi_reasons": [
             "RF-ACS: Chest pain suggestive of acute coronary syndrome (matched 'chest pressure')"
           ],
-          "ruleset_version": "esi-v4-attending-0.2.0"
+          "ruleset_version": "esi-v4-attending-0.3.0"
         }
       },
       {
@@ -187,7 +187,7 @@
           "esi_reasons": [
             "RF-ACS: Chest pain suggestive of acute coronary syndrome (matched 'chest pressure')"
           ],
-          "ruleset_version": "esi-v4-attending-0.2.0"
+          "ruleset_version": "esi-v4-attending-0.3.0"
         }
       }
     ],

@@ -274,3 +274,29 @@ class TestF2AvailabilityLexicon:
         )
         v = run_gates(r, state_with_critical_troponin)
         assert "info_blocking" not in gates_fired(v)
+
+
+class TestParaphraseLexicon:
+    """Judge-probe paraphrases (Codex review) — added with tests per house rule."""
+
+    def test_lose_sleep_over_is_interpretation(self, state_with_critical_troponin):
+        r = Rendering(
+            audience="patient",
+            text=(
+                "This is not something to lose sleep over. "
+                "This update was generated with AI — press your call button to speak with your nurse."
+            ),
+            refs=[],
+        )
+        assert "no_interpretation" in gates_fired(blocked(run_gates(r, state_with_critical_troponin)))
+
+    def test_reassuring_labs_is_false_reassurance_with_critical(self, state_with_critical_troponin):
+        r = Rendering(
+            audience="patient",
+            text=(
+                "Your labs are reassuring overall. "
+                "This update was generated with AI — press your call button to speak with your nurse."
+            ),
+            refs=[],
+        )
+        assert "no_interpretation" in gates_fired(blocked(run_gates(r, state_with_critical_troponin)))

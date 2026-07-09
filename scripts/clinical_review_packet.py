@@ -5,7 +5,7 @@ Program-aided by design: every value is read from the LIVE knowledge base and
 gold set at generation time, so the packet can never drift from the code the
 way a hand-written document would. Regenerate after any change:
 
-    make review-packet     # writes docs/CLINICAL_REVIEW.md
+    make review-packet     # writes docs/CLINICAL_REVIEW_PACKET.md (blank template)
 
 Review workflow: the physician marks each item ACCEPT or MODIFY(with change),
 edits land as normal versioned changes (RULESET_VERSION bump + export regen +
@@ -24,7 +24,7 @@ sys.path.insert(0, str(REPO / "src"))
 
 from attending import knowledge as K  # noqa: E402
 
-OUT = REPO / "docs" / "CLINICAL_REVIEW.md"
+OUT = REPO / "docs" / "CLINICAL_REVIEW_PACKET.md"
 
 # Curated by the build process: the judgment calls most deserving of expert
 # attention, with the reasoning that produced them. Everything else in the
@@ -131,8 +131,14 @@ def _gold_section() -> list[str]:
 
 
 def main() -> int:
+    completed = sorted((REPO / "docs" / "reviews").glob("*.md"))
     lines = [
-        "# Clinical review packet — Attending",
+        "# Clinical review packet — Attending  (BLANK TEMPLATE)",
+        "",
+        "> **This is the unfilled review template for the NEXT review round,**",
+        "> regenerated from live code so it can never drift. Completed, dated",
+        "> review records live in `docs/reviews/`"
+        + (f" — latest: `{completed[-1].relative_to(REPO)}`." if completed else "."),
         "",
         f"*Generated from live code. Ruleset `{K.RULESET_VERSION}` · status: "
         f"{K.APPROVAL_STATUS}*",

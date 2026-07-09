@@ -186,12 +186,19 @@ def gate_info_blocking(r: Rendering, s: EncounterState) -> list[Violation]:
             continue
         named = res.name.lower() in low
         generic = any(m in low for m in AVAILABILITY_MARKERS)
-        if not (named or generic):
+        # CRITICAL results must be acknowledged BY NAME: a generic "your
+        # results are back" can gloss the one result that matters, especially
+        # with several released results on the chart. Generic acknowledgment
+        # remains sufficient for non-critical results.
+        satisfied = named or (generic and res.flag != "critical")
+        if not satisfied:
+            crit = " CRITICAL result requires acknowledgment by name." \
+                if res.flag == "critical" and generic else ""
             out.append(Violation(
                 gate="info_blocking", severity=Severity.BLOCK,
                 detail=(
                     f"Final released result '{res.name}' not acknowledged in "
-                    f"patient pane — suppression is information blocking."
+                    f"patient pane — suppression is information blocking." + crit
                 ),
                 detail_ref=res.id,
             ))

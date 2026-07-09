@@ -21,7 +21,10 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 
+# Communication gates + decision-surface mechanisms: EVERY one must be
+# load-bearing (its removal must fail tests).
 GATES = [
+    # comms surface
     "gate_no_interpretation",
     "gate_info_blocking",
     "gate_no_advice",
@@ -30,6 +33,14 @@ GATES = [
     "gate_escalation",
     "gate_readability",
     "check_disclosure_gap",
+    # decision surface
+    "esi_independent_assessment",
+    "red_flag_matching",
+    "requirement_group_and",
+    "hallucination",
+    "anchoring_bias",
+    "incomplete_audio",
+    "transcription_error",
 ]
 
 _SUMMARY = re.compile(r"(\d+) failed")

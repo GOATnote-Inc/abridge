@@ -255,7 +255,17 @@ class TestF9Readability:
 
 
 class TestF2AvailabilityLexicon:
-    """Colloquial acknowledgments count — suppression, not phrasing, is the violation."""
+    """Colloquial acknowledgments count for NON-critical results — suppression,
+    not phrasing, is the violation. CRITICAL results require the name."""
+
+    @staticmethod
+    def _noncritical_state():
+        s = EncounterState(patient={"age": 40})
+        s.add_order(Order(id="ord-cbc", name="CBC", status="completed"))
+        s.add_result(Result(id="res-cbc", order_id="ord-cbc", name="CBC",
+                            value="normal", flag="normal", status="final",
+                            released=True))
+        return s
 
     @pytest.mark.parametrize("ack", [
         "Your results are back.",
@@ -263,11 +273,37 @@ class TestF2AvailabilityLexicon:
         "Your results have come back.",
         "Your result is ready to view.",
     ])
-    def test_colloquial_acknowledgment_passes(self, state_with_critical_troponin, ack):
+    def test_colloquial_acknowledgment_passes_for_noncritical(self, ack):
         r = Rendering(
             audience="patient",
             text=(
                 f"{ack} Dr. Dent will discuss it with you shortly. "
+                "This update was generated with AI — press your call button to speak with your nurse."
+            ),
+            refs=["res-cbc"],
+        )
+        v = run_gates(r, self._noncritical_state())
+        assert "info_blocking" not in gates_fired(v)
+
+    def test_critical_result_requires_acknowledgment_by_name(self, state_with_critical_troponin):
+        # Generic availability phrasing must NOT satisfy a CRITICAL result.
+        r = Rendering(
+            audience="patient",
+            text=(
+                "Your results are back. Dr. Dent will discuss them with you shortly. "
+                "This update was generated with AI — press your call button to speak with your nurse."
+            ),
+            refs=["res-trop"],
+        )
+        v = run_gates(r, state_with_critical_troponin)
+        assert "info_blocking" in gates_fired(blocked(v))
+
+    def test_critical_result_named_passes(self, state_with_critical_troponin):
+        r = Rendering(
+            audience="patient",
+            text=(
+                "A new Troponin I result is available in your record. "
+                "Dr. Dent will discuss it with you shortly. "
                 "This update was generated with AI — press your call button to speak with your nurse."
             ),
             refs=["res-trop"],

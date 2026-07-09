@@ -1,4 +1,8 @@
-# Clinical review packet — Attending
+# Clinical review packet — Attending  (BLANK TEMPLATE)
+
+> **This is the unfilled review template for the NEXT review round,**
+> regenerated from live code so it can never drift. Completed, dated
+> review records live in `docs/reviews/` — latest: `docs/reviews/2026-07-09-review.md`.
 
 *Generated from live code. Ruleset `esi-v4-attending-0.3.1` · status: physician-reviewed (Brandon Dent, MD, EM — 2026-07-09; single-reviewer, demonstration scope — see docs/reviews/) — hospital board governance PENDING*
 

@@ -221,6 +221,13 @@
                 "evidence": ""
               },
               {
+                "criterion_id": "SITREP-info_blocking",
+                "severity": "block",
+                "message": "Final released result 'troponin' not acknowledged in patient pane \u2014 suppression is information blocking. CRITICAL result requires acknowledgment by name.",
+                "citation": "21st Century Cures Act information-blocking rule (45 CFR Part 171)",
+                "evidence": "res-troponin"
+              },
+              {
                 "criterion_id": "SITREP-compliance",
                 "severity": "block",
                 "message": "Patient-facing rendering lacks AI-generation disclosure.",
@@ -296,12 +303,14 @@
       "ATT-anchoring_bias",
       "ATT-hallucination",
       "SITREP-no_interpretation",
+      "SITREP-info_blocking",
       "SITREP-compliance",
       "SITREP-disclosure_gap"
     ],
     "citations": [
       "ACEP Clinical Policy: Suspected NSTE-ACS (Ann Emerg Med 2018)",
       "Scope of practice: no diagnosis/prognosis in patient pane (CDS non-device lane, 21st Century Cures Act \u00a73060)",
+      "21st Century Cures Act information-blocking rule (45 CFR Part 171)",
       "CA AB 3030: AI disclosure + human contact path in clinical comms",
       "Cures-era safety: patient alone with a viewed critical result (21st Century Cures Act patient-access rule)"
     ],

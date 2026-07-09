@@ -189,6 +189,9 @@ def run_demo(fixture: dict, live: bool = False) -> dict:
         "fixture": fixture["id"],
         "synthetic": True,  # all demo output derives from attested fixtures
         "mode": "live" if live else "replay",
+        # Evidence provenance: which model drafted (live mode only; replay is
+        # scripted and stays a pure function of the fixture).
+        **({"performer_model": agent.agent_model()} if live else {}),
         "title": fixture.get("title", ""),
         # Verbatim encounter for UI consumers (nurse arrival card: CC + vitals).
         "encounter": fixture["encounter"],

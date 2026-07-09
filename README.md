@@ -9,9 +9,12 @@ tripped** — with linked evidence. It sits *in the path* across the two surface
 where an ED "what's next" agent can harm a patient:
 
 - **Decision** (`attending.supervise`) — the triage acuity, orders, and
-  disposition. Independently re-derives ESI v4 and blocks under-triage,
-  incomplete workup, and the four failure modes (incomplete audio,
-  transcription error, anchoring, hallucination).
+  disposition. Independently re-derives ESI v4 and blocks under-triage and
+  any **release with an incomplete red-flag workup**; an incomplete workup on
+  an in-department disposition surfaces as a WARN finding instead (the workup
+  is still in flight — a physician-ratified boundary, `docs/reviews/`). Four
+  failure-mode detectors: incomplete audio, transcription error, anchoring,
+  hallucination.
 - **Communication** (`attending.comms.supervise_rendering`, backed by
   `src/sitrep`) — what the patient/nurse/physician/consultant panes *say*.
   Blocks interpretation in the patient pane, information blocking (Cures Act),
@@ -49,6 +52,16 @@ guideline or law it protects.
 In live mode, Fable 5's textually flawless first reply is *still* blocked by
 the disclosure-gap state gate — the demonstration that prompting is necessary
 but middleware is the guarantee.
+
+## What Attending is — and isn't
+
+Attending supervises **agent proposals at the triage moment**: acuity,
+workup completeness against fired red flags, disposition, and every
+patient/team-facing message. It is **not** an order-entry CDS (it does not yet
+veto a clinically wrong order — no contraindication engine), not a diagnosis
+engine, and it supervises the *agent*, never the clinician. False positives
+here cost an agent a forced up-triage or a rewrite — not a mis-triaged
+patient — which is why thresholds deliberately sit on the sensitive side.
 
 ## The deployable unit
 
@@ -164,8 +177,10 @@ mutation coverage (`make mutation` — all 8 gates load-bearing, enforced in
 CI), an adversarial pre-publication red-team (secrets/claims/fail-open/ReDoS),
 live-model runs whose unsafe drafts were blocked by deterministic gates, and a
 structured **physician review of every clinical value and gold case**
-(2026-07-09, single EM reviewer, `docs/reviews/` — regenerate the packet with
-`make review-packet`). What is **not** validated yet — the honest product
+(2026-07-09, single EM reviewer — the dated record is
+[`docs/reviews/2026-07-09-review.md`](docs/reviews/2026-07-09-review.md); the
+blank template for the next round regenerates via `make review-packet` →
+`docs/CLINICAL_REVIEW_PACKET.md`). What is **not** validated yet — the honest product
 blockers: hospital-governance sign-off, false-positive burden measured against
 real ED workflow, clinician-labeled (non-synthetic) cases, and adversarial
 paraphrase coverage beyond the current lexicons. Next: (1) an adversarial eval

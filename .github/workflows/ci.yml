@@ -3,6 +3,8 @@ name: CI
 on:
   push:
   pull_request:
+  schedule:
+    - cron: "0 14 * * 1"  # weekly Monday: catch runner/dependency drift
 
 permissions:
   contents: read
@@ -38,3 +40,8 @@ jobs:
       # Runs offline — the optional LLM detector path is never exercised in CI.
       - name: Safety gate (gold set, zero false-negatives)
         run: PYTHONPATH=src python3 -m attending.evaluate
+
+      # Every communication gate must be load-bearing: disabling any one must
+      # fail its tests; the clean run must be green.
+      - name: Mutation check (gates are load-bearing)
+        run: python3 scripts/mutation_check.py

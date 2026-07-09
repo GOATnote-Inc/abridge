@@ -76,3 +76,11 @@ stdlib-only). Invariants (every one has a test; do not regress):
   demo replays byte-identically.
 - If a gate lexicon misses a phrase seen in the wild, ADD THE PHRASE AND A TEST
   in the same change. Lexicons are physician-owned and versioned (sign-off pending).
+
+## Day-of build lanes (July 18)
+
+Parallel build agents get **worktree isolation** (`EnterWorktree` / `isolation:
+"worktree"`) — one lane per surface: `gateway/` hardening, `renderers/` (pane
+prompts), `web/` UI, `demo/` rehearsal wiring. Merge gate for every lane:
+`make check` + `make mutation` green. One session owns git; lanes never run
+git themselves (two writers + git in one repo has burned us before).

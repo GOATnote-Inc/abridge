@@ -7,7 +7,7 @@
 VENV_PY := $(wildcard .venv/bin/python)
 PY      := $(if $(VENV_PY),$(VENV_PY),python3)
 
-.PHONY: install test lint format typecheck goldset smoke check demo demo-live serve
+.PHONY: install test lint format typecheck goldset smoke check demo demo-live serve mutation coverage review-packet
 
 install:
 	python3 -m venv .venv
@@ -53,5 +53,17 @@ demo-live:
 # extra: .venv/bin/python -m pip install -e ".[gateway]"
 serve:
 	PYTHONPATH=src $(PY) -m attending.gateway
+
+# Prove every communication gate is load-bearing: disable each in turn and
+# demand test failures, then a green clean run. The stage claim as a command.
+mutation:
+	$(PY) scripts/mutation_check.py
+
+coverage:
+	PYTHONPATH=src $(PY) -m pytest -q --cov=attending --cov=sitrep --cov-report=term-missing
+
+# Regenerate the physician sign-off packet from LIVE code (never hand-edit).
+review-packet:
+	$(PY) scripts/clinical_review_packet.py
 
 check: lint typecheck test goldset

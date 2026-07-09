@@ -1,0 +1,63 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "attending"
+version = "0.1.0"
+description = "A fail-closed supervising layer for clinical triage agents. Built on HealthCraft."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Brandon Dent" }]
+dependencies = []
+
+[project.optional-dependencies]
+# Fable 5 / Anthropic runtime augmentation for the LLM detector hooks.
+llm = ["anthropic>=0.40"]
+dev = ["pytest>=8.0"]
+gateway = ["fastapi>=0.110", "uvicorn>=0.29"]
+
+[project.scripts]
+attending = "attending.cli:main"
+attending-demo = "attending.demo:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/attending", "src/sitrep"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# Gate tests embed long, verbatim patient-facing rendering strings (AI
+# disclosure + human path + result text); wrapping them hurts readability.
+"tests/test_gates.py" = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+mypy_path = ["src"]
+warn_unused_ignores = true
+disallow_untyped_defs = false
+
+# HealthCraft is an optional source-checkout dependency (lazy sys.path import).
+[[tool.mypy.overrides]]
+module = ["healthcraft", "healthcraft.*"]
+ignore_missing_imports = true
+
+# Safety-critical modules get strict typing.
+[[tool.mypy.overrides]]
+module = [
+    "attending.supervisor",
+    "attending.esi",
+    "attending.confidence",
+    "attending.loop",
+]
+disallow_untyped_defs = true

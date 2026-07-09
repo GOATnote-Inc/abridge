@@ -1,0 +1,18 @@
+{
+  "encounter": {
+    "encounter_id": "ENC-1001",
+    "chief_complaint": "Chest pressure radiating to left arm, started 40 min ago",
+    "age_years": 58,
+    "sex": "male",
+    "arrival_mode": "walk_in",
+    "vitals": {"hr": 96, "rr": 18, "spo2": 97, "sbp": 148, "dbp": 88, "temp_c": 36.8, "pain": 6},
+    "transcript": "Patient reports pressure in the chest for the last forty minutes, radiating down the left arm, with some sweating. History of high blood pressure.",
+    "structured_facts": {"spo2": 97, "hr": 96}
+  },
+  "proposed": {
+    "esi_level": 3,
+    "orders": ["cbc", "bmp"],
+    "disposition": "fast_track",
+    "rationale": "Stable vitals, SpO2 98%, likely musculoskeletal chest pain. Route to fast track."
+  }
+}

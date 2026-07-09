@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attending — one encounter, both surfaces</title>
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#101720; --panel2:#0d1319; --line:#1e2a38; --line2:#2a3a4c;
+    --text:#dce5ee; --dim:#8fa2b5; --faint:#5d7186;
+    --red:#ff7076; --red-bg:rgba(229,72,77,.12); --red-line:rgba(229,72,77,.5);
+    --green:#4ecf96; --green-bg:rgba(48,164,108,.12); --green-line:rgba(48,164,108,.5);
+    --amber:#f5b04a; --amber-bg:rgba(245,166,35,.10); --amber-line:rgba(245,166,35,.45);
+    --blue:#5aa2f0; --blue-bg:rgba(79,156,249,.10); --blue-line:rgba(79,156,249,.4);
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg); color:var(--text);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  header{
+    display:flex; align-items:center; gap:14px;
+    padding:14px 20px 10px; border-bottom:1px solid var(--line);
+  }
+  header .brand{font-size:19px; font-weight:700; letter-spacing:.02em}
+  header .brand .rx{color:var(--blue)}
+  header .oneliner{color:var(--dim); font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  header .spacer{flex:1}
+  .badge{
+    font-size:10.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+    padding:3px 10px; border-radius:999px; border:1px solid var(--line2); color:var(--dim); white-space:nowrap;
+  }
+  .badge.mode-replay{color:var(--blue); border-color:var(--blue-line); background:var(--blue-bg)}
+  .badge.mode-live{color:var(--amber); border-color:var(--amber-line); background:var(--amber-bg)}
+  .badge.src{cursor:default}
+  #narration{
+    display:flex; align-items:center; gap:12px;
+    padding:9px 20px; border-bottom:1px solid var(--line); background:var(--panel2);
+  }
+  #stepLabel{font-size:14px; font-weight:600}
+  #stepCount{font-family:var(--mono); font-size:12px; color:var(--faint); white-space:nowrap}
+  #narration .spacer{flex:1}
+  .btn{
+    background:#141d28; color:var(--text); border:1px solid var(--line2);
+    padding:6px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;
+  }
+  .btn:hover:not(:disabled){background:#1b2734; border-color:#3a4f66}
+  .btn:disabled{opacity:.35; cursor:default}
+  .btn.subtle{font-weight:500; font-size:12px; color:var(--dim); padding:5px 12px}
+  #progress{height:2px; background:var(--line)}
+  #progressFill{height:100%; width:0; background:var(--blue); transition:width .25s ease}
+  main{
+    flex:1; min-height:0; display:grid; gap:12px; padding:12px 16px 14px;
+    grid-template-columns:1fr 1fr 350px; grid-template-rows:1fr 1fr;
+  }
+  .pane{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    display:flex; flex-direction:column; min-height:0; transition:border-color .4s ease;
+  }
+  .pane.active{border-color:var(--blue-line); animation:glow 1.5s ease-out}
+  @keyframes glow{
+    0%{box-shadow:0 0 0 0 rgba(90,162,240,.45)}
+    100%{box-shadow:0 0 18px 4px rgba(90,162,240,0)}
+  }
+  .pane-head{
+    display:flex; align-items:center; gap:8px;
+    padding:10px 14px; border-bottom:1px solid var(--line);
+    font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--dim);
+  }
+  .pane-head .dot{width:7px;height:7px;border-radius:50%;background:var(--faint)}
+  .pane.active .pane-head .dot{background:var(--blue)}
+  .pane-body{flex:1; overflow-y:auto; padding:12px 14px; min-height:0}
+  .empty{color:var(--faint); font-size:12.5px; font-style:italic; padding:4px 2px}
+  #rail{grid-column:3; grid-row:1 / span 2}
+  .card{
+    background:var(--panel2); border:1px solid var(--line); border-radius:10px;
+    padding:11px 13px; margin-bottom:10px; font-size:13.5px;
+  }
+  .card .k{color:var(--faint); font-size:11px; text-transform:uppercase; letter-spacing:.09em; font-weight:700; margin-bottom:5px}
+  .card.critical{border-left:3px solid var(--red)}
+  .card.page{border-left:3px solid var(--amber)}
+  .card.pending{border-left:3px solid var(--amber)}
+  .card.shipped{border-left:3px solid var(--green)}
+  .card.note{border-style:dashed; color:var(--dim)}
+  .bubble{
+    background:#13202c; border:1px solid var(--line2); border-radius:14px 14px 14px 4px;
+    padding:11px 14px; margin-bottom:10px; font-size:13.5px;
+  }
+  .bubble.from-team{border-radius:14px 14px 4px 14px; background:#12231d; border-color:var(--green-line)}
+  .bubble .who{font-size:10.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--faint); margin-bottom:4px}
+  .vitals{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:8px}
+  .vital{background:#0b1118; border:1px solid var(--line); border-radius:8px; padding:6px 8px; text-align:center}
+  .vital .vk{font-size:10px; color:var(--faint); text-transform:uppercase; letter-spacing:.06em}
+  .vital .vv{font-family:var(--mono); font-size:14px; font-weight:600}
+  .orders{display:flex; flex-wrap:wrap; gap:6px; margin-top:7px}
+  .order{
+    font-family:var(--mono); font-size:12px; padding:3px 9px; border-radius:6px;
+    background:#0b1118; border:1px solid var(--line2);
+  }
+  .esi{font-family:var(--mono); font-weight:700}
+  .chip{
+    display:inline-block; font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+    padding:2px 9px; border-radius:999px; border:1px solid var(--line2); color:var(--dim); vertical-align:middle;
+  }
+  .chip.block{color:var(--red); background:var(--red-bg); border-color:var(--red-line)}
+  .chip.allow{color:var(--green); background:var(--green-bg); border-color:var(--green-line)}
+  .chip.amber{color:var(--amber); background:var(--amber-bg); border-color:var(--amber-line)}
+  .chip.info{color:var(--blue); background:var(--blue-bg); border-color:var(--blue-line)}
+  .rail-entry{
+    border:1px solid var(--line); border-radius:10px; background:var(--panel2);
+    padding:10px 12px; margin-bottom:10px; font-size:12.5px;
+  }
+  .rail-entry.block{border-color:var(--red-line)}
+  .rail-entry.allow{border-color:var(--green-line)}
+  .rail-entry.amber{border-color:var(--amber-line)}
+  .rail-entry .re-head{display:flex; align-items:center; gap:8px; margin-bottom:4px}
+  .rail-entry .re-title{font-weight:600; font-size:12.5px}
+  .rail-entry .re-meta{color:var(--faint); font-size:11.5px; margin-bottom:2px}
+  .finding{margin:7px 0 0; padding-left:9px; border-left:2px solid var(--line2)}
+  .finding.sev-block{border-left-color:var(--red-line)}
+  .finding.sev-warn{border-left-color:var(--amber-line)}
+  .crit{font-family:var(--mono); font-size:11.5px; color:var(--text); font-weight:700}
+  .sev{font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--red); margin-right:6px}
+  .finding.sev-warn .sev{color:var(--amber)}
+  .fmsg{color:var(--dim); font-size:12px; margin-top:1px}
+  .cite{color:var(--faint); font-size:11px; margin-top:2px}
+  .cite::before{content:"§ "}
+  .evd{color:var(--faint); font-size:11px; font-family:var(--mono); margin-top:2px; word-break:break-word}
+  .quarantine{
+    margin-top:8px; padding:8px 10px; border:1px dashed var(--red-line); border-radius:8px; background:var(--red-bg);
+  }
+  .quarantine .qlabel{font-size:9.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--red); margin-bottom:3px}
+  .quarantine .qtext{text-decoration:line-through; opacity:.6; font-size:12px}
+  #overlay{
+    position:fixed; inset:0; background:rgba(5,8,12,.82); backdrop-filter:blur(3px);
+    display:none; align-items:center; justify-content:center; z-index:40;
+  }
+  #overlay.show{display:flex}
+  #summaryCard{
+    width:min(680px,92vw); max-height:86vh; overflow-y:auto;
+    background:var(--panel); border:1px solid var(--line2); border-radius:16px; padding:28px 32px;
+  }
+  #summaryCard h2{font-size:20px; margin-bottom:4px}
+  #summaryCard .sub{color:var(--dim); font-size:13px; margin-bottom:18px}
+  .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:18px}
+  .stat{background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:12px 14px; text-align:center}
+  .stat .n{font-size:26px; font-weight:700; font-family:var(--mono)}
+  .stat .l{font-size:11px; color:var(--dim); text-transform:uppercase; letter-spacing:.07em; margin-top:2px}
+  .sum-h{font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); margin:14px 0 7px}
+  .crit-chips{display:flex; flex-wrap:wrap; gap:6px}
+  .crit-chip{font-family:var(--mono); font-size:11.5px; padding:3px 9px; border-radius:6px; background:#0b1118; border:1px solid var(--line2)}
+  .cite-list{list-style:none}
+  .cite-list li{color:var(--dim); font-size:12.5px; padding:4px 0; border-bottom:1px solid var(--line)}
+  .cite-list li:last-child{border-bottom:0}
+  #unsafeLine{
+    margin-top:18px; padding:12px; border-radius:10px; text-align:center;
+    font-size:15px; font-weight:700; letter-spacing:.02em;
+  }
+  #unsafeLine.ok{color:var(--green); background:var(--green-bg); border:1px solid var(--green-line)}
+  #unsafeLine.bad{color:var(--red); background:var(--red-bg); border:1px solid var(--red-line)}
+  #boot{
+    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    background:var(--bg); z-index:50; padding:24px;
+  }
+  #boot .msg{max-width:560px; text-align:center; color:var(--dim)}
+  #boot .msg h1{color:var(--text); font-size:18px; margin-bottom:10px}
+  #boot code{
+    display:block; font-family:var(--mono); font-size:13px; color:var(--text);
+    background:var(--panel2); border:1px solid var(--line2); border-radius:8px; padding:10px 14px; margin:12px 0;
+  }
+  .hint{color:var(--faint); font-size:11px}
+  ::-webkit-scrollbar{width:9px}
+  ::-webkit-scrollbar-thumb{background:var(--line2); border-radius:5px}
+  ::-webkit-scrollbar-track{background:transparent}
+</style>
+</head>
+<body>
+
+<div id="boot"><div class="msg"><h1>Attending</h1><p>loading transcript…</p></div></div>
+
+<header>
+  <div class="brand">Attending<span class="rx">▮</span></div>
+  <div class="oneliner" id="oneliner"></div>
+  <div class="spacer"></div>
+  <span class="badge src" id="srcBadge" title="transcript source">local file</span>
+  <span class="badge" id="modeBadge"></span>
+  <button class="btn subtle" id="gatewayBtn" title="try fetch('/demo'); falls back to local file">⟳ reload from gateway</button>
+</header>
+
+<div id="narration">
+  <span id="stepLabel"></span>
+  <span id="stepCount"></span>
+  <div class="spacer"></div>
+  <span class="hint">←  → arrow keys</span>
+  <button class="btn" id="backBtn">‹ Back</button>
+  <button class="btn" id="nextBtn">Next ›</button>
+</div>
+<div id="progress"><div id="progressFill"></div></div>
+
+<main>
+  <section class="pane" id="pane-patient">
+    <div class="pane-head"><span class="dot"></span>Patient</div>
+    <div class="pane-body" id="body-patient"></div>
+  </section>
+  <section class="pane" id="pane-nurse">
+    <div class="pane-head"><span class="dot"></span>Nurse</div>
+    <div class="pane-body" id="body-nurse"></div>
+  </section>
+  <section class="pane" id="pane-physician">
+    <div class="pane-head"><span class="dot"></span>Physician</div>
+    <div class="pane-body" id="body-physician"></div>
+  </section>
+  <section class="pane" id="pane-consultant">
+    <div class="pane-head"><span class="dot"></span>Consultant</div>
+    <div class="pane-body" id="body-consultant"></div>
+  </section>
+  <section class="pane" id="rail">
+    <div class="pane-head"><span class="dot"></span>Verdict rail — supervision events</div>
+    <div class="pane-body" id="body-rail"></div>
+  </section>
+</main>
+
+<div id="overlay"><div id="summaryCard"></div></div>
+
+<script>
+"use strict";
+/* Attending demo UI — zero build, zero network deps, pure re-render of steps 0..k. */
+
+var T = null;        // transcript
+var STEPS = [];      // derived steps
+var K = 0;           // current step index
+var PANES = ["patient","nurse","physician","consultant"];
+
+/* ---------- tiny DOM helpers (textContent only — data never hits innerHTML) */
+function el(tag, cls, text){
+  var e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined && text !== null) e.textContent = String(text);
+  return e;
+}
+function chip(kind, label){ return el("span","chip "+kind, label); }
+
+/* ---------- shared renderers ------------------------------------------- */
+function findingNode(f){
+  var sev = String(f.severity || "block").toLowerCase();
+  var d = el("div","finding sev-"+sev);
+  var head = el("div");
+  head.appendChild(el("span","sev", sev));
+  head.appendChild(el("span","crit", f.criterion_id || "?"));
+  d.appendChild(head);
+  if (f.message) d.appendChild(el("div","fmsg", f.message));
+  if (f.citation) d.appendChild(el("div","cite", f.citation));
+  if (f.evidence) d.appendChild(el("div","evd", f.evidence));
+  return d;
+}
+function railEntry(opts){ // {tone, chipKind, chipLabel, title, meta, findings, quarantineText, body}
+  var e = el("div","rail-entry "+(opts.tone||""));
+  var h = el("div","re-head");
+  h.appendChild(chip(opts.chipKind, opts.chipLabel));
+  h.appendChild(el("span","re-title", opts.title||""));
+  e.appendChild(h);
+  if (opts.meta) e.appendChild(el("div","re-meta", opts.meta));
+  if (opts.body) e.appendChild(el("div","re-meta", opts.body));
+  if (opts.quarantineText){
+    var q = el("div","quarantine");
+    q.appendChild(el("div","qlabel","quarantined — never rendered to patient"));
+    q.appendChild(el("div","qtext", opts.quarantineText));
+    e.appendChild(q);
+  }
+  (opts.findings||[]).forEach(function(f){ e.appendChild(findingNode(f)); });
+  return e;
+}
+function ordersRow(orders){
+  var w = el("div","orders");
+  (orders||[]).forEach(function(o){ w.appendChild(el("span","order", o)); });
+  return w;
+}
+function card(cls, kicker, text){
+  var c = el("div","card"+(cls?" "+cls:""));
+  if (kicker) c.appendChild(el("div","k", kicker));
+  if (text) c.appendChild(el("div", null, text));
+  return c;
+}
+
+/* ---------- transcript accessors (defensive: no KeyErrors on regenerated JSON) */
+function get(o){ // get(obj, "a","b") -> obj.a.b or undefined
+  var cur = o;
+  for (var i = 1; i < arguments.length; i++){
+    if (cur === null || cur === undefined) return undefined;
+    cur = cur[arguments[i]];
+  }
+  return cur;
+}
+function encounterId(t){ return get(t,"stage_a","attempts",0,"verdict","encounter_id") || ""; }
+function rulesetVersion(t){ return get(t,"stage_a","attempts",0,"verdict","ruleset_version") || ""; }
+function validTranscript(j){
+  return !!(j && j.stage_a && Array.isArray(j.stage_a.attempts) && j.summary);
+}
+
+/* ---------- step derivation --------------------------------------------
+   A step = {label, active:[panes], apply(view)}. view accumulates pane cards
+   + rail entries; render(k) folds steps 0..k into a fresh view. */
+function arrivalCard(t){
+  var c = card("", "encounter arrives" + (encounterId(t) ? " · " + encounterId(t) : ""));
+  var enc = t.encounter; // optional: present only if the generator embeds it
+  if (enc && enc.chief_complaint){
+    c.appendChild(el("div", null, enc.chief_complaint));
+  } else {
+    c.appendChild(el("div", null, t.title || "encounter"));
+  }
+  if (enc && enc.vitals){
+    var v = enc.vitals, grid = el("div","vitals");
+    Object.keys(v).forEach(function(k2){
+      var cell = el("div","vital");
+      cell.appendChild(el("div","vk", k2));
+      cell.appendChild(el("div","vv", v[k2]));
+      grid.appendChild(cell);
+    });
+    c.appendChild(grid);
+  }
+  var reasons = get(t,"stage_a","attempts",0,"verdict","esi_reasons") || [];
+  reasons.forEach(function(r){
+    var line = el("div","cite"); line.textContent = r; c.appendChild(line);
+  });
+  return c;
+}
+
+function triageVerdictEntry(a, i){
+  var v = a.verdict || {};
+  var block = v.decision !== "ALLOW";
+  var meta = "proposed ESI " + get(v,"proposed_esi") +
+             " · attending ESI " + get(v,"attending_esi") +
+             " · recommended ESI " + get(v,"recommended_esi");
+  return railEntry({
+    tone: block ? "block" : "allow",
+    chipKind: block ? "block" : "allow",
+    chipLabel: v.decision || "?",
+    title: "Stage A — triage proposal " + (i+1),
+    meta: meta,
+    findings: v.findings || []
+  });
+}
+
+function proposalCard(p, i, decision){
+  var c = card("", "agent proposal " + (i+1) + (decision ? " · " + decision : ""));
+  var line = el("div");
+  line.appendChild(el("span","esi","ESI " + get(p,"esi_level")));
+  line.appendChild(el("span", null, "  →  " + (get(p,"disposition") || "")));
+  c.appendChild(line);
+  c.appendChild(ordersRow(p && p.orders));
+  if (p && p.rationale) c.appendChild(el("div","cite", p.rationale));
+  return c;
+}
+
+function replyAttemptSteps(loop, opts){
+  // one step per attempt; blocked text is rail-quarantined, ALLOW renders in the audience pane
+  var steps = [];
+  var attempts = (loop && loop.attempts) || [];
+  attempts.forEach(function(a, i){
+    var v = a.verdict || {};
+    var allow = v.decision === "ALLOW";
+    steps.push({
+      label: opts.label + (attempts.length > 1 ? " — draft " + (i+1) : "") +
+             " → " + (v.decision || "?"),
+      active: allow ? [opts.pane] : [],
+      apply: function(view){
+        if (allow){
+          var b = el("div","bubble" + (opts.pane === "patient" ? "" : " from-team"));
+          b.appendChild(el("div","who", opts.who));
+          b.appendChild(el("div", null, a.text));
+          view.panes[opts.pane].push(b);
+          view.rail.push(railEntry({
+            tone:"allow", chipKind: opts.chipKind || "allow",
+            chipLabel: opts.chipLabel || "ALLOW",
+            title: opts.railTitle, meta: (v.audience||"") + " · shipped",
+            findings: v.findings || []
+          }));
+        } else {
+          // The product's whole point: a blocked rendering NEVER reaches its pane.
+          view.rail.push(railEntry({
+            tone:"block", chipKind:"block", chipLabel: v.decision || "BLOCK",
+            title: opts.railTitle, meta:(v.audience||"") + " · draft withheld",
+            quarantineText: a.text, findings: v.findings || []
+          }));
+        }
+      }
+    });
+  });
+  return steps;
+}
+
+function deriveSteps(t){
+  var steps = [];
+  var sa = t.stage_a || {};
+  var attempts = sa.attempts || [];
+
+  // (1) encounter arrives
+  steps.push({
+    label:"Encounter arrives — triage intake",
+    active:["nurse"],
+    apply:function(view){
+      view.panes.nurse.push(arrivalCard(t));
+      view.rail.push(railEntry({
+        tone:"", chipKind:"info", chipLabel:"intake",
+        title:"Encounter " + (encounterId(t) || "?") + " arrives",
+        meta:(t.title || "") + (rulesetVersion(t) ? " · " + rulesetVersion(t) : "")
+      }));
+    }
+  });
+
+  // (2..n) stage A attempts
+  attempts.forEach(function(a, i){
+    var decision = get(a,"verdict","decision") || "?";
+    steps.push({
+      label:"Stage A — agent proposes plan " + (i+1) + " → " + decision,
+      active:["physician"],
+      apply:function(view){
+        view.panes.physician.push(proposalCard(a.proposal, i, decision));
+        view.rail.push(triageVerdictEntry(a, i));
+      }
+    });
+  });
+
+  // (n+1) shipped plan or escalation
+  if (sa.shipped){
+    steps.push({
+      label:"Plan ships — orders written to the chart",
+      active:["nurse"],
+      apply:function(view){
+        var c = card("shipped","shipped plan · orders to chart");
+        var line = el("div");
+        line.appendChild(el("span","esi","ESI " + get(sa,"shipped","esi_level")));
+        line.appendChild(el("span", null, "  →  " + (get(sa,"shipped","disposition") || "")));
+        c.appendChild(line);
+        c.appendChild(ordersRow(get(sa,"shipped","orders")));
+        view.panes.nurse.push(c);
+        view.rail.push(railEntry({
+          tone:"allow", chipKind:"allow", chipLabel:"shipped",
+          title:"Stage A plan shipped",
+          meta:"orders: " + (get(sa,"shipped","orders") || []).join(", ")
+        }));
+      }
+    });
+  } else {
+    steps.push({
+      label:"Stage A — escalated to a human",
+      active:["physician"],
+      apply:function(view){
+        view.panes.physician.push(card("pending","escalation", sa.reason || "escalated"));
+        view.rail.push(railEntry({
+          tone:"amber", chipKind:"amber", chipLabel:"escalate",
+          title:"Stage A escalated", meta: sa.reason || ""
+        }));
+      }
+    });
+  }
+
+  var sb = t.stage_b || {};
+  if (sb.skipped){
+    steps.push({
+      label:"Stage B skipped",
+      active:[],
+      apply:function(view){
+        view.rail.push(railEntry({
+          tone:"amber", chipKind:"amber", chipLabel:"halted",
+          title:"Communication surface skipped", meta: sb.skipped
+        }));
+      }
+    });
+  } else if (sb.event !== undefined){
+    // (n+2) the timeline event: critical result released + viewed
+    steps.push({
+      label:"40 min later — critical troponin released & viewed",
+      active:["nurse","patient"],
+      apply:function(view){
+        view.panes.nurse.push(card("critical","chart event · result released", sb.event));
+        var b = el("div","bubble");
+        b.appendChild(el("div","who","patient portal"));
+        b.appendChild(el("div", null, sb.event));
+        view.panes.patient.push(b);
+        view.rail.push(railEntry({
+          tone:"amber", chipKind:"amber", chipLabel:"event",
+          title:"Critical result auto-released (Cures Act) — patient viewed",
+          meta: sb.event
+        }));
+      }
+    });
+
+    // (n+3) first reply attempt(s) — blocked drafts are quarantined in the rail only
+    replyAttemptSteps(sb.first_reply, {
+      label:"Agent drafts patient reply", pane:"patient", who:"care team (AI)",
+      railTitle:"Patient reply — first draft"
+    }).forEach(function(s){ steps.push(s); });
+
+    // (n+4) escalation page
+    steps.push({
+      label:"Disclosure gap — care team paged",
+      active:["physician","consultant"],
+      apply:function(view){
+        var fr = sb.first_reply || {};
+        view.rail.push(railEntry({
+          tone:"amber", chipKind:"amber", chipLabel:"page",
+          title: sb.escalation || "care team paged",
+          meta: fr.reason || "",
+          body: (fr.state_findings && fr.state_findings.length)
+                ? "state gate: " + fr.state_findings.join(", ") : ""
+        }));
+        var pg = sb.physician_page || {};
+        var pageText = pg.shipped;
+        if (pageText === null || pageText === undefined){
+          var pa = (pg.attempts || [])[0];
+          if (pa && get(pa,"verdict","decision") === "ALLOW") pageText = pa.text;
+        }
+        if (pageText !== null && pageText !== undefined){
+          view.panes.physician.push(card("page","page · disclosure gap", pageText));
+          var pv = get(pg,"attempts",0,"verdict") || {};
+          view.rail.push(railEntry({
+            tone:"allow", chipKind:"allow", chipLabel: pv.decision || "ALLOW",
+            title:"Physician page", meta:(pv.audience || "physician") + " · shipped",
+            findings: pv.findings || []
+          }));
+        }
+        // pane choreography (demo-specific): the page opens a consult
+        view.panes.consultant.push(card("pending","consult", "cardiology consult — pending"));
+      }
+    });
+
+    // (n+5) documented discussion
+    if (sb.discussion){
+      steps.push({
+        label:"Bedside discussion — the human action, documented",
+        active:["physician"],
+        apply:function(view){
+          view.panes.physician.push(card("shipped","documented discussion", sb.discussion));
+          view.rail.push(railEntry({
+            tone:"", chipKind:"info", chipLabel:"chart",
+            title:"Discussion documented — disclosure gap closed",
+            meta: sb.discussion
+          }));
+        }
+      });
+    }
+
+    // (n+6) final reply attempt(s)
+    replyAttemptSteps(sb.final_reply, {
+      label:"Agent re-drafts patient reply", pane:"patient", who:"care team (AI)",
+      railTitle:"Patient reply — after discussion"
+    }).forEach(function(s){ steps.push(s); });
+  }
+
+  // (n+7) summary overlay
+  if (t.summary){
+    steps.push({
+      label:"Summary — the supervised encounter",
+      active:[],
+      overlay:true,
+      apply:function(view){ view.overlay = true; }
+    });
+  }
+  return steps;
+}
+
+/* ---------- summary overlay -------------------------------------------- */
+function buildSummary(t){
+  var s = t.summary || {};
+  var root = document.getElementById("summaryCard");
+  root.textContent = "";
+  root.appendChild(el("h2","", "Supervised encounter — summary"));
+  root.appendChild(el("div","sub",(t.title || "") + "  ·  mode: " + (t.mode || "?")));
+
+  var stats = el("div","stats");
+  [["artifacts shipped", s.artifacts_shipped],
+   ["drafts blocked", s.verdicts_blocked],
+   ["distinct criteria", (s.criteria_tripped || []).length]
+  ].forEach(function(p){
+    var st = el("div","stat");
+    st.appendChild(el("div","n", p[1] === undefined ? "—" : p[1]));
+    st.appendChild(el("div","l", p[0]));
+    stats.appendChild(st);
+  });
+  root.appendChild(stats);
+
+  root.appendChild(el("div","sum-h","criteria tripped"));
+  var cc = el("div","crit-chips");
+  (s.criteria_tripped || []).forEach(function(c){ cc.appendChild(el("span","crit-chip", c)); });
+  root.appendChild(cc);
+
+  root.appendChild(el("div","sum-h","rules & laws cited"));
+  var ul = el("ul","cite-list");
+  (s.citations || []).forEach(function(c){ ul.appendChild(el("li", null, c)); });
+  root.appendChild(ul);
+
+  var n = s.unsafe_artifacts_shipped;
+  var line = el("div", null, "unsafe artifacts shipped: " + (n === undefined ? "—" : n));
+  line.id = "unsafeLine";
+  line.className = (n === 0) ? "ok" : "bad";
+  root.appendChild(line);
+}
+
+/* ---------- render ------------------------------------------------------ */
+function render(){
+  var view = {panes:{patient:[],nurse:[],physician:[],consultant:[]}, rail:[], overlay:false};
+  for (var i = 0; i <= K && i < STEPS.length; i++) STEPS[i].apply(view);
+
+  PANES.forEach(function(p){
+    var body = document.getElementById("body-" + p);
+    body.textContent = "";
+    if (!view.panes[p].length){ body.appendChild(el("div","empty","— idle —")); }
+    else view.panes[p].forEach(function(node){ body.appendChild(node); });
+    body.scrollTop = body.scrollHeight;
+    var pane = document.getElementById("pane-" + p);
+    pane.classList.toggle("active", (STEPS[K].active || []).indexOf(p) !== -1);
+  });
+
+  var rail = document.getElementById("body-rail");
+  rail.textContent = "";
+  view.rail.forEach(function(node){ rail.appendChild(node); });
+  rail.scrollTop = rail.scrollHeight;
+
+  document.getElementById("stepLabel").textContent = STEPS[K].label;
+  document.getElementById("stepCount").textContent = "step " + (K+1) + " / " + STEPS.length;
+  document.getElementById("progressFill").style.width = (100 * (K+1) / STEPS.length) + "%";
+  document.getElementById("backBtn").disabled = (K === 0);
+  document.getElementById("nextBtn").disabled = (K === STEPS.length - 1);
+  document.getElementById("overlay").classList.toggle("show", !!view.overlay);
+}
+
+function step(delta){
+  var nk = Math.min(Math.max(K + delta, 0), STEPS.length - 1);
+  if (nk !== K){ K = nk; render(); }
+}
+
+/* ---------- loading ----------------------------------------------------- */
+function load(json, source){
+  T = json;
+  STEPS = deriveSteps(T);
+  K = Math.min(K, STEPS.length - 1);
+  document.getElementById("oneliner").textContent = T.title || "";
+  var mb = document.getElementById("modeBadge");
+  mb.textContent = T.mode || "?";
+  mb.className = "badge mode-" + (T.mode === "live" ? "live" : "replay");
+  document.getElementById("srcBadge").textContent = source;
+  buildSummary(T);
+  document.getElementById("boot").style.display = "none";
+  render();
+}
+
+function bootFail(){
+  var boot = document.getElementById("boot");
+  boot.textContent = "";
+  var m = el("div","msg");
+  m.appendChild(el("h1", null, "Attending — could not load demo_transcript.json"));
+  m.appendChild(el("p", null,
+    "Browsers block fetch() over file:// — serve this folder over localhost instead:"));
+  m.appendChild(el("code", null, "python3 -m http.server 8000 -d web"));
+  m.appendChild(el("p", null, "then open http://localhost:8000/"));
+  m.appendChild(el("p","hint",
+    "regenerate the transcript with: PYTHONPATH=src python3 -m attending.demo --json > web/demo_transcript.json"));
+  boot.appendChild(m);
+}
+
+function fetchJson(url, timeoutMs){
+  var ctl = ("AbortController" in window) ? new AbortController() : null;
+  var timer = ctl ? setTimeout(function(){ ctl.abort(); }, timeoutMs || 2500) : null;
+  return fetch(url, {cache:"no-store", signal: ctl ? ctl.signal : undefined})
+    .then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then(function(j){ if (timer) clearTimeout(timer); return j; })
+    .catch(function(e){ if (timer) clearTimeout(timer); throw e; });
+}
+
+function loadLocal(){
+  return fetchJson("./demo_transcript.json", 4000).then(function(j){
+    if (!validTranscript(j)) throw new Error("unexpected transcript shape");
+    load(j, "local file");
+  });
+}
+
+function reloadFromGateway(){
+  // Try the gateway; fall back silently to the local file (gateway may be down).
+  fetchJson("/demo", 1500).then(function(j){
+    if (!validTranscript(j)) throw new Error("shape");
+    load(j, "gateway");
+  }).catch(function(){
+    loadLocal().catch(function(){ /* keep whatever is on screen */ });
+  });
+}
+
+/* ---------- wiring ------------------------------------------------------ */
+document.getElementById("nextBtn").addEventListener("click", function(){ step(1); });
+document.getElementById("backBtn").addEventListener("click", function(){ step(-1); });
+document.getElementById("gatewayBtn").addEventListener("click", reloadFromGateway);
+document.addEventListener("keydown", function(ev){
+  if (ev.key === "ArrowRight" || ev.key === " "){ ev.preventDefault(); step(1); }
+  else if (ev.key === "ArrowLeft"){ ev.preventDefault(); step(-1); }
+  else if (ev.key === "Home"){ ev.preventDefault(); K = 0; render(); }
+  else if (ev.key === "End"){ ev.preventDefault(); K = STEPS.length - 1; render(); }
+});
+
+loadLocal().catch(bootFail);
+</script>
+</body>
+</html>

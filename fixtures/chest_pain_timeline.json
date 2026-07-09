@@ -1,0 +1,99 @@
+{
+  "synthetic": true,
+  "events": [
+    {
+      "t": 0,
+      "kind": "adt_arrival",
+      "patient": {
+        "age": 52,
+        "sex": "M",
+        "chief_complaint": "chest pain"
+      }
+    },
+    {
+      "t": 4,
+      "kind": "order_placed",
+      "order": {
+        "id": "ord-ecg",
+        "name": "ECG 12-lead",
+        "status": "completed"
+      }
+    },
+    {
+      "t": 6,
+      "kind": "result_final",
+      "result": {
+        "id": "res-ecg",
+        "order_id": "ord-ecg",
+        "name": "ECG 12-lead",
+        "value": "NSR, no ST elevation",
+        "flag": "abnormal",
+        "status": "final"
+      }
+    },
+    {
+      "t": 8,
+      "kind": "order_placed",
+      "order": {
+        "id": "ord-trop",
+        "name": "Troponin I",
+        "status": "in-progress"
+      }
+    },
+    {
+      "t": 42,
+      "kind": "result_final",
+      "result": {
+        "id": "res-trop",
+        "order_id": "ord-trop",
+        "name": "Troponin I",
+        "value": "0.42 ng/mL",
+        "flag": "critical",
+        "status": "final"
+      }
+    },
+    {
+      "t": 43,
+      "kind": "result_released",
+      "result_id": "res-trop"
+    },
+    {
+      "t": 51,
+      "kind": "patient_viewed_result",
+      "result_id": "res-trop"
+    },
+    {
+      "t": 55,
+      "kind": "order_placed",
+      "order": {
+        "id": "ord-ct",
+        "name": "CT Chest Angio",
+        "status": "in-progress"
+      }
+    },
+    {
+      "t": 58,
+      "kind": "consult_placed",
+      "consult": {
+        "id": "con-cards",
+        "service": "Cardiology",
+        "status": "pending"
+      }
+    },
+    {
+      "t": 63,
+      "kind": "red_flag_utterance",
+      "detail": "Patient reports chest pain getting worse"
+    },
+    {
+      "t": 70,
+      "kind": "result_discussed",
+      "result_id": "res-trop"
+    },
+    {
+      "t": 95,
+      "kind": "disposition",
+      "disposition": "admit-telemetry"
+    }
+  ]
+}

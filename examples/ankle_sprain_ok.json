@@ -1,0 +1,17 @@
+{
+  "encounter": {
+    "encounter_id": "ENC-1002",
+    "chief_complaint": "Twisted right ankle playing basketball, swollen, can't bear weight",
+    "age_years": 24,
+    "sex": "female",
+    "arrival_mode": "walk_in",
+    "vitals": {"hr": 82, "rr": 16, "spo2": 99, "sbp": 122, "dbp": 76, "temp_c": 36.9, "pain": 5},
+    "transcript": "Rolled the ankle about an hour ago, swelling on the outside, painful to walk on."
+  },
+  "proposed": {
+    "esi_level": 4,
+    "orders": ["ankle_xray"],
+    "disposition": "fast_track",
+    "rationale": "Isolated ankle injury, one resource (x-ray), stable vitals."
+  }
+}

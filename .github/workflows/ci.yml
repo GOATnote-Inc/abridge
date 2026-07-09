@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,llm]" ruff mypy
+
+      - name: Lint (ruff)
+        run: ruff check src tests
+
+      - name: Typecheck (mypy)
+        run: mypy src/attending
+
+      - name: Tests (pytest)
+        run: PYTHONPATH=src pytest -q
+
+      # Fail-closed safety gate: exits 1 if the synthetic gold set (physician sign-off pending)
+      # produces ANY false-negative (unsafe proposal allowed through).
+      # Runs offline — the optional LLM detector path is never exercised in CI.
+      - name: Safety gate (gold set, zero false-negatives)
+        run: PYTHONPATH=src python3 -m attending.evaluate

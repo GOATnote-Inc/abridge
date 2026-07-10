@@ -276,3 +276,8 @@ def test_float_esi_is_rejected(client, example):
     r = client.post("/supervise/triage", json={
         "encounter": example["encounter"], "proposed": {"esi_level": 3.0}})
     assert r.status_code == 400
+
+
+def test_playground_served_at_ui(client):
+    r = client.get("/ui/playground.html")
+    assert r.status_code == 200 and "pressure-test" in r.text

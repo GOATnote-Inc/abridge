@@ -37,7 +37,18 @@ Healthcare* hackathon (Abridge × Anthropic × Lightspeed).
 ```bash
 make demo        # deterministic replay: pure function of the fixture, rehearsable
 make demo-live   # identical choreography, drafts from the live Fable 5 performer
+make serve       # gateway + browser UI:  /ui (replay)  ·  /ui/playground.html
 ```
+
+Three surfaces, three jobs: the **replay** (also hosted at
+[goatnote-inc.github.io/abridge](https://goatnote-inc.github.io/abridge/)) is
+the narrated pitch — byte-identical every run; the **playground**
+(`/ui/playground.html`, needs the local gateway) is the pressure-test — type
+your own case or message, or fire the one-click adversarial presets
+(under-triage, ECG-only discharge, "denies chest pain", injection attack,
+zero-width evasion), and watch every verdict cite its rule and highlight the
+exact span of your input it acted on; the **API + committed transcripts** are
+the evidence.
 
 A 58-year-old with chest pressure. **Stage A:** the agent's ESI-3 fast-track
 proposal is BLOCKed (under-triage, missing ECG/troponin, anchored rationale,

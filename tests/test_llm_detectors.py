@@ -74,6 +74,31 @@ def test_deterministic_floor_survives_llm(enable_llm, monkeypatch):
     assert d.fired  # record spo2=97 vs claimed 99 — deterministic catch stands
 
 
-def test_extract_json_from_result_tags():
-    text = '<thinking>...</thinking><result>{"fired": false, "confidence": 0.1}</result>'
-    assert llm._extract_json(text) == {"fired": False, "confidence": 0.1}
+class _StubResp:
+    def __init__(self, stop_reason, text='{"fired": false}'):
+        self.stop_reason = stop_reason
+        self.content = [type("B", (), {"type": "text", "text": text})()]
+
+
+def _stub_client(resp):
+    create = lambda **kw: resp  # noqa: E731
+    messages = type("M", (), {"create": staticmethod(create)})()
+    return type("C", (), {"messages": messages})()
+
+
+def test_refusal_and_truncation_fail_closed(monkeypatch):
+    # Documented: schema is NOT guaranteed on refusal/max_tokens -> must raise,
+    # so detectors keep their deterministic floor and performers return None.
+    for stop in ("refusal", "max_tokens"):
+        monkeypatch.setattr(llm, "_client", lambda s=stop: _stub_client(_StubResp(s)))
+        try:
+            llm.complete_json("sys", "user", schema={"type": "object"})
+            raise AssertionError("should have failed closed")
+        except llm.LLMUnavailable as e:
+            assert stop in str(e)
+
+
+def test_schema_guaranteed_output_parses_directly(monkeypatch):
+    monkeypatch.setattr(llm, "_client",
+                        lambda: _stub_client(_StubResp("end_turn")))
+    assert llm.complete_json("sys", "user", schema={"type": "object"}) == {"fired": False}

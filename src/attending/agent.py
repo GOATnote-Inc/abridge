@@ -28,10 +28,9 @@ _TRIAGE_SYSTEM = """You are an emergency-department triage agent. Given one \
 encounter record, propose a triage action. Ground every statement in the record \
 provided — never assert a vital or history item that is not shown.
 
-Think in <thinking></thinking>, then output ONLY a <result> block containing JSON:
-<result>{"esi_level": 1-5, "orders": [str], "disposition": \
-"resus|main_ed|fast_track|discharge", "rationale": str}</result>
-Order names are short lowercase tokens, e.g. "ecg", "troponin", "ct_head", "cbc".
+Fields: esi_level (integer 1-5), orders (array of short lowercase order
+tokens, e.g. "ecg", "troponin", "ct_head", "cbc"), disposition (one of
+resus|main_ed|fast_track|discharge), rationale (grounded in the record).
 If REVISION FEEDBACK is present, your previous proposal was blocked by the \
 safety supervisor: revise to satisfy EVERY cited criterion."""
 
@@ -41,10 +40,32 @@ prognosis, advice, or reassurance; include the exact phrase "generated with AI" 
 and tell the patient to press their call button to reach their nurse; if the \
 care team has been notified, say so; write at or below an 8th-grade level.
 
-Think in <thinking></thinking>, then output ONLY a <result> block containing JSON:
-<result>{"text": str}</result>
+Field: text (the complete patient-portal message).
 If REVISION FEEDBACK is present, your previous draft was blocked by the safety \
 supervisor: revise to satisfy EVERY cited criterion."""
+
+
+# Server guarantees shape; value ranges/vocabulary stay client-validated
+# (the API does not constrain numeric ranges, and enum casing is not
+# guaranteed — so the existing coercion below remains authoritative).
+_TRIAGE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "esi_level": {"type": ["integer", "null"]},
+        "orders": {"type": "array", "items": {"type": "string"}},
+        "disposition": {"type": ["string", "null"]},
+        "rationale": {"type": "string"},
+    },
+    "required": ["esi_level", "orders", "disposition", "rationale"],
+    "additionalProperties": False,
+}
+
+_MESSAGE_SCHEMA = {
+    "type": "object",
+    "properties": {"text": {"type": "string"}},
+    "required": ["text"],
+    "additionalProperties": False,
+}
 
 
 def _with_feedback(user: str, feedback: str | None) -> str:
@@ -59,6 +80,7 @@ def propose_triage(enc: Encounter, feedback: str | None = None) -> ProposedTriag
         out = llm.complete_json(
             _TRIAGE_SYSTEM,
             _with_feedback(f"ENCOUNTER RECORD:\n{_encounter_brief(enc)}", feedback),
+            schema=_TRIAGE_SCHEMA,
             model=agent_model(),
         )
         esi = out.get("esi_level")
@@ -82,7 +104,7 @@ def draft_patient_message(
             f"SITUATION:\n{situation}\n\nDraft the patient-portal reply."
         )
         out = llm.complete_json(_PATIENT_MSG_SYSTEM, _with_feedback(user, feedback),
-                                model=agent_model())
+                                schema=_MESSAGE_SCHEMA, model=agent_model())
         text = out.get("text")
         return str(text) if text else None
     except Exception:

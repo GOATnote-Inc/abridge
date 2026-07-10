@@ -94,10 +94,17 @@ kept on the record (fix commit in parentheses):
    upper bound), with blinded ≥2-physician adjudication, inter-rater κ, and
    sequential or exact-interval analysis.
 2. **Discontinuous-encounter state machine.** ED encounters are fragmented as
-   the *normal case* (clinician paged away, patient at CT). Today's
-   `incomplete_audio` detector escalates on gaps; the roadmap version holds a
-   pended, fail-closed verdict per episode and adjudicates the stitched whole
-   at encounter close.
+   the *normal case* (clinician paged away, patient at CT; interruptions are
+   prospectively associated with prescribing errors and 18.5% of interrupted
+   ED tasks are never resumed). Today's `incomplete_audio` detector escalates
+   on gaps; the roadmap version holds a pended, fail-closed verdict per
+   episode and adjudicates the stitched whole at encounter close. Design
+   constraints (extracted from the framework adjudication, ADR-0001 — the
+   rejected framework's documented failure modes are the exclusion list):
+   one thread per encounter; checkpoint-before-yield; resume at *named*
+   suspension points, never index-matched; idempotency keys on every side
+   effect; stdlib persistence (`sqlite3`/`json`), byte-identical replay
+   preserved.
 3. **Unsupported-claim catch-rate benchmark** on a labeled set, reported as
    % caught with CIs *and* the over-block cost, with a
    correct/delete/false-alarm disposition path — the reporting grammar the
@@ -110,6 +117,11 @@ kept on the record (fix commit in parentheses):
    moment.
 6. Order-level contraindication checking; paraphrase robustness beyond
    lexicons; prompt-injection hardening on the performer channel.
+7. **Distribution adapters (pattern-only, per ADR-0001):** a stdio MCP
+   adapter after the 2026-07-28 spec revision finalizes — distribution only,
+   never the enforcement point (an MCP tool is advisory; enforcement stays in
+   the interposed loop/gateway) — and a Claude Agent SDK `PreToolUse` adapter
+   for teams hosted on that runtime.
 
 ## 7. Appendix — grader prompts (verbatim)
 

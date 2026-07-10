@@ -65,6 +65,12 @@ engine, and it supervises the *agent*, never the clinician. False positives
 here cost an agent a forced up-triage or a rewrite — not a mis-triaged
 patient — which is why thresholds deliberately sit on the sensitive side.
 
+**Framework posture:** none required, by decision rather than omission —
+LangChain/LangGraph/LangSmith were adjudicated against an error-surface bar
+and rejected or reduced to patterns; the one adoption is native Anthropic
+structured outputs (deletes the JSON-parse failure class at zero new
+dependencies). Evidence: [`docs/adr/0001-framework-adjudication.md`](docs/adr/0001-framework-adjudication.md).
+
 ## The deployable unit
 
 `attending.loop` is what a clinic integrates: `run_triage_loop` /

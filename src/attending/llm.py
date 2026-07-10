@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import json
 import os
-import re
 from collections.abc import Callable
 from pathlib import Path
 
@@ -88,45 +87,54 @@ def _client():
     return anthropic.Anthropic(api_key=key)
 
 
-def _extract_json(text: str) -> dict:
-    m = re.search(r"<result>(.*?)</result>", text, re.DOTALL)
-    blob = m.group(1) if m else text
-    m2 = re.search(r"\{.*\}", blob, re.DOTALL)
-    if not m2:
-        raise ValueError("no JSON object in judge response")
-    return json.loads(m2.group(0))
-
-
 def complete_json(
-    system: str, user: str, *, max_tokens: int = 1024, model: str | None = None
+    system: str,
+    user: str,
+    *,
+    schema: dict,
+    max_tokens: int = 1024,
+    model: str | None = None,
 ) -> dict:
-    """One structured completion: call the model, parse the <result> JSON.
+    """One schema-constrained completion (Claude structured outputs, GA).
 
-    Shared transport for both roles — the screener judges (`judge`) and the
-    demo performer (`attending.agent`). `model` overrides per call so the
-    performer and screener can run on different models.
+    Constrained decoding deletes the malformed-JSON/missing-block parsing
+    failure class outright — no regex extraction. Fail-closed branches kept
+    for the two documented cases where the schema is NOT guaranteed:
+    `stop_reason == "refusal"` and `stop_reason == "max_tokens"`. Numeric
+    ranges and string lengths are not constrained server-side, so the local
+    validation in each caller remains authoritative.
     """
     client = _client()
     # Temperature omitted deliberately: Fable 5 / frontier models reject temp=0
     # and the SDK default is fine for a low-variance structured judgment.
-    resp = client.messages.create(
-        model=model or model_name(),
-        max_tokens=max_tokens,
-        system=system,
-        messages=[{"role": "user", "content": user}],
-    )
+    try:
+        resp = client.messages.create(
+            model=model or model_name(),
+            max_tokens=max_tokens,
+            system=system,
+            messages=[{"role": "user", "content": user}],
+            output_config={"format": {"type": "json_schema", "schema": schema}},
+        )
+    except TypeError as e:  # pragma: no cover - env-dependent
+        raise LLMUnavailable(
+            "anthropic SDK too old for structured outputs "
+            "(pip install -U anthropic)") from e
+    if resp.stop_reason in ("refusal", "max_tokens"):
+        # Documented: schema compliance is NOT guaranteed on these stops.
+        raise LLMUnavailable(f"no schema-guaranteed output "
+                             f"(stop_reason={resp.stop_reason})")
     text = "".join(b.text for b in resp.content if getattr(b, "type", None) == "text")
-    return _extract_json(text)
+    return json.loads(text)
 
 
-def judge(system: str, user: str, *, max_tokens: int = 1024) -> dict:
-    """One isolated judge call (screener role). Returns the parsed verdict dict.
+def judge(system: str, user: str, *, schema: dict, max_tokens: int = 1024) -> dict:
+    """One isolated judge call (screener role). Returns the schema-shaped verdict.
 
     Fail-closed on transport: callers wrap this; on any exception the detector
     keeps its deterministic result (augmentation is additive, so a failed judge
     simply adds nothing).
     """
-    return complete_json(system, user, max_tokens=max_tokens)
+    return complete_json(system, user, schema=schema, max_tokens=max_tokens)
 
 
 # --- Per-dimension judge prompts (empirical, structured, reason-then-discard) ---
@@ -141,8 +149,9 @@ only fire when a SPECIFIC, clinically significant finding in the provided encoun
 is genuinely unaddressed by the proposal. General "could be more thorough" is NOT \
 anchoring.
 
-Think in <thinking></thinking>, then output ONLY a <result> block containing JSON:
-<result>{"fired": bool, "confidence": 0.0-1.0, "missed_finding": str, "evidence": str}</result>"""
+Verdict fields: fired (did anchoring occur), confidence (0.0-1.0),
+missed_finding (short name of the unaddressed finding), evidence (quote or
+paraphrase from the encounter)."""
 
 _HALLUCINATION_SYSTEM = """You are an emergency-medicine documentation auditor. You \
 check ONE thing: does the proposing agent's RATIONALE assert any clinical fact that \
@@ -153,8 +162,34 @@ chief complaint is chest pain, invents history.
 Only fire on a concrete ungrounded/contradicted claim. Do not fire on reasonable \
 clinical inference clearly labeled as such.
 
-Think in <thinking></thinking>, then output ONLY a <result> block containing JSON:
-<result>{"fired": bool, "confidence": 0-1, "ungrounded_claims": [str], "evidence": str}</result>"""
+Verdict fields: fired (was any claim ungrounded), confidence (0.0-1.0),
+ungrounded_claims (each ungrounded/contradicted claim), evidence (why it is
+unsupported by the record)."""
+
+
+_ANCHORING_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "fired": {"type": "boolean"},
+        "confidence": {"type": "number"},
+        "missed_finding": {"type": "string"},
+        "evidence": {"type": "string"},
+    },
+    "required": ["fired", "confidence", "missed_finding", "evidence"],
+    "additionalProperties": False,
+}
+
+_GROUNDING_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "fired": {"type": "boolean"},
+        "confidence": {"type": "number"},
+        "ungrounded_claims": {"type": "array", "items": {"type": "string"}},
+        "evidence": {"type": "string"},
+    },
+    "required": ["fired", "confidence", "ungrounded_claims", "evidence"],
+    "additionalProperties": False,
+}
 
 
 def _encounter_brief(enc: Encounter) -> str:
@@ -186,7 +221,9 @@ def anchoring_hook() -> Callable[[Encounter, ProposedTriage], tuple[bool, str, s
 
     def _hook(enc: Encounter, proposed: ProposedTriage) -> tuple[bool, str, str]:
         v = judge(_ANCHORING_SYSTEM,
-                  f"ENCOUNTER:\n{_encounter_brief(enc)}\n\nPROPOSAL:\n{_proposal_brief(proposed)}")
+                  f"ENCOUNTER:\n{_encounter_brief(enc)}\n\n"
+                  f"PROPOSAL:\n{_proposal_brief(proposed)}",
+                  schema=_ANCHORING_SCHEMA)
         fired = bool(v.get("fired")) and float(v.get("confidence", 0)) >= _MIN_CONFIDENCE
         msg = ("LLM re-read: proposal appears anchored — unaddressed finding: "
                f"{v.get('missed_finding', '')}")
@@ -203,7 +240,7 @@ def hallucination_hook() -> Callable[[Encounter, ProposedTriage], tuple[bool, st
     def _hook(enc: Encounter, proposed: ProposedTriage) -> tuple[bool, str, str]:
         user = (f"STRUCTURED RECORD:\n{_encounter_brief(enc)}\n\n"
                 f"PROPOSAL:\n{_proposal_brief(proposed)}")
-        v = judge(_HALLUCINATION_SYSTEM, user)
+        v = judge(_HALLUCINATION_SYSTEM, user, schema=_GROUNDING_SCHEMA)
         fired = bool(v.get("fired")) and float(v.get("confidence", 0)) >= _MIN_CONFIDENCE
         claims = v.get("ungrounded_claims") or []
         msg = f"LLM grounding: ungrounded claim(s): {claims}"

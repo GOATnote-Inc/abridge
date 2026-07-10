@@ -4,11 +4,13 @@ Stage A (decision): an agent proposes triage; Attending blocks the under-triage
 citing ESI/ACEP and the tripped detectors; the revised proposal ships and its
 orders are written to the chart.
 
-Stage B (communication, 40 minutes later): the troponin results CRITICAL and is
-auto-released (Cures Act); the patient views it; the agent's reassuring reply is
-blocked (false reassurance, AB 3030, disclosure gap); the disclosure gap forces
-a page + documented bedside discussion — no wording can substitute — and only
-then does a compliant message ship.
+Stage B (communication): the journey panel is live from the first order —
+the patient always has a populated "next step" box. The troponin results
+CRITICAL and auto-releases (post-Cures); the panel updates WITH the result as
+a labeled, guideline-attributed result_context rendering (gated, shipped);
+the agent's conversational reply — subtly minimizing — is blocked; the
+disclosure gap pages the team for the bedside discussion; only after the
+documented discussion does a conversational reply ship.
 
 Modes:
   replay (default) — scripted drafts from the fixture; pure function of the
@@ -32,7 +34,7 @@ from typing import Any
 
 from sitrep.state import EncounterState, Order, Result
 
-from . import agent
+from . import agent, pathway
 from .cli import _verdict_to_dict
 from .encounter import Encounter, encounter_from_dict, proposed_from_dict
 from .loop import (
@@ -151,7 +153,8 @@ def _collect_summary(transcript: dict) -> dict:
         shipped += 1
         if stage_a["attempts"][-1]["verdict"]["decision"] != Decision.ALLOW.value:
             unsafe_shipped += 1
-    for key in ("first_reply", "physician_page", "final_reply"):
+    for key in ("result_context_panel", "first_reply", "physician_page",
+                "final_reply"):
         r = transcript.get("stage_b", {}).get(key)
         if not r:
             continue
@@ -207,15 +210,30 @@ def run_demo(fixture: dict, live: bool = False) -> dict:
         transcript["summary"] = _collect_summary(transcript)
         return transcript
 
-    # ---- Chart state: shipped orders; then the timeline event (critical result).
+    # ---- Chart state: shipped orders. The journey panel is live from the
+    # first order — the patient always has a populated "next step" box.
     state = EncounterState(patient={"encounter_id": enc.encounter_id})
     for order in triage.shipped.orders:
         state.add_order(Order(id=f"ord-{order}", name=order))
+    journey_pre = pathway.chest_pain_journey(state)
+
+    # ---- The result lands and auto-releases (post-Cures reality).
     state.add_result(Result(
         id="res-troponin", order_id="ord-troponin", name="troponin",
         value="0.31", flag="critical", status="final",
         released=True, viewed=True, discussed=False,
     ))
+
+    # ---- The journey panel updates WITH the result: a labeled, not-advice,
+    # guideline-attributed next-steps panel (kind="result_context") travels
+    # with the released result. It passes the same gates as any patient
+    # rendering; the disclosure gap still pages the team below, and
+    # conversational replies stay blocked until the bedside discussion.
+    journey_post = pathway.chest_pain_journey(state)
+    panel = run_rendering_loop(
+        state, "patient", ["res-troponin", "ord-ecg", "ord-troponin"],
+        _scripted_drafter([journey_post.patient_text]),
+        max_revisions=0, kind="result_context")
 
     # ---- Stage B, first reply: blocked by text gates AND the disclosure gap.
     if live:
@@ -252,6 +270,9 @@ def run_demo(fixture: dict, live: bool = False) -> dict:
 
     transcript["stage_b"] = {
         "event": stage_b_cfg["event"],
+        "journey_pre": pathway.journey_to_dict(journey_pre),
+        "journey_post": pathway.journey_to_dict(journey_post),
+        "result_context_panel": _rendering_result_dict(panel),
         "first_reply": _rendering_result_dict(first_reply),
         "escalation": "care team paged — disclosure gap",
         "physician_page": _rendering_result_dict(page),

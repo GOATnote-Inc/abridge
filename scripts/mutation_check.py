@@ -25,6 +25,7 @@ REPO = Path(__file__).resolve().parents[1]
 # load-bearing (its removal must fail tests).
 GATES = [
     # comms surface
+    "gate_result_context_labels",
     "gate_no_interpretation",
     "gate_info_blocking",
     "gate_no_advice",

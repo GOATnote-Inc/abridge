@@ -116,6 +116,7 @@ def run_rendering_loop(
     refs: Iterable[str],
     draft: DraftFn,
     max_revisions: int = 2,
+    kind: str = "message",
 ) -> RenderingLoopResult:
     attempts: list[RenderingAttempt] = []
     feedback: str | None = None
@@ -127,7 +128,8 @@ def run_rendering_loop(
                 tuple(attempts), None, True,
                 "performer produced no usable draft — nothing was sent",
             )
-        verdict = supervise_rendering(Rendering(audience=audience, text=text, refs=refs), state)
+        verdict = supervise_rendering(
+            Rendering(audience=audience, text=text, refs=refs, kind=kind), state)
         attempts.append(RenderingAttempt(text, verdict))
         if not verdict.blocked:
             return RenderingLoopResult(tuple(attempts), text, False, "allowed")

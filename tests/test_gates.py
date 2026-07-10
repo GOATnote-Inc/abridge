@@ -366,3 +366,20 @@ class TestRealisticMinimization:
         )
         # FALSE_REASSURANCE is critical-gated: benign chart -> no interpretation block.
         assert "no_interpretation" not in gates_fired(run_gates(r, s))
+
+
+def test_generated_automatically_is_a_valid_disclosure(state_with_critical_troponin):
+    # Deployed-precedent phrasing (UCSD label, Tai-Seale JAMA Netw Open 2024):
+    # "generated automatically" satisfies the AI-disclosure requirement.
+    r = Rendering(
+        audience="patient",
+        text=(
+            "A new Troponin I result is available. This message was generated "
+            "automatically. Press your call button to speak with your nurse."
+        ),
+        refs=["res-trop"],
+    )
+    fired = gates_fired(run_gates(r, state_with_critical_troponin))
+    assert "compliance" not in fired or all(
+        "disclosure" not in v.detail for v in run_gates(r, state_with_critical_troponin)
+        if v.gate == "compliance")

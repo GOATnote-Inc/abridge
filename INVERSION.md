@@ -27,6 +27,14 @@ in code, not prompts). Tests are the ledger. CI is the enforcement.
 Two-tier severity by design: **BLOCK** stops the render; **WARN** ships with
 annotation — mirrors the dual-layer safety-gated rubric pattern.
 
+**F3 refinement (2026-07-10, physician-directed; see `docs/reviews/`):**
+renderings carry a `kind`. The disclosure gap continues to page the team and
+continues to block conversational `message` renderings — but a
+`result_context` panel (labeled not-advice + team-decides via
+`gate_result_context_labels`, result named, all other gates passing) may
+travel WITH the released result. Context with the result, never instead of
+the conversation; the bedside-discussion requirement is unchanged.
+
 Non-goals (explicitly out, to stay inside the CDS non-device lane):
 - No diagnosis, no treatment recommendation, no disposition prediction.
 - No result delays of any kind. Context travels *with* the result, never instead of it.

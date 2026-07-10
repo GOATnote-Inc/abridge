@@ -56,6 +56,11 @@ class Rendering:
     audience: str            # patient | nurse | physician | consultant
     text: str
     refs: list[str] = field(default_factory=list)
+    # "message" = conversational reply; "result_context" = a labeled,
+    # not-advice status/next-steps panel that may travel WITH a released
+    # result (context with the result, never instead of the conversation —
+    # physician-directed refinement, 2026-07-10; see docs/reviews/).
+    kind: str = "message"
 
 
 # ---------------------------------------------------------------------------
@@ -99,6 +104,9 @@ ADVICE_PATTERNS = [
 ]
 
 AI_DISCLOSURE_MARKERS = [
+    "generated automatically",
+    "automatically generated",
+    "created automatically",
     "generated with ai",
     "generated using ai",
     "ai-generated",
@@ -358,7 +366,37 @@ def check_disclosure_gap(s: EncounterState) -> list[Violation]:
     return out
 
 
+NOT_ADVICE_MARKERS = ["not medical advice"]
+TEAM_DECIDES_MARKERS = [
+    "care team makes all decisions",
+    "team decides your actual plan",
+    "your team decides",
+]
+
+
+def gate_result_context_labels(r: Rendering, s: EncounterState) -> list[Violation]:
+    """result_context panels must carry the not-advice and team-decides lines
+    (FDA informing-not-directing posture + AMA disclosure policy). A panel
+    without its labels is blocked — the carve-out never applies to it."""
+    if not is_patient_facing(r.audience) or r.kind != "result_context":
+        return []
+    low = fold_text(r.text)
+    out: list[Violation] = []
+    if not any(m in low for m in NOT_ADVICE_MARKERS):
+        out.append(Violation(
+            gate="result_context_labels", severity=Severity.BLOCK,
+            detail="result_context panel lacks the not-medical-advice label.",
+        ))
+    if not any(m in low for m in TEAM_DECIDES_MARKERS):
+        out.append(Violation(
+            gate="result_context_labels", severity=Severity.BLOCK,
+            detail="result_context panel lacks the care-team-decides line.",
+        ))
+    return out
+
+
 ALL_GATES = [
+    gate_result_context_labels,
     gate_no_interpretation,
     gate_info_blocking,
     gate_no_advice,

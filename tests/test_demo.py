@@ -57,7 +57,7 @@ def test_replay_is_byte_identical(fx):
 def test_summary_integrity(fx):
     s = run_demo(fx)["summary"]
     assert s["unsafe_artifacts_shipped"] == 0
-    assert s["artifacts_shipped"] == 3  # triage plan, physician page, final reply
+    assert s["artifacts_shipped"] == 4  # triage plan, journey panel, page, final reply
     assert len(s["criteria_tripped"]) >= 6
     assert len(s["citations"]) >= 3
 
@@ -80,3 +80,16 @@ def test_checked_in_transcript_is_not_stale():
     assert versions == {K.RULESET_VERSION}, (
         f"stale demo transcript {versions}; regenerate: "
         "PYTHONPATH=src python3 -m attending.demo --json > web/demo_transcript.json")
+
+
+def test_journey_panel_ships_with_result_before_discussion(fx):
+    t = run_demo(fx)
+    sb = t["stage_b"]
+    assert sb["journey_pre"]["next_box"].strip()          # never an empty box
+    panel = sb["result_context_panel"]
+    assert panel["shipped"] and not panel["escalated"]
+    assert "not medical advice" in panel["shipped"]
+    assert "1-3 hours" in sb["journey_pre"]["next_box"]   # hs-cTn guideline interval
+    # And the conversational reply is STILL blocked until the discussion.
+    assert sb["first_reply"]["escalated"]
+    assert t["summary"]["artifacts_shipped"] == 4

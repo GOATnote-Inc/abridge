@@ -31,6 +31,9 @@ GATE_CITATIONS: dict[str, str] = {
     "grounding": "No-fabrication / Linked-Evidence: every claim traces to the chart",
     "escalation": "Escalation persistence: a raised escalation must stay acknowledged",
     "readability": "Health literacy: patient text at/below ~8th-grade (AHRQ plain language)",
+    "result_context_labels": "FDA CDS patient-facing line (informing, never "
+    "directing) + AMA AI-disclosure policy: required not-advice and "
+    "team-decides labels on next-step panels",
     "disclosure_gap": "Cures-era safety: patient alone with a viewed critical result "
     "(21st Century Cures Act patient-access rule)",
 }
@@ -76,7 +79,13 @@ def supervise_rendering(rendering: Rendering, state: EncounterState) -> CommsVer
     violations = list(run_gates(rendering, state))
     # The disclosure gap is a property of the chart, not this text, but a
     # patient-facing rendering is exactly the moment it must not slip through.
-    if is_patient_facing(rendering.audience):
+    # Carve-out (physician-directed, 2026-07-10; docs/reviews/): a
+    # kind="result_context" panel — labeled not-advice, result-naming,
+    # team-decides — may travel WITH the released result. The gap still pages
+    # the team and still blocks conversational replies; the bedside
+    # discussion requirement is unchanged. Context with the result, never
+    # instead of the conversation.
+    if is_patient_facing(rendering.audience) and rendering.kind != "result_context":
         violations.extend(check_disclosure_gap(state))
 
     findings = tuple(_to_finding(v) for v in violations)

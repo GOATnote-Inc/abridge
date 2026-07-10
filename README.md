@@ -1,25 +1,34 @@
 # Attending
 
-**A fail-closed supervising layer for clinical agents — for what they decide
-*and* what they say.**
+**A communication layer that keeps ED patients continuously informed of
+their next step — made deployable by a fail-closed safety supervisor
+underneath.**
 
-Attending reviews every action a clinical agent takes on an ED encounter,
-**blocks the unsafe ones**, and **cites the exact safety criterion (or law)
-tripped** — with linked evidence. It sits *in the path* across the two surfaces
-where an ED "what's next" agent can harm a patient:
+Post-Cures, results reach a patient's phone the second they finalize; the
+dominant ED experience failure is waiting without information. The product
+surface is a per-encounter journey panel — the same panel for patient and
+nurse — with an always-populated "next step" box grounded in published care
+pathways (design: [`docs/JOURNEY.md`](docs/JOURNEY.md)). None of that is
+deployable unless every AI-generated string is safe and compliant by
+construction, which is what the substrate provides: Attending reviews every
+action and every rendering, blocks the unsafe ones, and cites the criterion
+or law tripped, with the evidence span quoted.
 
-- **Decision** (`attending.supervise`) — the triage acuity, orders, and
-  disposition. Independently re-derives ESI v4 and blocks under-triage and
-  any **release with an incomplete red-flag workup**; an incomplete workup on
-  an in-department disposition surfaces as a WARN finding instead (the workup
-  is still in flight — a physician-ratified boundary, `docs/reviews/`). Four
-  failure-mode detectors: incomplete audio, transcription error, anchoring,
-  hallucination.
+- **Decision** (`attending.supervise`) — checks an assistive agent's drafts.
+  Workflow truth: triage acuity is a *nursing* function under per-hospital
+  protocols; the supervised agent drafts a protocol-aligned suggestion for
+  the triage RN — it never assigns acuity — and Attending checks the draft
+  against the protocol (ESI v4 here). It blocks under-triage drafts and any
+  release with an incomplete red-flag workup; an incomplete workup on an
+  in-department disposition is a WARN (the workup is still in flight — a
+  physician-ratified boundary, `docs/reviews/`). Four failure-mode detectors:
+  incomplete audio, transcription error, anchoring, hallucination.
 - **Communication** (`attending.comms.supervise_rendering`, backed by
-  `src/sitrep`) — what the patient/nurse/physician/consultant panes *say*.
-  Blocks interpretation in the patient pane, information blocking (Cures Act),
-  missing AI disclosure (AB 3030), ungrounded claims, dropped escalations, and
-  the disclosure gap (a patient alone with a viewed critical result). Failure
+  `src/sitrep`) — every patient/nurse/physician/consultant rendering,
+  including the journey panel's own strings. Blocks interpretation and
+  minimization in the patient pane, information blocking (Cures Act), missing
+  AI disclosure (AB 3030), ungrounded claims, dropped escalations, and the
+  disclosure gap (a patient alone with a viewed critical result). Failure
   ledger: [`INVERSION.md`](INVERSION.md), F1–F13.
 
 Both surfaces use one verdict vocabulary (`Decision`/`Finding`/`Severity`)
@@ -69,13 +78,14 @@ wording.
 
 ## What Attending is — and isn't
 
-Attending supervises **agent proposals at the triage moment**: acuity,
-workup completeness against fired red flags, disposition, and every
-patient/team-facing message. It is **not** an order-entry CDS (it does not yet
-veto a clinically wrong order — no contraindication engine), not a diagnosis
-engine, and it supervises the *agent*, never the clinician. False positives
-here cost an agent a forced up-triage or a rewrite — not a mis-triaged
-patient — which is why thresholds deliberately sit on the sensitive side.
+Attending supervises **assistive-agent drafts and AI communications**:
+protocol-aligned triage suggestions for the RN, workup completeness against
+fired red flags, disposition drafts, and every patient/team-facing message
+including the journey panel. It is **not** an order-entry CDS (no
+contraindication engine yet), not a diagnosis engine, not a triage authority
+(the RN is), and it supervises the *agent*, never the clinician. False
+positives cost an agent a rewrite — not a mis-triaged patient — which is why
+thresholds deliberately sit on the sensitive side.
 
 No agent framework is required. LangChain/LangGraph/LangSmith were
 evaluated and rejected or reduced to patterns; the one adoption is native

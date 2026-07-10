@@ -6,10 +6,15 @@ prompts in the appendix, independence labeled, changelog included.*
 
 ## 1. What this is, and the release decision
 
-A fail-closed supervising layer over clinical agents at the ED triage moment:
-it independently re-derives ESI v4 acuity, checks red-flag workups as
-conjunctions of requirement groups, gates every patient/team-facing rendering,
-and never ships a blocked artifact (no override parameter exists). Release
+A fail-closed supervising layer over assistive clinical agents in the ED.
+Workflow truth: triage acuity is a nursing function under per-hospital
+protocols — the supervised agent drafts protocol-aligned suggestions for the
+triage RN, never assigns acuity, and Attending checks drafts against the
+protocol (ESI v4 here): it independently re-derives acuity, checks red-flag
+workups as conjunctions of requirement groups, gates every patient/team-facing
+rendering, and never ships a blocked artifact (no override parameter exists).
+The product surface this substrate exists for is the patient journey panel
+(docs/JOURNEY.md): patients continuously informed of their next step. Release
 posture: **demonstration only.** The deterministic core carries the safety
 load; the LLM augmentation is additive-only. On uncertainty the system
 escalates to a human — degraded input (missing danger-zone vitals, implausible

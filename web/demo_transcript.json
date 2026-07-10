@@ -208,7 +208,7 @@
     "first_reply": {
       "attempts": [
         {
-          "text": "Good news first - your results are back and everything looks fine for now. Try not to worry tonight, and the team will be by when they can.",
+          "text": "Your test came back a little elevated, which can happen for many reasons. Try not to worry tonight - the team will check on you in the morning and explain everything then.",
           "verdict": {
             "audience": "patient",
             "decision": "BLOCK",
@@ -216,14 +216,14 @@
               {
                 "criterion_id": "SITREP-no_interpretation",
                 "severity": "block",
-                "message": "False reassurance with critical result on chart: 'everything looks fine'",
+                "message": "False reassurance with critical result on chart: 'not to worry'",
                 "citation": "Scope of practice: no diagnosis/prognosis in patient pane (CDS non-device lane, 21st Century Cures Act \u00a73060)",
                 "evidence": ""
               },
               {
                 "criterion_id": "SITREP-info_blocking",
                 "severity": "block",
-                "message": "Final released result 'troponin' not acknowledged in patient pane \u2014 suppression is information blocking. CRITICAL result requires acknowledgment by name.",
+                "message": "Final released result 'troponin' not acknowledged in patient pane \u2014 suppression is information blocking.",
                 "citation": "21st Century Cures Act information-blocking rule (45 CFR Part 171)",
                 "evidence": "res-troponin"
               },

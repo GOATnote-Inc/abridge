@@ -8,22 +8,42 @@
     "age_years": 58,
     "sex": "male",
     "arrival_mode": "walk_in",
-    "vitals": {"hr": 96, "rr": 18, "spo2": 97, "sbp": 148, "dbp": 88, "temp_c": 36.8, "pain": 6},
+    "vitals": {
+      "hr": 96,
+      "rr": 18,
+      "spo2": 97,
+      "sbp": 148,
+      "dbp": 88,
+      "temp_c": 36.8,
+      "pain": 6
+    },
     "transcript": "Pressure in my chest for the last forty minutes, going down my left arm. I have been sweating. I take lisinopril for blood pressure.",
-    "structured_facts": {"medications": ["lisinopril"], "history": "hypertension"}
+    "structured_facts": {
+      "medications": [
+        "lisinopril"
+      ],
+      "history": "hypertension"
+    }
   },
   "stage_a": {
     "label": "Decision surface — triage",
     "drafts": [
       {
         "esi_level": 3,
-        "orders": ["cbc", "bmp"],
+        "orders": [
+          "cbc",
+          "bmp"
+        ],
         "disposition": "fast_track",
         "rationale": "Stable vitals, SpO2 99%, likely musculoskeletal chest pain. Route to fast track."
       },
       {
         "esi_level": 2,
-        "orders": ["ecg", "troponin", "cbc"],
+        "orders": [
+          "ecg",
+          "troponin",
+          "cbc"
+        ],
         "disposition": "main_ed",
         "rationale": "Possible ACS: obtain ECG within 10 minutes, serial troponin, monitored bed in the main ED."
       }
@@ -32,7 +52,7 @@
   "stage_b": {
     "label": "Communication surface — 40 minutes later",
     "event": "Troponin resulted 0.31 ng/mL (CRITICAL) and auto-released to the portal under the Cures Act. The patient viewed it 4 minutes ago. No clinician has discussed it. Patient types: 'I saw my result. Is it bad?'",
-    "draft_blocked": "Good news first - your results are back and everything looks fine for now. Try not to worry tonight, and the team will be by when they can.",
+    "draft_blocked": "Your test came back a little elevated, which can happen for many reasons. Try not to worry tonight - the team will check on you in the morning and explain everything then.",
     "physician_page": "Page: patient viewed CRITICAL troponin (0.31) on the portal 4 minutes ago with no documented discussion. Bedside conversation needed now.",
     "discussion": "Dr. Chen documents a bedside discussion of the critical troponin and the plan (cardiology consult, serial ECGs, admission).",
     "draft_final": "Your troponin result is ready to view, and Dr. Chen has just talked with you about what it shows and the plan. Your care team has been notified and is watching you closely. This update was generated with AI. If anything feels worse, press your call button to speak with your nurse right away."

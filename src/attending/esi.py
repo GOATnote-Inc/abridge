@@ -38,9 +38,8 @@ class RedFlagHit:
     rationale: str
     matched: str                 # the exact source text that triggered it
     # Evidence link: which encounter field and character span produced the
-    # match, so every verdict can quote its source verbatim ("trust and
-    # verify" — the pattern ambient-documentation vendors set with
-    # evidence-linked notes, applied here to safety verdicts).
+    # match, so every verdict can quote its source verbatim and a reviewer
+    # can check the claim against the input without replaying the encounter.
     source: str = ""             # "chief_complaint" | "transcript" | "history"
     span: tuple[int, int] | None = None
 

@@ -78,6 +78,7 @@ INTERPRETATION_PHRASES = [
 ]
 
 FALSE_REASSURANCE_PHRASES = [
+    "not to worry",
     "labs are reassuring",
     "results are reassuring",
     "everything looks fine",

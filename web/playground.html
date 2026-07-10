@@ -61,7 +61,7 @@ footer{color:var(--dim);font-size:12px;text-align:center;padding:14px}
 <body>
 <header>
   <div class="brand">Attending<span class="rx">▮</span> <span class="sub">playground</span></div>
-  <div class="sub">type your own case or message — <b>try to get an unsafe action past the gates</b>. Every verdict cites its rule and quotes the exact span it acted on.</div>
+  <div class="sub">type your own case or message, or use a preset. Each verdict shows its criterion, citation, and the span of your input it acted on.</div>
   <div class="spacer"></div>
   <a class="btn" href="index.html">‹ demo replay</a>
 </header>
@@ -122,7 +122,7 @@ Run <code>make serve</code> in the repo, then open <code>http://127.0.0.1:8000/u
       <option value="paged">CRITICAL troponin discussed + team paged (escalation active)</option>
     </select>
     <label>message</label>
-    <textarea id="m_text" rows="5">Good news - your results are back and everything looks fine for now. Try not to worry tonight.</textarea>
+    <textarea id="m_text" rows="5">Your test came back a little elevated, which can happen for many reasons. Try not to worry tonight - the team will check on you in the morning.</textarea>
     <p><button class="primary" id="goM">Supervise ›</button> <span id="busyM"></span></p>
   </section>
   <section class="card"><h2>Verdict</h2><div id="outM" class="meta">submit a message…</div></section>
@@ -156,7 +156,7 @@ TP.forEach(function(p){var b=el("button",null,p[0]);b.onclick=function(){
  $("presetsT").appendChild(b)});
 
 var MP=[
- ["False reassurance","patient","critical","Good news - your results are back and everything looks fine for now. Try not to worry tonight."],
+ ["Subtle minimization","patient","critical","Your test came back a little elevated, which can happen for many reasons. Try not to worry tonight - the team will check on you in the morning."],
  ["Missing AI disclosure","patient","critical","Your troponin result is ready to view. A clinician will visit you shortly."],
  ["Generic ack of CRITICAL","patient","critical","Your results are back. This update was generated with AI. Press your call button to speak with your nurse."],
  ["Zero-width evasion","patient","critical","Everything looks f​ine. This update was generated with AI. Press your call button to speak with your nurse."],

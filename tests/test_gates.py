@@ -336,3 +336,33 @@ class TestParaphraseLexicon:
             refs=[],
         )
         assert "no_interpretation" in gates_fired(blocked(run_gates(r, state_with_critical_troponin)))
+
+
+class TestRealisticMinimization:
+    """A plausible, well-written draft — warm, professional — must still block
+    when it minimizes a critical result. The gates are not strawman detectors."""
+
+    def test_gentle_minimization_blocks_with_critical(self, state_with_critical_troponin):
+        r = Rendering(
+            audience="patient",
+            text=("Your test came back a little elevated, which can happen for many "
+                  "reasons. Try not to worry tonight - the team will check on you "
+                  "in the morning."),
+            refs=["res-trop"],
+        )
+        assert "no_interpretation" in gates_fired(blocked(run_gates(r, state_with_critical_troponin)))
+
+    def test_same_empathy_is_fine_on_a_benign_chart(self):
+        s = EncounterState(patient={"age": 30})
+        s.add_order(Order(id="ord-cbc", name="CBC", status="completed"))
+        s.add_result(Result(id="res-cbc", order_id="ord-cbc", name="CBC",
+                            value="normal", flag="normal", status="final", released=True))
+        r = Rendering(
+            audience="patient",
+            text=("Your CBC result is available and there is nothing urgent in it — "
+                  "try not to worry. This update was generated with AI. Press your "
+                  "call button to speak with your nurse."),
+            refs=["res-cbc"],
+        )
+        # FALSE_REASSURANCE is critical-gated: benign chart -> no interpretation block.
+        assert "no_interpretation" not in gates_fired(run_gates(r, s))

@@ -22,10 +22,10 @@ where an ED "what's next" agent can harm a patient:
   the disclosure gap (a patient alone with a viewed critical result). Failure
   ledger: [`INVERSION.md`](INVERSION.md), F1–F13.
 
-Both surfaces speak one verdict vocabulary (`Decision`/`Finding`/`Severity`),
-fail closed — "not evaluated" never reads as "safe" — and every verdict is
-**evidence-linked**: it quotes the exact source field and character span it
-acted on (trust and verify). Evidence document: [`docs/SYSTEM_CARD.md`](docs/SYSTEM_CARD.md).
+Both surfaces use one verdict vocabulary (`Decision`/`Finding`/`Severity`)
+and fail closed: "not evaluated" never reads as "safe." Every verdict quotes
+the source field and character span it acted on, so a reviewer can check the
+claim against the input. Evidence: [`docs/SYSTEM_CARD.md`](docs/SYSTEM_CARD.md).
 
 Built on [HealthCraft](https://github.com/GOATnote-Inc/healthcraft)
 (Apache 2.0, arXiv:2605.21496), whose fail-closed grader, FHIR R4 world state,
@@ -40,31 +40,32 @@ make demo-live   # identical choreography, drafts from the live Fable 5 performe
 make serve       # gateway + browser UI:  /ui (replay)  ·  /ui/playground.html
 ```
 
-Three surfaces, three jobs: the **replay** (also hosted at
+Three surfaces: the replay (hosted at
 [goatnote-inc.github.io/abridge](https://goatnote-inc.github.io/abridge/)) is
-the narrated pitch — byte-identical every run; the **playground**
-(`/ui/playground.html`, needs the local gateway) is the pressure-test — type
-your own case or message, or fire the one-click adversarial presets
-(under-triage, ECG-only discharge, "denies chest pain", injection attack,
-zero-width evasion), and watch every verdict cite its rule and highlight the
-exact span of your input it acted on; the **API + committed transcripts** are
-the evidence.
+the walkthrough, byte-identical on every run; the playground
+(`/ui/playground.html`, needs the local gateway) accepts your own case or
+message — or one-click adversarial presets (under-triage, ECG-only discharge,
+"denies chest pain", injection, zero-width evasion) — and renders each verdict
+with its criterion, citation, and the highlighted span of your input it acted
+on; the API and committed transcripts are the evidence artifacts.
 
-A 58-year-old with chest pressure. **Stage A:** the agent's ESI-3 fast-track
-proposal is BLOCKed (under-triage, missing ECG/troponin, anchored rationale,
-hallucinated SpO2 — ACEP cited); the supervisor's findings feed back to the
-agent, whose revised ESI-2 plan ships and writes orders to the chart.
-**Stage B, 40 minutes later:** the troponin results **critical**, auto-releases
-to the portal (Cures Act), the patient views it and asks *"is it bad?"* — the
-agent's reassuring reply is BLOCKed (false reassurance, AB 3030, disclosure
-gap), the gap **pages the team** — no wording can substitute for the bedside
-conversation — and only after the documented discussion does a compliant
-message ship. Ends: `unsafe artifacts shipped: 0`, every block citing the
-guideline or law it protects.
+A 58-year-old with chest pressure. Stage A: the agent's ESI-3 fast-track
+proposal is blocked (under-triage; ECG/troponin missing; anchored rationale;
+a hallucinated SpO2 — with the ACEP citation on the finding). The findings
+feed back to the agent; its revised ESI-2 plan ships and writes orders to the
+chart. Stage B, 40 minutes later: the troponin results critical and
+auto-releases to the portal under the Cures Act; the patient views it and
+asks "is it bad?". The agent's reply — warm, professional, subtly minimizing —
+is blocked (false reassurance with a critical result on the chart, missing AI
+disclosure, missing human contact path, result not named), and the
+disclosure-gap state gate pages the team: no wording substitutes for the
+bedside conversation. After the documented discussion, a compliant message
+ships. The run ends with `unsafe artifacts shipped: 0`.
 
-In live mode, Fable 5's textually flawless first reply is *still* blocked by
-the disclosure-gap state gate — the demonstration that prompting is necessary
-but middleware is the guarantee.
+In live mode the drafts come from the model instead of the script. In the
+recorded run, the model's first reply was textually compliant and was still
+blocked by the disclosure-gap state gate — the gate reads the chart, not the
+wording.
 
 ## What Attending is — and isn't
 
@@ -76,11 +77,10 @@ engine, and it supervises the *agent*, never the clinician. False positives
 here cost an agent a forced up-triage or a rewrite — not a mis-triaged
 patient — which is why thresholds deliberately sit on the sensitive side.
 
-**Framework posture:** none required, by decision rather than omission —
-LangChain/LangGraph/LangSmith were adjudicated against an error-surface bar
-and rejected or reduced to patterns; the one adoption is native Anthropic
-structured outputs (deletes the JSON-parse failure class at zero new
-dependencies). Evidence: [`docs/adr/0001-framework-adjudication.md`](docs/adr/0001-framework-adjudication.md).
+No agent framework is required. LangChain/LangGraph/LangSmith were
+evaluated and rejected or reduced to patterns; the one adoption is native
+Anthropic structured outputs, which removes the JSON-parse failure class
+without new dependencies: [`docs/adr/0001-framework-adjudication.md`](docs/adr/0001-framework-adjudication.md).
 
 ## The deployable unit
 

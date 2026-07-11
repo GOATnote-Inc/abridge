@@ -299,3 +299,28 @@ def test_coverage_loop_none_escalates(tmp_path):
     pack = _pack(tmp_path)
     r = run_coverage_loop(_case(), pack, lambda f: None)
     assert r.escalated and not r.attempts
+
+
+class TestQuoteAnchoredCites:
+    """Performers cite exact quotes; the deterministic engine locates them."""
+
+    def test_auto_cite_with_exact_quote_resolves(self, tmp_path):
+        pack = _pack(tmp_path)
+        p = _proposal(pack, claims=[
+            Claim("Assessment is below the 5th percentile.",
+                  cites=(Cite("note", "auto", quote="below the 5th percentile"),))])
+        v = supervise_determination(_case(), pack, p)
+        assert v.decision is Decision.ALLOW, [f.message for f in v.findings]
+
+    def test_auto_cite_with_absent_quote_blocks(self, tmp_path):
+        pack = _pack(tmp_path)
+        p = _proposal(pack, claims=[
+            Claim("x", cites=(Cite("note", "auto", quote="text that is not there"),))])
+        v = supervise_determination(_case(), pack, p)
+        assert any(f.criterion_id == "COV-F15" for f in v.findings)
+
+    def test_auto_cite_without_quote_blocks(self, tmp_path):
+        pack = _pack(tmp_path)
+        p = _proposal(pack, claims=[Claim("x", cites=(Cite("note", "auto"),))])
+        v = supervise_determination(_case(), pack, p)
+        assert any(f.criterion_id == "COV-F15" for f in v.findings)

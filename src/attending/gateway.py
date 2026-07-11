@@ -342,6 +342,69 @@ def create_app() -> Any:
             raise _bad_request(exc) from exc
         return _comms_verdict_dict(supervise_rendering(rendering, state))
 
+    @app.post("/coverage/preset")
+    async def coverage_preset(body: dict):  # type: ignore[no-untyped-def]
+        """Run one canned coverage scenario against the DRAFT pack (status
+        surfaced). Presets mirror the demo's Act 3 beats; read-only."""
+        from . import coverage as cov
+        drafts = Path(__file__).resolve().parents[2] / "drafts" / "coverage"
+        pack_path = drafts / "pack_peds_speech_therapy.json"
+        case_path = drafts / "case_peds_speech_denial.json"
+        if not (pack_path.is_file() and case_path.is_file()):
+            raise HTTPException(404, "coverage drafts not present")
+        name = body.get("name") if isinstance(body, dict) else None
+        if name not in ("vague_denial", "unsupported_claim", "auto_deny"):
+            raise HTTPException(400, "unknown preset name")
+        pack = cov.load_pack(pack_path)
+        raw = json.loads(case_path.read_text())
+        note = raw["clinical_note"]
+        case = cov.CoverageCase(
+            case_id=raw["id"], synthetic=True, note=note,
+            transcript="", note_facts=raw["note_facts"],
+            evidence={cid: "met" for cid in pack.clauses})
+        prov = cov.make_provenance(pack, model_id="playground",
+                                   timestamp="playground-fixed")
+        if name == "auto_deny":
+            try:
+                cov.build_denial(case, pack, physician_signoff=None,
+                                 model_id="playground",
+                                 timestamp="playground-fixed")
+                return {"f14": {"raised": False}}
+            except cov.PhysicianSignoffRequired as exc:
+                return {"f14": {"raised": True, "error": str(exc)},
+                        "pack": {"version": pack.version,
+                                 "status": pack.approval_status}}
+        if name == "vague_denial":
+            proposal = cov.CoverageProposal(
+                kind="determination", outcome="deny",
+                claims=(cov.Claim("The services requested are not medically "
+                                  "necessary.", cites=()),),
+                authorities_cited=("UNSPECIFIED-INTERNAL-CRITERIA",),
+                provenance={})
+        else:  # unsupported_claim
+            i = note.index("below the 5th percentile for age")
+            good = cov.Claim(
+                "PLS-5 places expressive communication below the 5th "
+                "percentile for age.",
+                cites=(cov.Cite("clause", "SLT-01"),
+                       cov.Cite("note", f"note:{i}:{i+32}",
+                                quote=note[i:i+32])))
+            bad = cov.Claim("The patient also demonstrates childhood apraxia "
+                            "of speech.", cites=())
+            proposal = cov.CoverageProposal(
+                kind="appeal", outcome=None, claims=(good, bad),
+                authorities_cited=("AUTH-EPSDT-1396D-R",), provenance=prov)
+        v = cov.supervise_determination(case, pack, proposal)
+        return {
+            "decision": v.decision.value,
+            "pack": {"version": pack.version, "status": pack.approval_status,
+                     "hash": pack.hash[:12]},
+            "findings": [{"criterion_id": f.criterion_id,
+                          "severity": f.severity.value,
+                          "message": f.message, "citation": f.citation}
+                         for f in v.findings],
+        }
+
     @app.get("/demo")
     def get_demo(live: bool = False) -> dict[str, Any]:
         """The two-surface demo transcript. Replay by default (a pure function

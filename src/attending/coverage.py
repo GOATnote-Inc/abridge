@@ -131,10 +131,20 @@ _SPAN_RE = re.compile(r"^(note|transcript):(\d+):(\d+)$")
 
 
 def _resolve_span(case: CoverageCase, cite: Cite) -> tuple[bool, str]:
+    source = case.note if cite.type == "note" else case.transcript
+    # Quote-anchored citation: the performer supplies the exact quote and the
+    # DETERMINISTIC engine locates it (models cannot count character offsets;
+    # engines can). ref "auto" (or empty) means locate-by-quote.
+    if cite.ref in ("auto", ""):
+        if not cite.quote:
+            return False, "auto cite without a quote"
+        if cite.quote in source:
+            return True, ""
+        return False, (f"quote not found in {cite.type} — "
+                       f"\"{cite.quote[:60]}\" is not in the source")
     m = _SPAN_RE.match(cite.ref)
     if not m:
         return False, f"unparseable span ref '{cite.ref}'"
-    source = case.note if m.group(1) == "note" else case.transcript
     a, b = int(m.group(2)), int(m.group(3))
     if not (0 <= a < b <= len(source)):
         return False, f"span {cite.ref} out of bounds (source len {len(source)})"

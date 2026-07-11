@@ -71,6 +71,7 @@ Run <code>make serve</code> in the repo, then open <code>http://127.0.0.1:8000/u
 <div class="tabs">
   <div class="tab on" id="tabT">Triage decision</div>
   <div class="tab" id="tabM">Patient message</div>
+  <div class="tab" id="tabC">Coverage</div>
 </div>
 
 <main id="paneT">
@@ -128,6 +129,20 @@ Run <code>make serve</code> in the repo, then open <code>http://127.0.0.1:8000/u
   <section class="card"><h2>Verdict</h2><div id="outM" class="meta">submit a message…</div></section>
 </main>
 
+<main id="paneC" class="hidden">
+  <section class="card">
+    <h2>Prior-auth presets (DRAFT criteria pack — pending physician review)</h2>
+    <p class="why">Three one-click scenarios against the pediatric speech-therapy pack. The deny path requires a physician sign-off token structurally — the third preset proves it.</p>
+    <div class="presets">
+      <button id="cvVague">Vague denial — audited</button>
+      <button id="cvClaim">Unsupported claim in appeal</button>
+      <button id="cvDeny">Auto-deny attempt (F14)</button>
+    </div>
+    <p><span id="busyC"></span></p>
+  </section>
+  <section class="card"><h2>Verdict</h2><div id="outC" class="meta">pick a preset…</div></section>
+</main>
+
 <footer>deterministic gates · evidence-linked verdicts · fail-closed (no override parameter exists) ·
 <a class="btn" style="border:none;padding:0;color:var(--acc);background:none" href="https://github.com/GOATnote-Inc/abridge">source + system card</a></footer>
 
@@ -138,9 +153,11 @@ var $=function(id){return document.getElementById(id)};
 function el(t,c,tx){var e=document.createElement(t);if(c)e.className=c;if(tx!=null)e.textContent=tx;return e}
 
 /* ---------- tabs ---------- */
-$("tabT").onclick=function(){sw(true)};$("tabM").onclick=function(){sw(false)};
-function sw(t){$("paneT").classList.toggle("hidden",!t);$("paneM").classList.toggle("hidden",t);
-$("tabT").classList.toggle("on",t);$("tabM").classList.toggle("on",!t)}
+$("tabT").onclick=function(){sw("T")};$("tabM").onclick=function(){sw("M")};
+$("tabC").onclick=function(){sw("C")};
+function sw(which){["T","M","C"].forEach(function(x){
+  $("pane"+x).classList.toggle("hidden", x!==which);
+  $("tab"+x).classList.toggle("on", x===which)})}
 
 /* ---------- adversarial presets (one-click booth attacks) ---------- */
 var TP=[
@@ -246,6 +263,24 @@ $("goM").onclick=function(){
    +(v.decision==="BLOCK"?"  ·  this text was NOT shipped (a blocked rendering never reaches the patient)":"")));
   renderFindings(box,v.findings||[]);
   if(!(v.findings||[]).length)box.appendChild(el("div","ok","no violations — message may ship."))})};
+
+function coveragePreset(name){
+ post("/coverage/preset",{name:name},"busyC",function(st,v){
+  var box=$("outC");box.textContent="";
+  if(st>=400){box.appendChild(el("div","err","API "+st+": "+(v.detail||JSON.stringify(v))));return}
+  if(v.f14){
+   box.appendChild(el("span","chip BLOCK","F14 RAISED"));
+   box.appendChild(el("div","meta","PhysicianSignoffRequired — the deny path is structurally gated; no token, no artifact."));
+   box.appendChild(el("div","cite",v.f14.error||""));
+   if(v.pack)box.appendChild(el("div","cite","pack "+v.pack.version+" · "+v.pack.status));
+   return}
+  box.appendChild(el("span","chip "+v.decision,v.decision));
+  if(v.pack)box.appendChild(el("div","meta","criteria pack "+v.pack.version+" ("+v.pack.status+") · "+(v.pack.hash||"")));
+  renderFindings(box,v.findings||[]);
+  if(!(v.findings||[]).length)box.appendChild(el("div","ok","no findings."))})}
+$("cvVague").onclick=function(){coveragePreset("vague_denial")};
+$("cvClaim").onclick=function(){coveragePreset("unsupported_claim")};
+$("cvDeny").onclick=function(){coveragePreset("auto_deny")};
 
 /* gateway reachability probe (playground is live-only by design) */
 fetch("/health").then(function(r){if(!r.ok)throw 0}).catch(function(){$("offline").style.display="block"});

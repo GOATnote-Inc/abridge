@@ -281,3 +281,22 @@ def test_float_esi_is_rejected(client, example):
 def test_playground_served_at_ui(client):
     r = client.get("/ui/playground.html")
     assert r.status_code == 200 and "pressure-test" in r.text
+
+
+def test_coverage_preset_vague_denial(client):
+    r = client.post("/coverage/preset", json={"name": "vague_denial"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["decision"] == "BLOCK"
+    ids = {f["criterion_id"] for f in body["findings"]}
+    assert {"COV-F15", "COV-F16", "COV-F17", "COV-F18"} <= ids
+    assert "DRAFT" in body["pack"]["status"]
+
+
+def test_coverage_preset_auto_deny_raises_f14(client):
+    r = client.post("/coverage/preset", json={"name": "auto_deny"})
+    assert r.status_code == 200 and r.json()["f14"]["raised"] is True
+
+
+def test_coverage_preset_unknown_name_400(client):
+    assert client.post("/coverage/preset", json={"name": "x"}).status_code == 400

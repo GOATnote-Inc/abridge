@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="420" viewBox="0 0 760 420">
+<rect width="760" height="420" fill="#0d1117"/>
+<text x="24" y="34" fill="#e6edf3" font-size="18" font-weight="bold">Iterations to ALLOW — oracle findings vs self-critique</text>
+<text x="24" y="54" fill="#8b949e" font-size="12">performer: claude-haiku-4-5-20251001 · same cases, cap 3 attempts · deterministic gates as the oracle</text>
+<rect x="80" y="81.42857142857142" width="90" height="128.57142857142858" fill="#3fb950" rx="4"/><text x="125.0" y="73.42857142857142" text-anchor="middle" fill="#e6edf3" font-size="15" font-weight="bold">1.43</text><text x="125.0" y="232" text-anchor="middle" fill="#e6edf3" font-size="13">oracle feedback</text><text x="125.0" y="248" text-anchor="middle" fill="#8b949e" font-size="11">7/9 converged</text>
+<rect x="230" y="30.0" width="90" height="180.0" fill="#f85149" rx="4"/><text x="275.0" y="22.0" text-anchor="middle" fill="#e6edf3" font-size="15" font-weight="bold">2.00</text><text x="275.0" y="232" text-anchor="middle" fill="#e6edf3" font-size="13">self-critique</text><text x="275.0" y="248" text-anchor="middle" fill="#8b949e" font-size="11">5/9 converged</text>
+<text x="24" y="290" fill="#e6edf3" font-size="14" font-weight="bold">What self-critique kept missing</text>
+<text x="420" y="300" fill="#8b949e" font-size="12">COV-F15: 19 repeat violation(s) under self-critique</text><text x="420" y="318" fill="#8b949e" font-size="12">TOY-CITE: sentence 2 lacks a line citation [L<n>]: 3 repeat violation(s) under self-critique</text>
+<text x="24" y="404" fill="#8b949e" font-size="11">mean attempts among converged runs · trace: evaluation/exhibit/trace.jsonl · rerun: scripts/loop_exhibit.py --live</text>
+</svg>

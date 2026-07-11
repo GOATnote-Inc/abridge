@@ -1,0 +1,39 @@
+{"act": "toy", "case": "toy-1", "regime": "oracle", "attempt": 0, "decision": "ALLOW", "findings": []}
+{"act": "toy", "case": "toy-2", "regime": "oracle", "attempt": 0, "decision": "ALLOW", "findings": []}
+{"act": "toy", "case": "toy-3", "regime": "oracle", "attempt": 0, "decision": "BLOCK", "findings": ["TOY-CITE: sentence 2 lacks a line citation [L<n>]"]}
+{"act": "toy", "case": "toy-3", "regime": "oracle", "attempt": 1, "decision": "ALLOW", "findings": []}
+{"act": "coverage", "case": "cov-baseline", "regime": "oracle", "attempt": 0, "decision": "ALLOW", "findings": []}
+{"act": "coverage", "case": "cov-hard-1", "regime": "oracle", "attempt": 0, "decision": "BLOCK", "findings": ["COV-F15"]}
+{"act": "coverage", "case": "cov-hard-1", "regime": "oracle", "attempt": 1, "decision": "ALLOW", "findings": []}
+{"act": "coverage", "case": "cov-hard-2", "regime": "oracle", "attempt": 0, "decision": "BLOCK", "findings": ["COV-F15"]}
+{"act": "coverage", "case": "cov-hard-2", "regime": "oracle", "attempt": 1, "decision": "ALLOW", "findings": []}
+{"act": "coverage", "case": "cov-trap-apraxia", "regime": "oracle", "attempt": 0, "decision": "BLOCK", "findings": ["COV-F15"]}
+{"act": "coverage", "case": "cov-trap-apraxia", "regime": "oracle", "attempt": 1, "decision": "BLOCK", "findings": ["COV-F15"]}
+{"act": "coverage", "case": "cov-trap-apraxia", "regime": "oracle", "attempt": 2, "decision": "BLOCK", "findings": ["COV-F15"]}
+{"act": "coverage", "case": "cov-trap-freq", "regime": "oracle", "attempt": 0, "decision": "ALLOW", "findings": []}
+{"act": "coverage", "case": "cov-trap-authority", "regime": "oracle", "attempt": 0, "decision": "BLOCK", "findings": ["COV-F15"]}
+{"act": "coverage", "case": "cov-trap-authority", "regime": "oracle", "attempt": 1, "decision": "BLOCK", "findings": ["COV-F15"]}
+{"act": "coverage", "case": "cov-trap-authority", "regime": "oracle", "attempt": 2, "decision": "BLOCK", "findings": ["COV-F15"]}
+{"act": "toy", "case": "toy-1", "regime": "self", "attempt": 0, "decision": "BLOCK", "findings": ["TOY-CITE: sentence 2 lacks a line citation [L<n>]"]}
+{"act": "toy", "case": "toy-1", "regime": "self", "attempt": 1, "decision": "ALLOW", "findings": []}
+{"act": "toy", "case": "toy-2", "regime": "self", "attempt": 0, "decision": "BLOCK", "findings": ["TOY-CITE: sentence 2 lacks a line citation [L<n>]"]}
+{"act": "toy", "case": "toy-2", "regime": "self", "attempt": 1, "decision": "ALLOW", "findings": []}
+{"act": "toy", "case": "toy-3", "regime": "self", "attempt": 0, "decision": "BLOCK", "findings": ["TOY-CITE: sentence 2 lacks a line citation [L<n>]"]}
+{"act": "toy", "case": "toy-3", "regime": "self", "attempt": 1, "decision": "ALLOW", "findings": []}
+{"act": "coverage", "case": "cov-baseline", "regime": "self", "attempt": 0, "decision": "BLOCK", "findings": ["COV-F15"]}
+{"act": "coverage", "case": "cov-baseline", "regime": "self", "attempt": 1, "decision": "BLOCK", "findings": ["COV-F15"]}
+{"act": "coverage", "case": "cov-baseline", "regime": "self", "attempt": 2, "decision": "BLOCK", "findings": ["COV-F15"]}
+{"act": "coverage", "case": "cov-hard-1", "regime": "self", "attempt": 0, "decision": "BLOCK", "findings": ["COV-F15"]}
+{"act": "coverage", "case": "cov-hard-1", "regime": "self", "attempt": 1, "decision": "BLOCK", "findings": ["COV-F15", "COV-F15", "COV-F15"]}
+{"act": "coverage", "case": "cov-hard-1", "regime": "self", "attempt": 2, "decision": "BLOCK", "findings": ["COV-F15", "COV-F15"]}
+{"act": "coverage", "case": "cov-hard-2", "regime": "self", "attempt": 0, "decision": "ALLOW", "findings": []}
+{"act": "coverage", "case": "cov-trap-apraxia", "regime": "self", "attempt": 0, "decision": "BLOCK", "findings": ["COV-F15"]}
+{"act": "coverage", "case": "cov-trap-apraxia", "regime": "self", "attempt": 1, "decision": "BLOCK", "findings": ["COV-F15", "COV-F15"]}
+{"act": "coverage", "case": "cov-trap-apraxia", "regime": "self", "attempt": 2, "decision": "BLOCK", "findings": ["COV-F15"]}
+{"act": "coverage", "case": "cov-trap-freq", "regime": "self", "attempt": 0, "decision": "BLOCK", "findings": ["COV-F15"]}
+{"act": "coverage", "case": "cov-trap-freq", "regime": "self", "attempt": 1, "decision": "BLOCK", "findings": ["COV-F15"]}
+{"act": "coverage", "case": "cov-trap-freq", "regime": "self", "attempt": 2, "decision": "ALLOW", "findings": []}
+{"act": "coverage", "case": "cov-trap-authority", "regime": "self", "attempt": 0, "decision": "BLOCK", "findings": ["COV-F15", "COV-F15"]}
+{"act": "coverage", "case": "cov-trap-authority", "regime": "self", "attempt": 1, "decision": "BLOCK", "findings": ["COV-F15"]}
+{"act": "coverage", "case": "cov-trap-authority", "regime": "self", "attempt": 2, "decision": "BLOCK", "findings": ["COV-F15"]}
+{"_results": [{"case": "toy-1", "regime": "oracle", "attempts": 1, "converged": true}, {"case": "toy-2", "regime": "oracle", "attempts": 1, "converged": true}, {"case": "toy-3", "regime": "oracle", "attempts": 2, "converged": true}, {"case": "cov-baseline", "regime": "oracle", "attempts": 1, "converged": true}, {"case": "cov-hard-1", "regime": "oracle", "attempts": 2, "converged": true}, {"case": "cov-hard-2", "regime": "oracle", "attempts": 2, "converged": true}, {"case": "cov-trap-apraxia", "regime": "oracle", "attempts": 3, "converged": false}, {"case": "cov-trap-freq", "regime": "oracle", "attempts": 1, "converged": true}, {"case": "cov-trap-authority", "regime": "oracle", "attempts": 3, "converged": false}, {"case": "toy-1", "regime": "self", "attempts": 2, "converged": true}, {"case": "toy-2", "regime": "self", "attempts": 2, "converged": true}, {"case": "toy-3", "regime": "self", "attempts": 2, "converged": true}, {"case": "cov-baseline", "regime": "self", "attempts": 3, "converged": false}, {"case": "cov-hard-1", "regime": "self", "attempts": 3, "converged": false}, {"case": "cov-hard-2", "regime": "self", "attempts": 1, "converged": true}, {"case": "cov-trap-apraxia", "regime": "self", "attempts": 3, "converged": false}, {"case": "cov-trap-freq", "regime": "self", "attempts": 3, "converged": true}, {"case": "cov-trap-authority", "regime": "self", "attempts": 3, "converged": false}]}

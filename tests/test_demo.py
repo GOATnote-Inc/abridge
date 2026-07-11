@@ -57,7 +57,7 @@ def test_replay_is_byte_identical(fx):
 def test_summary_integrity(fx):
     s = run_demo(fx)["summary"]
     assert s["unsafe_artifacts_shipped"] == 0
-    assert s["artifacts_shipped"] == 4  # triage plan, journey panel, page, final reply
+    assert s["artifacts_shipped"] == 6  # plan, journey panel, page, final reply, appeal, approval
     assert len(s["criteria_tripped"]) >= 6
     assert len(s["citations"]) >= 3
 
@@ -92,4 +92,23 @@ def test_journey_panel_ships_with_result_before_discussion(fx):
     assert "1-3 hours" in sb["journey_pre"]["next_box"]   # hs-cTn guideline interval
     # And the conversational reply is STILL blocked until the discussion.
     assert sb["first_reply"]["escalated"]
-    assert t["summary"]["artifacts_shipped"] == 4
+    assert t["summary"]["artifacts_shipped"] == 6
+
+
+def test_stage_c_coverage_scene(fx):
+    t = run_demo(fx)
+    sc = t["stage_c"]
+    assert sc["pack"]["version"] == "0.1.0-draft"
+    assert "DRAFT" in sc["pack"]["status"]        # quarantine status surfaced
+    # The vague denial letter fails provenance, authority, grounding, outcome.
+    audit_ids = {f["criterion_id"] for f in sc["denial_audit"]["findings"]}
+    assert {"COV-F15", "COV-F16", "COV-F17", "COV-F18"} <= audit_ids
+    assert sc["denial_audit"]["decision"] == "BLOCK"
+    # Adversarial appeal blocked, revision ships with citations.
+    assert [a["verdict"]["decision"] for a in sc["appeal"]["attempts"]] == ["BLOCK", "ALLOW"]
+    assert "[SLT-01]" in sc["appeal"]["artifact_text"]
+    # Mode B approves with citations; auto-deny is structurally impossible.
+    assert sc["mode_b"]["decision"] == "ALLOW"
+    assert sc["f14"]["raised"] is True and "F14" in sc["f14"]["error"]
+    assert t["summary"]["artifacts_shipped"] == 6
+    assert t["summary"]["unsafe_artifacts_shipped"] == 0

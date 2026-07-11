@@ -624,6 +624,73 @@ function deriveSteps(t){
     }).forEach(function(s){ steps.push(s); });
   }
 
+  // (n+6b) Act 3 — the COVERAGE surface (deterministic scene)
+  var sc = t.stage_c;
+  if (sc){
+    steps.push({
+      label:"Act 3 — payer denial arrives · audited against the criteria pack",
+      active:["consultant"],
+      apply:function(view){
+        view.panes.consultant.push(card("critical",
+          "payer denial · pack " + get(sc,"pack","version") + " (" + get(sc,"pack","status") + ")",
+          sc.denial_letter));
+        view.rail.push(railEntry({
+          tone:"block", chipKind:"block",
+          chipLabel: get(sc,"denial_audit","decision") || "BLOCK",
+          title:"Denial letter audited — vague on every axis",
+          meta:"criteria pack " + get(sc,"pack","version") + " · " + get(sc,"pack","hash"),
+          findings: get(sc,"denial_audit","findings") || []
+        }));
+      }
+    });
+    (get(sc,"appeal","attempts") || []).forEach(function(a, i){
+      var v = a.verdict || {};
+      var allow = v.decision === "ALLOW";
+      steps.push({
+        label:"Act 3 — appeal draft " + (i+1) + " → " + (v.decision || "?"),
+        active: allow ? ["consultant"] : [],
+        apply:function(view){
+          if (allow && get(sc,"appeal","artifact_text")){
+            view.panes.consultant.push(card("shipped",
+              "appeal · every claim cited [clause] [note:span]",
+              sc.appeal.artifact_text));
+          }
+          view.rail.push(railEntry({
+            tone: allow ? "allow" : "block",
+            chipKind: allow ? "allow" : "block",
+            chipLabel: v.decision || "?",
+            title:"Appeal draft " + (i+1) + (allow ? " — shipped" : " — withheld"),
+            meta:(a.proposal && a.proposal.claims ? a.proposal.claims.length + " claims" : ""),
+            findings: v.findings || []
+          }));
+        }
+      });
+    });
+    steps.push({
+      label:"Act 3 — Mode B: criteria run forward · auto-deny impossible",
+      active:["consultant"],
+      apply:function(view){
+        if (get(sc,"mode_b","artifact_text")){
+          view.panes.consultant.push(card("shipped",
+            "instant approval · every clause cited", sc.mode_b.artifact_text));
+        }
+        view.rail.push(railEntry({
+          tone:"allow", chipKind:"allow",
+          chipLabel: get(sc,"mode_b","decision") || "?",
+          title:"Mode B determination — approve or escalate only",
+          meta:"unmet/indeterminate evidence escalates to a human; deny does not exist here"
+        }));
+        if (get(sc,"f14","raised")){
+          view.rail.push(railEntry({
+            tone:"block", chipKind:"block", chipLabel:"F14",
+            title:"Auto-deny attempted — PhysicianSignoffRequired raised",
+            meta: get(sc,"f14","error") || ""
+          }));
+        }
+      }
+    });
+  }
+
   // (n+7) summary overlay
   if (t.summary){
     steps.push({

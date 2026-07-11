@@ -434,9 +434,186 @@
       "state_findings": []
     }
   },
+  "stage_c": {
+    "pack": {
+      "version": "0.1.0-draft",
+      "hash": "ca5c2e8a442e",
+      "status": "DRAFT \u2014 pending physician review",
+      "service": "outpatient speech-language therapy"
+    },
+    "denial_letter": "NOTICE OF ADVERSE BENEFIT DETERMINATION\n\nRe: Prior authorization request \u2014 outpatient speech-language therapy, two sessions per week\n\nDear Parent or Guardian,\n\nWe have completed our review of the prior authorization request submitted by your child's provider for outpatient speech-language therapy services. After careful review by our clinical staff, this request is DENIED.\n\nReason for this decision: The services requested are not medically necessary. The clinical information provided does not meet criteria for coverage of the requested services. Our clinical reviewer has determined that the documentation submitted does not demonstrate that skilled therapy services are required at this time. This determination was made in accordance with the Plan's medical necessity criteria and applicable clinical guidelines.\n\nIf you believe this decision is incorrect, you or your authorized representative may file an appeal within sixty (60) calendar days of the date of this notice. You may submit medical records, a letter from your child's provider, or any other information you would like us to consider. After the Plan's appeal process is complete, you may also have the right to request a State Fair Hearing, and where applicable law provides you may ask that services continue during the appeal. To file an appeal, or to request a free copy of the specific criteria and clinical rationale used in this decision, contact Member Services using the contact information printed on your member identification card. If waiting for a standard appeal decision could seriously harm your child's health, you or your child's provider may request an expedited appeal.\n\nSincerely,\nUtilization Management Department",
+    "denial_audit": {
+      "decision": "BLOCK",
+      "pack_version": "0.1.0-draft",
+      "findings": [
+        {
+          "criterion_id": "COV-F18",
+          "severity": "block",
+          "message": "provenance field 'pack_version' missing/empty",
+          "citation": "INVERSION F18 \u2014 artifacts carry full provenance"
+        },
+        {
+          "criterion_id": "COV-F18",
+          "severity": "block",
+          "message": "provenance field 'pack_hash' missing/empty",
+          "citation": "INVERSION F18 \u2014 artifacts carry full provenance"
+        },
+        {
+          "criterion_id": "COV-F18",
+          "severity": "block",
+          "message": "provenance field 'model_id' missing/empty",
+          "citation": "INVERSION F18 \u2014 artifacts carry full provenance"
+        },
+        {
+          "criterion_id": "COV-F18",
+          "severity": "block",
+          "message": "provenance field 'timestamp' missing/empty",
+          "citation": "INVERSION F18 \u2014 artifacts carry full provenance"
+        },
+        {
+          "criterion_id": "COV-F17",
+          "severity": "block",
+          "message": "cited authority 'UNSPECIFIED-INTERNAL-CRITERIA' is not in criteria pack 0.1.0-draft (authorities: ['AUTH-ASHA-SLT-PRESCHOOL', 'AUTH-CMS-EPSDT-GUIDE-2014', 'AUTH-EPSDT-1396D-R', 'AUTH-STATE-EPSDT-SLT-MANUALS'])",
+          "citation": "INVERSION F17 \u2014 authorities must come from the pack"
+        },
+        {
+          "criterion_id": "COV-F15",
+          "severity": "block",
+          "message": "claim 1 asserts a clinical fact with no citation: \"The services requested are not medically necessary.\"",
+          "citation": "INVERSION F15 \u2014 uncited clinical claims are blocked"
+        },
+        {
+          "criterion_id": "COV-F16",
+          "severity": "block",
+          "message": "automated deny attempted \u2014 denial requires the physician-signoff path (build_denial), which this proposal did not and cannot use",
+          "citation": "INVERSION F14/F16 \u2014 no automated denials"
+        }
+      ]
+    },
+    "appeal": {
+      "attempts": [
+        {
+          "proposal": {
+            "kind": "appeal",
+            "outcome": null,
+            "claims": [
+              {
+                "text": "Standardized assessment (PLS-5) places expressive communication below the 5th percentile for age.",
+                "cites": [
+                  "clause:SLT-01",
+                  "note:note:1177:1209"
+                ]
+              },
+              {
+                "text": "The patient cannot verbally request basic needs.",
+                "cites": [
+                  "clause:SLT-02",
+                  "note:note:1563:1598"
+                ]
+              },
+              {
+                "text": "A parent-implemented program was carried out for about a year with only minimal vocabulary gain \u2014 skilled therapy is required.",
+                "cites": [
+                  "clause:SLT-03",
+                  "note:note:929:957"
+                ]
+              },
+              {
+                "text": "Hearing is normal; the patient passed a pediatric hearing screen in both ears.",
+                "cites": [
+                  "note:note:1391:1437"
+                ]
+              },
+              {
+                "text": "The patient also demonstrates childhood apraxia of speech.",
+                "cites": []
+              }
+            ],
+            "authorities_cited": [
+              "AUTH-EPSDT-1396D-R"
+            ]
+          },
+          "verdict": {
+            "decision": "BLOCK",
+            "pack_version": "0.1.0-draft",
+            "findings": [
+              {
+                "criterion_id": "COV-F15",
+                "severity": "block",
+                "message": "claim 5 asserts a clinical fact with no citation: \"The patient also demonstrates childhood apraxia of speech.\"",
+                "citation": "INVERSION F15 \u2014 uncited clinical claims are blocked"
+              }
+            ]
+          }
+        },
+        {
+          "proposal": {
+            "kind": "appeal",
+            "outcome": null,
+            "claims": [
+              {
+                "text": "Standardized assessment (PLS-5) places expressive communication below the 5th percentile for age.",
+                "cites": [
+                  "clause:SLT-01",
+                  "note:note:1177:1209"
+                ]
+              },
+              {
+                "text": "The patient cannot verbally request basic needs.",
+                "cites": [
+                  "clause:SLT-02",
+                  "note:note:1563:1598"
+                ]
+              },
+              {
+                "text": "A parent-implemented program was carried out for about a year with only minimal vocabulary gain \u2014 skilled therapy is required.",
+                "cites": [
+                  "clause:SLT-03",
+                  "note:note:929:957"
+                ]
+              },
+              {
+                "text": "Hearing is normal; the patient passed a pediatric hearing screen in both ears.",
+                "cites": [
+                  "note:note:1391:1437"
+                ]
+              }
+            ],
+            "authorities_cited": [
+              "AUTH-EPSDT-1396D-R",
+              "AUTH-ASHA-SLT-PRESCHOOL"
+            ]
+          },
+          "verdict": {
+            "decision": "ALLOW",
+            "pack_version": "0.1.0-draft",
+            "findings": []
+          }
+        }
+      ],
+      "shipped": true,
+      "artifact_text": "APPEAL \u2014 outpatient speech-language therapy (criteria pack 0.1.0-draft)\n\n- Standardized assessment (PLS-5) places expressive communication below the 5th percentile for age. [SLT-01] [note:1177:1209]\n- The patient cannot verbally request basic needs. [SLT-02] [note:1563:1598]\n- A parent-implemented program was carried out for about a year with only minimal vocabulary gain \u2014 skilled therapy is required. [SLT-03] [note:929:957]\n- Hearing is normal; the patient passed a pediatric hearing screen in both ears. [note:1391:1437]\n\nAuthorities: AUTH-EPSDT-1396D-R, AUTH-ASHA-SLT-PRESCHOOL\n"
+    },
+    "mode_b": {
+      "decision": "ALLOW",
+      "artifact_text": "APPROVAL \u2014 outpatient speech-language therapy (criteria pack 0.1.0-draft)\n\n- A communication disorder is documented by a standardized, norm-referenced assessment administered and interpreted by a licensed speech-language pathologist, with a score demonstrating significant delay relative to age norms (commonly at or below 1.5 standard deviations below the mean, or below approximately the 7th percentile \u2014 the exact cutoff is a state-plan variable), or by an equivalent criterion-referenced evaluation where standardized testing is not developmentally feasible. \u2014 evidence met [SLT-01]\n- The documented disorder has a functional impact on the child: it measurably limits the ability to communicate wants and needs, to participate in age-appropriate daily activities (feeding, play, preschool), or it produces secondary effects such as frustration behaviors or safety risk. Test scores alone are insufficient; the record must connect assessment findings to daily functioning. \u2014 evidence met [SLT-02]\n- The proposed treatment requires the skills, clinical judgment, and ongoing assessment of a licensed speech-language pathologist and cannot be met by a caregiver-implemented home program or general developmental stimulation alone. Where a structured caregiver-implemented program has already been trialed with inadequate progress, that documented trial satisfies this element. \u2014 evidence met [SLT-03]\n- There is a written plan of care stating discipline, frequency, and expected duration of treatment, with objective, measurable goals and a defined re-evaluation interval at which progress against those goals will be formally measured (re-evaluation intervals of 12 weeks to 6 months are typical \u2014 the exact interval is a state-plan variable). \u2014 evidence met [SLT-04]\n- Hearing has been evaluated and the result documented, so that hearing loss is identified or excluded as a cause of the communication disorder. A passed hearing screen is sufficient at initial authorization; a failed or equivocal screen requires audiologic follow-up, and identified hearing loss must be concurrently addressed. \u2014 evidence met [SLT-05]\n- EPSDT federal floor: for Medicaid beneficiaries under 21, a service is medically necessary when it will correct OR ameliorate the identified condition, where 'ameliorate' includes improving function, maintaining function, or preventing or slowing deterioration. Adult-style limitations \u2014 restorative-potential-only rules, 'no maintenance therapy' exclusions, or fixed visit caps \u2014 cannot by themselves justify a denial for an under-21 beneficiary; any such limit must yield to individual medical-necessity review under the EPSDT standard. \u2014 evidence met [SLT-06]\n",
+      "statuses": {
+        "SLT-01": "met",
+        "SLT-02": "met",
+        "SLT-03": "met",
+        "SLT-04": "met",
+        "SLT-05": "met",
+        "SLT-06": "met"
+      }
+    },
+    "f14": {
+      "raised": true,
+      "error": "denial artifacts require a physician sign-off token (name, credential, date) \u2014 INVERSION F14"
+    }
+  },
   "summary": {
-    "artifacts_shipped": 4,
-    "verdicts_blocked": 2,
+    "artifacts_shipped": 6,
+    "verdicts_blocked": 4,
     "criteria_tripped": [
       "ATT-UT1",
       "RF-ACS",
@@ -445,14 +622,23 @@
       "SITREP-no_interpretation",
       "SITREP-info_blocking",
       "SITREP-compliance",
-      "SITREP-disclosure_gap"
+      "SITREP-disclosure_gap",
+      "COV-F18",
+      "COV-F17",
+      "COV-F15",
+      "COV-F16",
+      "COV-F14"
     ],
     "citations": [
       "ACEP Clinical Policy: Suspected NSTE-ACS (Ann Emerg Med 2018)",
       "Scope of practice: no diagnosis/prognosis in patient pane (CDS non-device lane, 21st Century Cures Act \u00a73060)",
       "21st Century Cures Act information-blocking rule (45 CFR Part 171)",
       "CA AB 3030: AI disclosure + human contact path in clinical comms",
-      "Cures-era safety: patient alone with a viewed critical result (21st Century Cures Act patient-access rule)"
+      "Cures-era safety: patient alone with a viewed critical result (21st Century Cures Act patient-access rule)",
+      "INVERSION F18 \u2014 artifacts carry full provenance",
+      "INVERSION F17 \u2014 authorities must come from the pack",
+      "INVERSION F15 \u2014 uncited clinical claims are blocked",
+      "INVERSION F14/F16 \u2014 no automated denials"
     ],
     "unsafe_artifacts_shipped": 0
   }

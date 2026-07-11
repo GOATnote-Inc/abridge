@@ -39,17 +39,23 @@ from typing import Any
 from sitrep.state import EncounterState, Order, Result
 
 from . import agent, pathway
+from . import coverage as cov
 from .cli import _verdict_to_dict
 from .encounter import Encounter, encounter_from_dict, proposed_from_dict
 from .loop import (
     RenderingLoopResult,
     TriageLoopResult,
+    run_coverage_loop,
     run_rendering_loop,
     run_triage_loop,
 )
 from .verdict import Decision
 
 _DEFAULT_FIXTURE = Path(__file__).resolve().parents[2] / "fixtures" / "demo_chest_pain.json"
+_DRAFTS_DIR = Path(__file__).resolve().parents[2] / "drafts" / "coverage"
+# Fixed timestamp: the coverage engine has no clock; replay stays byte-identical.
+_DEMO_TS = "2026-07-18T09:00:00Z"
+_DEMO_MODEL_ID = "scripted-replay"
 
 
 # --- performers --------------------------------------------------------------
@@ -168,12 +174,162 @@ def _collect_summary(transcript: dict) -> dict:
             shipped += 1
             if a["verdict"]["decision"] != Decision.ALLOW.value:
                 unsafe_shipped += 1
+    sc = transcript.get("stage_c") or {}
+    if sc:
+        eat_verdict(sc["denial_audit"])
+        for a in sc["appeal"]["attempts"]:
+            eat_verdict(a["verdict"])
+        if sc["appeal"]["shipped"]:
+            shipped += 1
+        if sc["mode_b"]["decision"] == "ALLOW" and sc["mode_b"]["artifact_text"]:
+            shipped += 1
+        if sc.get("f14", {}).get("raised"):
+            cid = "COV-F14"
+            if cid not in criteria:
+                criteria.append(cid)
     return {
         "artifacts_shipped": shipped,
         "verdicts_blocked": blocked,
         "criteria_tripped": criteria,
         "citations": citations,
         "unsafe_artifacts_shipped": unsafe_shipped,
+    }
+
+
+def _coverage_verdict_dict(v) -> dict:
+    return {
+        "decision": v.decision.value,
+        "pack_version": v.pack_version,
+        "findings": [
+            {"criterion_id": f.criterion_id, "severity": f.severity.value,
+             "message": f.message, "citation": f.citation}
+            for f in v.findings
+        ],
+    }
+
+
+def _claim_summary(p) -> dict:
+    return {
+        "kind": p.kind, "outcome": p.outcome,
+        "claims": [{"text": c.text,
+                    "cites": [f"{x.type}:{x.ref}" for x in c.cites]}
+                   for c in p.claims],
+        "authorities_cited": list(p.authorities_cited),
+    }
+
+
+def _span_cite(note: str, quote: str) -> cov.Cite:
+    i = note.index(quote)
+    return cov.Cite("note", f"note:{i}:{i + len(quote)}", quote=quote)
+
+
+def _coverage_scene() -> dict | None:
+    """Act 3 — the COVERAGE surface, fully scripted and deterministic.
+
+    Uses the DRAFT criteria pack (status surfaced verbatim: pending physician
+    review); clinical pack content is ratified only via the clinical-review-
+    packet flow — the demo displays that status, it never hides it.
+    """
+    pack_path = _DRAFTS_DIR / "pack_peds_speech_therapy.json"
+    case_path = _DRAFTS_DIR / "case_peds_speech_denial.json"
+    if not (pack_path.is_file() and case_path.is_file()):
+        return None
+    pack = cov.load_pack(pack_path)
+    raw = json.loads(case_path.read_text())
+    note = raw["clinical_note"]
+    case = cov.CoverageCase(
+        case_id=raw["id"], synthetic=True, note=note,
+        transcript="\n".join(f"{t['speaker']}: {t['text']}"
+                             for t in raw["encounter_transcript"]),
+        note_facts=raw["note_facts"],
+        # Demo choreography: the note documents every clause (draft pack).
+        evidence={cid: "met" for cid in pack.clauses},
+    )
+    prov = cov.make_provenance(pack, model_id=_DEMO_MODEL_ID, timestamp=_DEMO_TS)
+
+    # Beat 1 — audit the payer's own letter as a determination proposal:
+    # outcome=deny, zero cited claims, unlisted authority, no provenance.
+    denial_proposal = cov.CoverageProposal(
+        kind="determination", outcome="deny",
+        claims=(cov.Claim(
+            "The services requested are not medically necessary.", cites=()),),
+        authorities_cited=("UNSPECIFIED-INTERNAL-CRITERIA",),
+        provenance={},
+    )
+    denial_audit = cov.supervise_determination(case, pack, denial_proposal)
+
+    # Beat 2 — the appeal loop: first draft carries one unsupported claim
+    # (the adversarial beat); the revision ships with every claim cited.
+    good_claims = (
+        cov.Claim(
+            "Standardized assessment (PLS-5) places expressive communication "
+            "below the 5th percentile for age.",
+            cites=(cov.Cite("clause", "SLT-01"),
+                   _span_cite(note, "below the 5th percentile for age")),
+        ),
+        cov.Claim(
+            "The patient cannot verbally request basic needs.",
+            cites=(cov.Cite("clause", "SLT-02"),
+                   _span_cite(note, "cannot verbally request basic needs")),
+        ),
+        cov.Claim(
+            "A parent-implemented program was carried out for about a year "
+            "with only minimal vocabulary gain — skilled therapy is required.",
+            cites=(cov.Cite("clause", "SLT-03"),
+                   _span_cite(note, "only minimal vocabulary gain")),
+        ),
+        cov.Claim(
+            "Hearing is normal; the patient passed a pediatric hearing screen "
+            "in both ears.",
+            cites=(_span_cite(note, "passed a pediatric hearing screen in both ears"),),
+        ),
+    )
+    bad = cov.CoverageProposal(
+        kind="appeal", outcome=None,
+        claims=good_claims + (cov.Claim(
+            "The patient also demonstrates childhood apraxia of speech.",
+            cites=()),),
+        authorities_cited=("AUTH-EPSDT-1396D-R",), provenance=dict(prov))
+    good = cov.CoverageProposal(
+        kind="appeal", outcome=None, claims=good_claims,
+        authorities_cited=("AUTH-EPSDT-1396D-R", "AUTH-ASHA-SLT-PRESCHOOL"),
+        provenance=dict(prov))
+    queue = [bad, good]
+    appeal = run_coverage_loop(case, pack, lambda fb: queue.pop(0) if queue else None)
+    appeal_artifact = (cov.build_appeal(case, pack, appeal.shipped)
+                       if appeal.shipped else None)
+
+    # Beat 3 — Mode B: the same criteria run forward. Approve or escalate;
+    # denying is structurally impossible here.
+    mode_b = cov.determine(case, pack, model_id=_DEMO_MODEL_ID, timestamp=_DEMO_TS)
+
+    # Beat 4 — the F14 moment: an auto-deny attempt raises, structurally.
+    f14: dict[str, object]
+    try:
+        cov.build_denial(case, pack, physician_signoff=None,
+                         model_id=_DEMO_MODEL_ID, timestamp=_DEMO_TS)
+        f14 = {"raised": False}
+    except cov.PhysicianSignoffRequired as exc:
+        f14 = {"raised": True, "error": str(exc)}
+
+    return {
+        "pack": {"version": pack.version, "hash": pack.hash[:12],
+                 "status": pack.approval_status, "service": pack.service},
+        "denial_letter": raw["denial_letter"],
+        "denial_audit": _coverage_verdict_dict(denial_audit),
+        "appeal": {
+            "attempts": [
+                {"proposal": _claim_summary(a.proposal),
+                 "verdict": _coverage_verdict_dict(a.verdict)}
+                for a in appeal.attempts
+            ],
+            "shipped": bool(appeal.shipped),
+            "artifact_text": appeal_artifact["text"] if appeal_artifact else None,
+        },
+        "mode_b": {"decision": mode_b["decision"],
+                   "artifact_text": (mode_b["artifact"] or {}).get("text"),
+                   "statuses": mode_b["statuses"]},
+        "f14": f14,
     }
 
 
@@ -272,6 +428,7 @@ def run_demo(fixture: dict, live: bool = False) -> dict:
     final_reply = run_rendering_loop(
         state, "patient", ["res-troponin"], final_draft, max_revisions=2)
 
+    transcript["stage_c"] = _coverage_scene()
     transcript["stage_b"] = {
         "event": stage_b_cfg["event"],
         "journey_pre": pathway.journey_to_dict(journey_pre),

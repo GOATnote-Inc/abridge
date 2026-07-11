@@ -18,6 +18,9 @@ human-readable); on ALLOW the artifact ships. Fail-closed guarantees:
 
 from __future__ import annotations
 
+import hashlib
+import json
+import time
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 
@@ -38,6 +41,37 @@ from .verdict import Decision, Finding, Severity, Verdict
 
 # Chart-state gate criteria: a rewrite cannot satisfy these; a human must act.
 STATE_GATE_CRITERIA = {"SITREP-disclosure_gap"}
+
+
+def _stable_hash(obj: object) -> str:
+    """Deterministic short hash of a proposal for trace correlation."""
+    try:
+        blob = json.dumps(obj, sort_keys=True, default=lambda o: getattr(o, "__dict__", str(o)))
+    except TypeError:
+        blob = repr(obj)
+    return hashlib.sha256(blob.encode()).hexdigest()[:12]
+
+
+def trace_event(trace: list | None, *, surface: str, attempt: int,
+                proposal: object, decision: str,
+                findings: Iterable[Finding], t0: float | None) -> None:
+    """Append one per-attempt record to a caller-supplied trace list.
+
+    Tracing is strictly opt-in: when ``trace is None`` (the default — all
+    replay/demo paths) nothing here runs and no clock is read, so F11
+    byte-identical replay is untouched. The exhibit runner passes a list and
+    writes JSONL from it.
+    """
+    if trace is None:
+        return
+    trace.append({
+        "surface": surface,
+        "attempt": attempt,
+        "proposal_hash": _stable_hash(proposal),
+        "decision": decision,
+        "findings": [f.criterion_id or f.kind for f in findings],
+        "latency_ms": None if t0 is None else round((time.perf_counter() - t0) * 1000, 1),
+    })
 
 
 def format_feedback(findings: Iterable[Finding]) -> str:
@@ -69,11 +103,13 @@ class TriageLoopResult:
 
 
 def run_triage_loop(
-    enc: Encounter, propose: ProposeFn, max_revisions: int = 2
+    enc: Encounter, propose: ProposeFn, max_revisions: int = 2,
+    trace: list | None = None,
 ) -> TriageLoopResult:
     attempts: list[TriageAttempt] = []
     feedback: str | None = None
-    for _ in range(max_revisions + 1):
+    for i in range(max_revisions + 1):
+        t0 = time.perf_counter() if trace is not None else None
         proposal = propose(enc, feedback)
         if proposal is None:
             return TriageLoopResult(
@@ -82,6 +118,9 @@ def run_triage_loop(
             )
         verdict = supervise(enc, proposal)
         attempts.append(TriageAttempt(proposal, verdict))
+        trace_event(trace, surface="triage", attempt=i, proposal=proposal,
+                    decision=verdict.decision.value, findings=verdict.findings,
+                    t0=t0)
         if verdict.decision is Decision.ALLOW:
             return TriageLoopResult(tuple(attempts), proposal, False, "allowed")
         if verdict.decision is Decision.ESCALATE:
@@ -124,11 +163,13 @@ def run_rendering_loop(
     draft: DraftFn,
     max_revisions: int = 2,
     kind: str = "message",
+    trace: list | None = None,
 ) -> RenderingLoopResult:
     attempts: list[RenderingAttempt] = []
     feedback: str | None = None
     refs = list(refs)
-    for _ in range(max_revisions + 1):
+    for i in range(max_revisions + 1):
+        t0 = time.perf_counter() if trace is not None else None
         text = draft(feedback)
         if text is None:
             return RenderingLoopResult(
@@ -138,6 +179,9 @@ def run_rendering_loop(
         verdict = supervise_rendering(
             Rendering(audience=audience, text=text, refs=refs, kind=kind), state)
         attempts.append(RenderingAttempt(text, verdict))
+        trace_event(trace, surface="rendering", attempt=i, proposal=text,
+                    decision=verdict.decision.value, findings=verdict.findings,
+                    t0=t0)
         if not verdict.blocked:
             return RenderingLoopResult(tuple(attempts), text, False, "allowed")
         state_hits = tuple(
@@ -183,13 +227,15 @@ def run_coverage_loop(
     pack: CoveragePack,
     propose: CoverageProposeFn,
     max_revisions: int = 2,
+    trace: list | None = None,
 ) -> CoverageLoopResult:
     """Same loop semantics as the other two surfaces: BLOCK feeds the findings
     back verbatim; ESCALATE stops immediately (a human decides — automated
     denial does not exist); a None proposal escalates fail-closed."""
     attempts: list[CoverageAttempt] = []
     feedback: str | None = None
-    for _ in range(max_revisions + 1):
+    for i in range(max_revisions + 1):
+        t0 = time.perf_counter() if trace is not None else None
         proposal = propose(feedback)
         if proposal is None:
             return CoverageLoopResult(
@@ -197,6 +243,9 @@ def run_coverage_loop(
                 "performer produced no usable proposal — fail closed to a human")
         verdict = supervise_determination(case, pack, proposal)
         attempts.append(CoverageAttempt(proposal, verdict))
+        trace_event(trace, surface="coverage", attempt=i, proposal=proposal,
+                    decision=verdict.decision.value, findings=verdict.findings,
+                    t0=t0)
         if verdict.decision is Decision.ALLOW:
             return CoverageLoopResult(tuple(attempts), proposal, False, "allowed")
         if verdict.decision is Decision.ESCALATE:

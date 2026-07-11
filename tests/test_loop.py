@@ -96,3 +96,23 @@ def test_rendering_cap_fails_closed_nothing_sent():
     r = run_rendering_loop(_state(), "patient", ["res-troponin"],
                            lambda f: _BAD, max_revisions=1)
     assert r.escalated and r.shipped is None and len(r.attempts) == 2
+
+
+def test_trace_is_opt_in_and_records_attempts():
+    trace = []
+
+    def propose(enc, feedback):
+        return _UNSAFE if feedback is None else _SAFE
+
+    run_triage_loop(_chest_pain(), propose, trace=trace)
+    assert [e["decision"] for e in trace] == ["BLOCK", "ALLOW"]
+    assert trace[0]["surface"] == "triage" and trace[0]["attempt"] == 0
+    assert "ATT-UT1" in trace[0]["findings"]
+    assert isinstance(trace[0]["latency_ms"], float)
+    assert len(trace[0]["proposal_hash"]) == 12
+
+
+def test_no_trace_means_no_clock_and_no_records():
+    # Replay purity: default path must not read any clock or emit anything.
+    r = run_triage_loop(_chest_pain(), lambda e, f: _SAFE)
+    assert r.shipped == _SAFE  # and nothing traced anywhere

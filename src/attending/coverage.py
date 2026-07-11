@@ -191,8 +191,23 @@ def gate_coverage_grounding(case: CoverageCase, pack: CoveragePack,
     return out
 
 
+# (number, unit-noun) pairs: "20 words" -> ("20", "word"). Same-unit
+# comparison keeps precision — different quantities of different things
+# ("age 3" vs "under 21") are not contradictions.
+_NUM_UNIT_RE = re.compile(r"(\d+(?:\.\d+)?)\W{0,3}([A-Za-z]+)")
+
+
+def _num_units(text: str) -> dict[str, set[str]]:
+    pairs: dict[str, set[str]] = {}
+    for num, unit in _NUM_UNIT_RE.findall(text):
+        pairs.setdefault(unit.lower().rstrip("s"), set()).add(num)
+    return pairs
+
+
 def gate_frankenfacts(case: CoverageCase, proposal: CoverageProposal) -> list[Finding]:
-    """F19 (facts half): claim-asserted facts must not contradict note_facts."""
+    """F19 (facts half): claim-asserted facts must not contradict note_facts;
+    and a claim's own text must not numerically contradict the evidence it
+    quotes (e.g. text says "200 words" while citing the span that says 20)."""
     out: list[Finding] = []
     for i, claim in enumerate(proposal.claims):
         for key, val in (claim.facts or {}).items():
@@ -204,6 +219,26 @@ def gate_frankenfacts(case: CoverageCase, proposal: CoverageProposal) -> list[Fi
                     criterion_id="COV-F19",
                     citation="INVERSION F19 — artifact facts must match the note",
                 ))
+        text_units = _num_units(claim.text)
+        if not text_units:
+            continue
+        for cite in claim.cites:
+            quote_units = _num_units(cite.quote or "")
+            clash = next(
+                (u for u in text_units
+                 if u in quote_units and text_units[u].isdisjoint(quote_units[u])),
+                None)
+            if clash:
+                out.append(Finding(
+                    "coverage_frankenfact", Severity.BLOCK,
+                    f"claim {i + 1} states {sorted(text_units[clash])} "
+                    f"{clash}(s) but its cited evidence says "
+                    f"{sorted(quote_units[clash])} — the claim contradicts "
+                    "its own quote",
+                    criterion_id="COV-F19",
+                    citation="INVERSION F19 — artifact facts must match the note",
+                ))
+                break
     return out
 
 

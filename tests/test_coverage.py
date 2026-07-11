@@ -324,3 +324,39 @@ class TestQuoteAnchoredCites:
         p = _proposal(pack, claims=[Claim("x", cites=(Cite("note", "auto"),))])
         v = supervise_determination(_case(), pack, p)
         assert any(f.criterion_id == "COV-F15" for f in v.findings)
+
+
+def test_claim_contradicting_its_own_quote_blocks(tmp_path):
+    # F19 (GSC-08 pattern): same unit, different number — "200 words" while
+    # quoting evidence that says "20 words".
+    pack = _pack(tmp_path)
+    p = _proposal(pack, claims=[
+        Claim("The patient has an expressive vocabulary of about 200 words.",
+              cites=(Cite("note", "auto",
+                          quote="an expressive vocabulary of approximately "
+                                "20 words"),))])
+    case = _case()
+    case.note += (" His parent reports an expressive vocabulary of "
+                  "approximately 20 words today.")
+    v = supervise_determination(case, pack, p)
+    assert any(f.criterion_id == "COV-F19" for f in v.findings)
+
+
+def test_different_units_are_not_contradictions(tmp_path):
+    # "re-eval in 12 weeks" quoting a span about "2 times per week" is fine.
+    pack = _pack(tmp_path)
+    p = _proposal(pack, claims=[
+        Claim("Re-evaluation is planned in 12 weeks.",
+              cites=(Cite("clause", "T-03"),
+                     Cite("note", "auto", quote="2x/week is required")))])
+    v = supervise_determination(_case(), pack, p)
+    assert not any(f.criterion_id == "COV-F19" for f in v.findings)
+
+
+def test_matching_numbers_do_not_false_positive(tmp_path):
+    pack = _pack(tmp_path)
+    p = _proposal(pack, claims=[
+        Claim("Therapy is skilled, delivered 2x/week.",
+              cites=(Cite("clause", "T-03"), Cite("note", "auto", quote="2x/week")))])
+    v = supervise_determination(_case(), pack, p)
+    assert not any(f.criterion_id == "COV-F19" for f in v.findings)

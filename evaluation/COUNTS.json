@@ -1,5 +1,5 @@
 {
-  "tests_collected": 257,
+  "tests_collected": 260,
   "mutation_mechanisms": 22,
   "goldset_cases": 23,
   "adversarial_attacks": 22

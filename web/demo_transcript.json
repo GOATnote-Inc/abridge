@@ -204,7 +204,7 @@
     "reason": "allowed"
   },
   "stage_b": {
-    "event": "Troponin resulted 0.31 ng/mL (CRITICAL) and auto-released to the portal under the Cures Act. The patient viewed it 4 minutes ago. No clinician has discussed it. Patient types: 'I saw my result. Is it bad?'",
+    "event": "Troponin resulted 0.31 ng/mL (critical flag) and auto-released to the portal under the Cures Act. The patient viewed it 4 minutes ago; no one has talked it over with them yet. Patient types: 'I saw my result. Is it bad?'",
     "journey_pre": {
       "steps": [
         {
@@ -306,25 +306,33 @@
           "citation": null
         },
         {
-          "id": "next_steps",
-          "label": "Clinician discussion and continued care",
+          "id": "troponin_repeat",
+          "label": "Repeat troponin (watching the trend)",
           "status": "active",
-          "detail": "A clinician will talk with you about this result.",
+          "detail": "",
+          "window": "typically 1-3 hours after the first blood draw",
+          "citation": "2021 AHA/ACC Chest Pain Guideline \u00a74.1 (Class 1): repeat troponin 1-3 h after the first sample (high-sensitivity assay) or 3-6 h (conventional assay)"
+        },
+        {
+          "id": "next_steps",
+          "label": "Nurse check-in; doctor reviewing",
+          "status": "active",
+          "detail": "Your nurse will go over this result with you. Your ED doctor is reviewing it.",
           "window": null,
           "citation": "HEART Pathway (Mahler 2015) and 2021 AHA/ACC \u00a74.1: elevated troponin \u2014 cardiology consultation and admission or observation are commonly recommended"
         }
       ],
       "delays": [],
-      "next_box": "Your care team has been notified about this result. A clinician will talk with you about it. For results like this, published guidelines commonly recommend: staying on the heart monitor, repeat ECG tracings, a repeat troponin blood test, and a visit from the heart team. Many patients are admitted or observed. Your team decides your actual plan and will explain it to you.",
-      "nurse_note": "Troponin CRITICAL 0.31 \u2014 pt-visible via portal. Gate paged MD for bedside discussion. Commonly recommended per HEART/AHA-ACC/ESC: continuous monitoring, serial ECG + troponin, cards consult, admit/obs. Confirm plan documented.",
+      "next_box": "Your care team has been notified about this result. The next step is a repeat troponin blood test \u2014 published guidelines commonly recommend repeating it to watch the trend. You stay on the heart monitor. Your nurse will go over this result with you, and your ED doctor is reviewing it. Depending on the repeat test and your exam, some patients are seen by the heart team or stay for observation. Your team decides your actual plan and will explain it to you.",
+      "nurse_note": "Troponin 0.31 (critical flag) \u2014 patient has viewed it on the portal. Repeat troponin due 1-3 hours after the first blood draw; continuous monitoring. Track board flagged; RN to acknowledge at bedside; ED MD reviewing. Consult/observation per trend and exam.",
       "labels": "This panel is generated automatically. It is general information, not medical advice. Your care team makes all decisions about your care. To reach a person, press your call button or ask any staff member. If you feel worse, tell your nurse right away.",
-      "patient_text": "Your care team has been notified about this result. A clinician will talk with you about it. For results like this, published guidelines commonly recommend: staying on the heart monitor, repeat ECG tracings, a repeat troponin blood test, and a visit from the heart team. Many patients are admitted or observed. Your team decides your actual plan and will explain it to you. This panel is generated automatically. It is general information, not medical advice. Your care team makes all decisions about your care. To reach a person, press your call button or ask any staff member. If you feel worse, tell your nurse right away.",
+      "patient_text": "Your care team has been notified about this result. The next step is a repeat troponin blood test \u2014 published guidelines commonly recommend repeating it to watch the trend. You stay on the heart monitor. Your nurse will go over this result with you, and your ED doctor is reviewing it. Depending on the repeat test and your exam, some patients are seen by the heart team or stay for observation. Your team decides your actual plan and will explain it to you. This panel is generated automatically. It is general information, not medical advice. Your care team makes all decisions about your care. To reach a person, press your call button or ask any staff member. If you feel worse, tell your nurse right away.",
       "reviewed_by": null
     },
     "result_context_panel": {
       "attempts": [
         {
-          "text": "Your care team has been notified about this result. A clinician will talk with you about it. For results like this, published guidelines commonly recommend: staying on the heart monitor, repeat ECG tracings, a repeat troponin blood test, and a visit from the heart team. Many patients are admitted or observed. Your team decides your actual plan and will explain it to you. This panel is generated automatically. It is general information, not medical advice. Your care team makes all decisions about your care. To reach a person, press your call button or ask any staff member. If you feel worse, tell your nurse right away.",
+          "text": "Your care team has been notified about this result. The next step is a repeat troponin blood test \u2014 published guidelines commonly recommend repeating it to watch the trend. You stay on the heart monitor. Your nurse will go over this result with you, and your ED doctor is reviewing it. Depending on the repeat test and your exam, some patients are seen by the heart team or stay for observation. Your team decides your actual plan and will explain it to you. This panel is generated automatically. It is general information, not medical advice. Your care team makes all decisions about your care. To reach a person, press your call button or ask any staff member. If you feel worse, tell your nurse right away.",
           "verdict": {
             "audience": "patient",
             "decision": "ALLOW",
@@ -332,7 +340,7 @@
           }
         }
       ],
-      "shipped": "Your care team has been notified about this result. A clinician will talk with you about it. For results like this, published guidelines commonly recommend: staying on the heart monitor, repeat ECG tracings, a repeat troponin blood test, and a visit from the heart team. Many patients are admitted or observed. Your team decides your actual plan and will explain it to you. This panel is generated automatically. It is general information, not medical advice. Your care team makes all decisions about your care. To reach a person, press your call button or ask any staff member. If you feel worse, tell your nurse right away.",
+      "shipped": "Your care team has been notified about this result. The next step is a repeat troponin blood test \u2014 published guidelines commonly recommend repeating it to watch the trend. You stay on the heart monitor. Your nurse will go over this result with you, and your ED doctor is reviewing it. Depending on the repeat test and your exam, some patients are seen by the heart team or stay for observation. Your team decides your actual plan and will explain it to you. This panel is generated automatically. It is general information, not medical advice. Your care team makes all decisions about your care. To reach a person, press your call button or ask any staff member. If you feel worse, tell your nurse right away.",
       "escalated": false,
       "reason": "allowed",
       "state_findings": []
@@ -391,11 +399,11 @@
         "SITREP-disclosure_gap"
       ]
     },
-    "escalation": "care team paged \u2014 disclosure gap",
+    "escalation": "care team notified (track board) \u2014 disclosure gap",
     "physician_page": {
       "attempts": [
         {
-          "text": "Page: patient viewed CRITICAL troponin (0.31) on the portal 4 minutes ago with no documented discussion. Bedside conversation needed now.",
+          "text": "Track board \u2014 DEMO-001: troponin 0.31 (critical flag); patient has viewed it on the portal. No new chest pain reported; ECG unchanged. Repeat troponin timed per protocol; RN to acknowledge at bedside; ED physician reviewing.",
           "verdict": {
             "audience": "physician",
             "decision": "ALLOW",
@@ -403,16 +411,16 @@
           }
         }
       ],
-      "shipped": "Page: patient viewed CRITICAL troponin (0.31) on the portal 4 minutes ago with no documented discussion. Bedside conversation needed now.",
+      "shipped": "Track board \u2014 DEMO-001: troponin 0.31 (critical flag); patient has viewed it on the portal. No new chest pain reported; ECG unchanged. Repeat troponin timed per protocol; RN to acknowledge at bedside; ED physician reviewing.",
       "escalated": false,
       "reason": "allowed",
       "state_findings": []
     },
-    "discussion": "Dr. Chen documents a bedside discussion of the critical troponin and the plan (cardiology consult, serial ECGs, admission).",
+    "discussion": "RN Alvarez reviews the result with the patient at the bedside and documents it: repeat troponin scheduled, ED physician reviewing, use the call button if anything changes.",
     "final_reply": {
       "attempts": [
         {
-          "text": "Your troponin result is ready to view, and Dr. Chen has just talked with you about what it shows and the plan. Your care team has been notified and is watching you closely. This update was generated with AI. If anything feels worse, press your call button to speak with your nurse right away.",
+          "text": "Your nurse has gone over your troponin result with you, and your ED doctor is reviewing it. The next step is your repeat troponin test. Your care team has been notified and is watching closely. This update was generated with AI. If anything feels worse, press your call button to speak with your nurse right away.",
           "verdict": {
             "audience": "patient",
             "decision": "ALLOW",
@@ -420,7 +428,7 @@
           }
         }
       ],
-      "shipped": "Your troponin result is ready to view, and Dr. Chen has just talked with you about what it shows and the plan. Your care team has been notified and is watching you closely. This update was generated with AI. If anything feels worse, press your call button to speak with your nurse right away.",
+      "shipped": "Your nurse has gone over your troponin result with you, and your ED doctor is reviewing it. The next step is your repeat troponin test. Your care team has been notified and is watching closely. This update was generated with AI. If anything feels worse, press your call button to speak with your nurse right away.",
       "escalated": false,
       "reason": "allowed",
       "state_findings": []

@@ -168,24 +168,32 @@ def chest_pain_journey(
         ))
         if critical:
             steps.append(JourneyStep(
-                "next_steps", "Clinician discussion and continued care", "active",
-                detail="A clinician will talk with you about this result.",
+                "troponin_repeat", "Repeat troponin (watching the trend)", "active",
+                window=f"typically {interval}",
+                citation=CITE_TROP_SERIAL,
+            ))
+            steps.append(JourneyStep(
+                "next_steps", "Nurse check-in; doctor reviewing", "active",
+                detail="Your nurse will go over this result with you. Your ED "
+                       "doctor is reviewing it.",
                 citation=CITE_DISPO,
             ))
             next_box = (
-                "Your care team has been notified about this result. A "
-                "clinician will talk with you about it. For results like "
-                "this, published guidelines commonly recommend: staying on "
-                "the heart monitor, repeat ECG tracings, a repeat troponin "
-                "blood test, and a visit from the heart team. Many patients "
-                "are admitted or observed. Your team decides your actual "
-                "plan and will explain it to you."
+                "Your care team has been notified about this result. The "
+                "next step is a repeat troponin blood test — published "
+                "guidelines commonly recommend repeating it to watch the "
+                "trend. You stay on the heart monitor. Your nurse will go "
+                "over this result with you, and your ED doctor is reviewing "
+                "it. Depending on the repeat test and your exam, some "
+                "patients are seen by the heart team or stay for "
+                "observation. Your team decides your actual plan and will "
+                "explain it to you."
             )
-            nurse_note = ("Troponin CRITICAL " + trop.value + " — pt-visible via "
-                          "portal. Gate paged MD for bedside discussion. "
-                          "Commonly recommended per HEART/AHA-ACC/ESC: continuous "
-                          "monitoring, serial ECG + troponin, cards consult, "
-                          "admit/obs. Confirm plan documented.")
+            nurse_note = (f"Troponin {trop.value} (critical flag) — patient has "
+                          f"viewed it on the portal. Repeat troponin due "
+                          f"{interval}; continuous monitoring. Track board "
+                          "flagged; RN to acknowledge at bedside; ED MD "
+                          "reviewing. Consult/observation per trend and exam.")
         else:
             steps.append(JourneyStep(
                 "troponin_repeat", "Repeat troponin", "expected",

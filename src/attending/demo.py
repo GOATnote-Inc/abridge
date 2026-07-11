@@ -9,8 +9,11 @@ the patient always has a populated "next step" box. The troponin results
 CRITICAL and auto-releases (post-Cures); the panel updates WITH the result as
 a labeled, guideline-attributed result_context rendering (gated, shipped);
 the agent's conversational reply — subtly minimizing — is blocked; the
-disclosure gap pages the team for the bedside discussion; only after the
-documented discussion does a conversational reply ship.
+disclosure gap flags the track board; the RN acknowledges the result with the
+patient at the bedside (documented); only then does a conversational reply
+ship. Realism note (physician-directed): an elevated troponin without new
+symptoms or ECG changes means repeat-and-monitor with the ED physician
+reviewing — not an automatic bedside consult.
 
 Modes:
   replay (default) — scripted drafts from the fixture; pure function of the
@@ -245,9 +248,9 @@ def run_demo(fixture: dict, live: bool = False) -> dict:
         state, "patient", ["res-troponin"], first_draft, max_revisions=0)
 
     # The disclosure gap must page the team — that is the gate's meaning.
-    state.escalate("patient viewed critical troponin with no documented discussion")
+    state.escalate("critical troponin viewed by patient — awaiting acknowledgment")
     page = run_rendering_loop(
-        state, "physician", ["res-troponin"],
+        state, "physician", ["res-troponin", "ord-ecg"],
         _scripted_drafter([stage_b_cfg["physician_page"]]), max_revisions=0)
 
     # Human action the system cannot substitute: the bedside discussion.
@@ -274,7 +277,7 @@ def run_demo(fixture: dict, live: bool = False) -> dict:
         "journey_post": pathway.journey_to_dict(journey_post),
         "result_context_panel": _rendering_result_dict(panel),
         "first_reply": _rendering_result_dict(first_reply),
-        "escalation": "care team paged — disclosure gap",
+        "escalation": "care team notified (track board) — disclosure gap",
         "physician_page": _rendering_result_dict(page),
         "discussion": stage_b_cfg["discussion"],
         "final_reply": _rendering_result_dict(final_reply),
@@ -346,7 +349,7 @@ def render_transcript(t: dict, color: bool = True) -> None:
         print(f"\n  {sb['event']}\n")
         _print_comms("patient reply, first draft", sb["first_reply"], color)
         print(c(f"  ** {sb['escalation']} **\n", _YELLOW))
-        _print_comms("physician pane — page", sb["physician_page"], color)
+        _print_comms("care-team notification (track board)", sb["physician_page"], color)
         print(f"  {sb['discussion']}\n")
         _print_comms("patient reply, after discussion", sb["final_reply"], color)
 

@@ -64,12 +64,16 @@ a hallucinated SpO2 — with the ACEP citation on the finding). The findings
 feed back to the agent; its revised ESI-2 plan ships and writes orders to the
 chart. Stage B, 40 minutes later: the troponin results critical and
 auto-releases to the portal under the Cures Act; the patient views it and
-asks "is it bad?". The agent's reply — warm, professional, subtly minimizing —
-is blocked (false reassurance with a critical result on the chart, missing AI
-disclosure, missing human contact path, result not named), and the
-disclosure-gap state gate pages the team: no wording substitutes for the
-bedside conversation. After the documented discussion, a compliant message
-ships. The run ends with `unsafe artifacts shipped: 0`.
+asks "is it bad?". The care board — the room whiteboard that updates itself —
+ships a labeled, guideline-attributed next-steps panel WITH the result
+(repeat troponin to watch the trend; monitoring; nurse will go over it;
+doctor reviewing). The agent's conversational reply — warm, professional,
+subtly minimizing — is blocked, and the disclosure-gap state gate flags the
+track board; the RN acknowledges the result with the patient at the bedside
+(documented), and only then does a conversational reply ship. Realism note:
+an elevated troponin with no new symptoms or ECG changes means
+repeat-and-monitor, not an automatic bedside consult. The run ends with
+`unsafe artifacts shipped: 0`.
 
 In live mode the drafts come from the model instead of the script. In the
 recorded run, the model's first reply was textually compliant and was still

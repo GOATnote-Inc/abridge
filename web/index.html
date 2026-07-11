@@ -175,6 +175,22 @@
   ::-webkit-scrollbar{width:9px}
   ::-webkit-scrollbar-thumb{background:var(--line2); border-radius:5px}
   ::-webkit-scrollbar-track{background:transparent}
+
+/* care board — the room whiteboard that updates itself */
+.wb{background:#0f1a14;border-color:#2b4a33}
+.wb.wb-rn{background:#101826;border-color:#2b3b55}
+.wb .k{color:#7ee2a8}
+.wb.wb-rn .k{color:#79b8ff}
+.wb-step{display:flex;gap:8px;margin:4px 0;align-items:flex-start}
+.wb-ic{width:16px;color:#8b949e;flex:none}
+.wb-step.done .wb-ic{color:#3fb950}
+.wb-step.active .wb-ic{color:#d29922}
+.wb-l{font-size:13px}
+.wb-step.done .wb-l{color:#8b949e}
+.wb-w,.wb-c{font-size:11px;color:#8b949e}
+.wb-next{margin-top:8px;border:1px solid #d29922;border-radius:6px;padding:8px;background:#1a1710}
+.wb-nk{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:#d29922;margin-bottom:3px}
+.wb-lb{margin-top:6px;font-size:10.5px;color:#8b949e}
 </style>
 </head>
 <body>
@@ -283,6 +299,31 @@ function card(cls, kicker, text){
   var c = el("div","card"+(cls?" "+cls:""));
   if (kicker) c.appendChild(el("div","k", kicker));
   if (text) c.appendChild(el("div", null, text));
+  return c;
+}
+
+function journeyCard(j, mode){ // the room whiteboard, patient or RN view
+  var c = el("div","card wb" + (mode === "nurse" ? " wb-rn" : ""));
+  c.appendChild(el("div","k", mode === "patient"
+    ? "your care board · updates itself"
+    : "care board · RN view (same state)"));
+  (j.steps || []).forEach(function(st){
+    var row = el("div","wb-step " + (st.status || ""));
+    row.appendChild(el("span","wb-ic",
+      st.status === "done" ? "✓" : (st.status === "active" ? "●" : "○")));
+    var body = el("div","wb-body");
+    body.appendChild(el("div","wb-l", st.label));
+    if (st.window) body.appendChild(el("div","wb-w", st.window));
+    if (mode === "nurse" && st.citation) body.appendChild(el("div","wb-c", st.citation));
+    row.appendChild(body);
+    c.appendChild(row);
+  });
+  var nb = el("div","wb-next");
+  nb.appendChild(el("div","wb-nk","next step"));
+  nb.appendChild(el("div", null,
+    mode === "patient" ? (j.next_box || "") : (j.nurse_note || "")));
+  c.appendChild(nb);
+  if (mode === "patient" && j.labels) c.appendChild(el("div","wb-lb", j.labels));
   return c;
 }
 
@@ -428,8 +469,8 @@ function deriveSteps(t){
   // (n+1) shipped plan or escalation
   if (sa.shipped){
     steps.push({
-      label:"Plan ships — orders written to the chart",
-      active:["nurse"],
+      label:"Plan ships — care boards go live",
+      active:["nurse","patient"],
       apply:function(view){
         var c = card("shipped","shipped plan · orders to chart");
         var line = el("div");
@@ -438,6 +479,11 @@ function deriveSteps(t){
         c.appendChild(line);
         c.appendChild(ordersRow(get(sa,"shipped","orders")));
         view.panes.nurse.push(c);
+        var jp = get(t,"stage_b","journey_pre");
+        if (jp){
+          view.panes.patient.push(journeyCard(jp,"patient"));
+          view.panes.nurse.push(journeyCard(jp,"nurse"));
+        }
         view.rail.push(railEntry({
           tone:"allow", chipKind:"allow", chipLabel:"shipped",
           title:"Stage A plan shipped",
@@ -490,6 +536,32 @@ function deriveSteps(t){
       }
     });
 
+    // (n+2b) the care board updates WITH the result — gated result_context
+    if (sb.journey_post || sb.result_context_panel){
+      steps.push({
+        label:"Care board updates with the result — labeled context ships",
+        active:["patient","nurse"],
+        apply:function(view){
+          var jp = sb.journey_post;
+          if (jp){
+            view.panes.patient.push(journeyCard(jp,"patient"));
+            view.panes.nurse.push(journeyCard(jp,"nurse"));
+          }
+          var panel = sb.result_context_panel || {};
+          var pv = get(panel,"attempts",0,"verdict") || {};
+          view.rail.push(railEntry({
+            tone: panel.shipped ? "allow" : "block",
+            chipKind: panel.shipped ? "allow" : "block",
+            chipLabel: pv.decision || "?",
+            title:"Care-board panel (result_context) — gated",
+            meta:(pv.audience || "patient") +
+                 (panel.shipped ? " · shipped with the result" : " · withheld"),
+            findings: pv.findings || []
+          }));
+        }
+      });
+    }
+
     // (n+3) first reply attempt(s) — blocked drafts are quarantined in the rail only
     replyAttemptSteps(sb.first_reply, {
       label:"Agent drafts patient reply", pane:"patient", who:"care team (AI)",
@@ -498,13 +570,13 @@ function deriveSteps(t){
 
     // (n+4) escalation page
     steps.push({
-      label:"Disclosure gap — care team paged",
+      label:"Disclosure gap — care team notified (track board)",
       active:["physician","consultant"],
       apply:function(view){
         var fr = sb.first_reply || {};
         view.rail.push(railEntry({
-          tone:"amber", chipKind:"amber", chipLabel:"page",
-          title: sb.escalation || "care team paged",
+          tone:"amber", chipKind:"amber", chipLabel:"notify",
+          title: sb.escalation || "care team notified",
           meta: fr.reason || "",
           body: (fr.state_findings && fr.state_findings.length)
                 ? "state gate: " + fr.state_findings.join(", ") : ""
@@ -516,26 +588,26 @@ function deriveSteps(t){
           if (pa && get(pa,"verdict","decision") === "ALLOW") pageText = pa.text;
         }
         if (pageText !== null && pageText !== undefined){
-          view.panes.physician.push(card("page","page · disclosure gap", pageText));
+          view.panes.physician.push(card("page","track board · result flagged", pageText));
           var pv = get(pg,"attempts",0,"verdict") || {};
           view.rail.push(railEntry({
             tone:"allow", chipKind:"allow", chipLabel: pv.decision || "ALLOW",
-            title:"Physician page", meta:(pv.audience || "physician") + " · shipped",
+            title:"Team notification", meta:(pv.audience || "physician") + " · shipped",
             findings: pv.findings || []
           }));
         }
         // pane choreography (demo-specific): the page opens a consult
-        view.panes.consultant.push(card("pending","consult", "cardiology consult — pending"));
+        view.panes.consultant.push(card("pending","consult", "none yet — per repeat troponin trend and exam"));
       }
     });
 
     // (n+5) documented discussion
     if (sb.discussion){
       steps.push({
-        label:"Bedside discussion — the human action, documented",
-        active:["physician"],
+        label:"Bedside acknowledgment (RN) — documented",
+        active:["nurse"],
         apply:function(view){
-          view.panes.physician.push(card("shipped","documented discussion", sb.discussion));
+          view.panes.nurse.push(card("shipped","documented acknowledgment", sb.discussion));
           view.rail.push(railEntry({
             tone:"", chipKind:"info", chipLabel:"chart",
             title:"Discussion documented — disclosure gap closed",

@@ -21,6 +21,12 @@ not the product surface.*
 
 ## The product
 
+The physical anchor is the ED room whiteboard: every room has one, it is
+supposed to carry the plan and the next step, and it is almost never current
+because updating it is manual work the RN does not have time for. The journey
+panel is that whiteboard, deriving from chart state instead of a marker.
+
+
 A per-encounter journey panel — the same panel for the patient and the
 nurse — showing:
 

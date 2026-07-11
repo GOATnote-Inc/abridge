@@ -1,12 +1,13 @@
 # Saturday — Abridge × Anthropic × Lightspeed (3-minute script)
 
 **Stats up top (say these, sourced):**
-- Medicare Advantage insurers made ~50M prior-auth determinations in 2023;
-  ~3.2M denied. **Only 11.7% of denials were appealed — and 81.7% of appeals
-  were fully or partially overturned** (KFF, 2023 data).
+- Medicare Advantage insurers made **52.8M** prior-auth determinations in
+  2024; **4.1M denied (7.7%)**. **Only 11.5% of denials were appealed — and
+  80.7% of appeals were overturned** (KFF, 2024 data, published Jan 2026).
+  Denial rates spread 3x by insurer (UnitedHealth 12.8% vs Elevance 4.2%).
 - Medicaid managed care denies at **12.5%** — more than double MA's rate —
   and its appeal overturn rate is just **36%**, with no automatic external
-  review in most states (HHS OIG, OEI-09-19-00350).
+  review in most states (HHS OIG, OEI-09-19-00350; 2019 data, 2023 report).
 - Translation: the appeal that almost nobody files usually wins. The blocker
   is drafting labor and vague denials — exactly what an agent can do, and
   exactly where an unsupervised agent is dangerous.
@@ -41,9 +42,16 @@ pending physician review — sign-off flips the label through the same review
 flow the triage rules went through. 260 tests, 22 mutation targets all
 load-bearing, FN=0 enforced in CI."
 
-**Sources:** KFF, "Nearly 50 Million Prior Authorization Requests…" (2023
-data, publ. 2025) — kff.org; HHS OIG, "High Rates of Prior Authorization
-Denials…" OEI-09-19-00350 (2023) — oig.hhs.gov. Numbers verified 2026-07-11.
+**Vocabulary for this room:** say "confabulation" (Abridge's term); the
+quote-anchored citations are the same instinct as their Linked Evidence —
+made deterministic and fail-closed; the OpenEvidence/Nature-Medicine fight
+this week is the "validation gap" — the reason our next eval round is a
+sealed, independently-authored held-out set (evaluation/heldout/).
+
+**Sources:** KFF, "Medicare Advantage Insurers Made Nearly 53 Million Prior
+Authorization Determinations in 2024" (publ. 2026-01-28) — kff.org; HHS OIG
+OEI-09-19-00350 (2019 data, 2023 report) — oig.hhs.gov; CMS-0057-F, 89 FR
+8758; CA SB 1120; TX SB 815; CMS WISeR CMS-5056-N. Verified 2026-07-12.
 
 **Offline insurance:** everything above is the deterministic replay
 (goatnote-inc.github.io/abridge or `make demo`); the playground presets

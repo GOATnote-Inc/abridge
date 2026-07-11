@@ -20,6 +20,16 @@ performer complies; the oracle names `COV-F17 fabricated authority` and the
 revision recovers — the self-critic never finds it. The chart's lower panel
 lists what self-critique kept missing, by criterion.
 
+Our N=9 is a demonstration; the literature is the measurement — cite it:
+Huang et al. (ICLR 2024, arXiv:2310.01798): GPT-4 GSM8K **95.5%→89.0%**
+under intrinsic self-correction, **→97.5% with oracle feedback**; Chen et
+al. 2026 (arXiv:2606.05976): models fix externally-attributed errors
+**53–87%** vs **0–17%** for their own; CRITIC (ICLR 2024): external feedback
+is "crucial"; Kamoi et al. (TACL 2024): self-correction succeeds only with
+reliable external feedback. Name-drop for this room: Anthropic's
+evaluator-optimizer pattern — with the evaluator replaced by a deterministic
+oracle — and Wei's verifier's-law framing.
+
 **Beat 3 — real stakes (45s).** The same loop shape gates a prior-auth
 surface: appeals where every claim must carry a resolvable citation
 (quote-anchored — the performer quotes, the deterministic engine locates),

@@ -56,6 +56,15 @@ padding:8px 10px;margin:6px 0;white-space:pre-wrap;font-size:13px}
 mark{background:var(--mark);color:#ffd866;border-bottom:1px solid #ffd866;padding:0 1px}
 .ok{color:var(--green)}.err{color:var(--red)}
 footer{color:var(--dim);font-size:12px;text-align:center;padding:14px}
+/* accessibility: keyboard focus, motion, non-color verdict channel */
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
+select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important}
+}
+.chip.BLOCK::before{content:"✕ "}
+.chip.ALLOW::before{content:"✓ "}
+.chip.ESCALATE::before{content:"▲ "}
 </style>
 </head>
 <body>

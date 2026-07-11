@@ -7,7 +7,7 @@
 <style>
   :root{
     --bg:#0b0f14; --panel:#101720; --panel2:#0d1319; --line:#1e2a38; --line2:#2a3a4c;
-    --text:#dce5ee; --dim:#8fa2b5; --faint:#5d7186;
+    --text:#dce5ee; --dim:#8fa2b5; --faint:#8296ab; /* 5.9:1 on --panel (AA) */
     --red:#ff7076; --red-bg:rgba(229,72,77,.12); --red-line:rgba(229,72,77,.5);
     --green:#4ecf96; --green-bg:rgba(48,164,108,.12); --green-line:rgba(48,164,108,.5);
     --amber:#f5b04a; --amber-bg:rgba(245,166,35,.10); --amber-line:rgba(245,166,35,.45);
@@ -105,10 +105,15 @@
     display:inline-block; font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
     padding:2px 9px; border-radius:999px; border:1px solid var(--line2); color:var(--dim); vertical-align:middle;
   }
-  .chip.block{color:var(--red); background:var(--red-bg); border-color:var(--red-line)}
+  /* BLOCK is solid (weight survives grayscale); every verdict also carries a
+     glyph so state is never encoded by hue alone (WCAG 1.4.1). */
+  .chip.block{color:#ffd9db; background:#7f1d22; border-color:#c4373d}
   .chip.allow{color:var(--green); background:var(--green-bg); border-color:var(--green-line)}
   .chip.amber{color:var(--amber); background:var(--amber-bg); border-color:var(--amber-line)}
   .chip.info{color:var(--blue); background:var(--blue-bg); border-color:var(--blue-line)}
+  .chip.block::before{content:"✕ "}
+  .chip.allow::before{content:"✓ "}
+  .chip.amber::before{content:"▲ "}
   .rail-entry{
     border:1px solid var(--line); border-radius:10px; background:var(--panel2);
     padding:10px 12px; margin-bottom:10px; font-size:12.5px;
@@ -191,6 +196,46 @@
 .wb-next{margin-top:8px;border:1px solid #d29922;border-radius:6px;padding:8px;background:#1a1710}
 .wb-nk{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:#d29922;margin-bottom:3px}
 .wb-lb{margin-top:6px;font-size:10.5px;color:#8b949e}
+
+/* step status words — state is never carried by glyph color alone */
+.wb-st{font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  margin-left:7px;color:#8b949e;white-space:nowrap}
+.wb-step.done .wb-st{color:#3fb950}
+.wb-step.active .wb-st{color:#d29922}
+
+/* ---- accessibility: keyboard + motion ---- */
+.btn:focus-visible,a:focus-visible,button:focus-visible{
+  outline:2px solid var(--blue);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important}
+}
+
+/* ---- patient pane: print-like light surface (clinician console stays dark).
+   All colors ≥4.5:1 on their backgrounds; body text ≥16px. ---- */
+#pane-patient{background:#f6f8fa;border-color:#c9d6e2}
+#pane-patient .pane-head{color:#3f5468;border-bottom-color:#d8e1ea}
+#pane-patient .pane-head .dot{background:#5a6e81}
+#pane-patient .pane-body{font-size:16px}
+#pane-patient .empty{color:#5a6e81;font-size:14px}
+#pane-patient .bubble{background:#ffffff;border-color:#c3d0dc;color:#182430;font-size:16px}
+#pane-patient .bubble.from-team{background:#eef7f1;border-color:#9fceb4}
+#pane-patient .bubble .who{color:#3f5468}
+#pane-patient .card{background:#ffffff;border-color:#d8e1ea;color:#182430}
+#pane-patient .card .k{color:#3f5468}
+#pane-patient .wb{background:#f0f7f2;border-color:#b9d8c4}
+#pane-patient .wb .k{color:#177245}
+#pane-patient .wb-ic{color:#5a6e81}
+#pane-patient .wb-step.done .wb-ic{color:#1a7f4b}
+#pane-patient .wb-step.active .wb-ic{color:#8a5a00}
+#pane-patient .wb-l{font-size:15px;color:#182430}
+#pane-patient .wb-step.done .wb-l{color:#4a5f72}
+#pane-patient .wb-w,#pane-patient .wb-c{color:#4a5f72;font-size:12.5px}
+#pane-patient .wb-st{color:#5a6e81}
+#pane-patient .wb-step.done .wb-st{color:#1a7f4b}
+#pane-patient .wb-step.active .wb-st{color:#8a5a00}
+#pane-patient .wb-next{background:#fff8e8;border-color:#c8981e;color:#182430}
+#pane-patient .wb-nk{color:#7a5200}
+#pane-patient .wb-lb{color:#5a6e81;font-size:12px}
 </style>
 </head>
 <body>
@@ -215,7 +260,7 @@
   <button class="btn" id="backBtn">‹ Back</button>
   <button class="btn" id="nextBtn">Next ›</button>
 </div>
-<div id="progress"><div id="progressFill"></div></div>
+<div id="progress" role="progressbar" aria-label="replay progress" aria-valuemin="0"><div id="progressFill"></div></div>
 
 <main>
   <section class="pane" id="pane-patient">
@@ -236,7 +281,8 @@
   </section>
   <section class="pane" id="rail">
     <div class="pane-head"><span class="dot"></span>Verdict rail — supervision events</div>
-    <div class="pane-body" id="body-rail"></div>
+    <div class="pane-body" id="body-rail" role="log" aria-live="polite"
+         aria-label="Verdict rail — supervision events"></div>
   </section>
 </main>
 
@@ -309,10 +355,17 @@ function journeyCard(j, mode){ // the room whiteboard, patient or RN view
     : "care board · RN view (same state)"));
   (j.steps || []).forEach(function(st){
     var row = el("div","wb-step " + (st.status || ""));
-    row.appendChild(el("span","wb-ic",
-      st.status === "done" ? "✓" : (st.status === "active" ? "●" : "○")));
+    if (st.status === "active") row.setAttribute("aria-current","step");
+    var ic = el("span","wb-ic",
+      st.status === "done" ? "✓" : (st.status === "active" ? "●" : "○"));
+    ic.setAttribute("aria-hidden","true"); // the status word carries the state
+    row.appendChild(ic);
     var body = el("div","wb-body");
-    body.appendChild(el("div","wb-l", st.label));
+    var lab = el("div","wb-l", st.label);
+    lab.appendChild(el("span","wb-st",
+      st.status === "done" ? "done"
+      : (st.status === "active" ? "happening now" : "expected")));
+    body.appendChild(lab);
     if (st.window) body.appendChild(el("div","wb-w", st.window));
     if (mode === "nurse" && st.citation) body.appendChild(el("div","wb-c", st.citation));
     row.appendChild(body);
@@ -763,6 +816,9 @@ function render(){
   document.getElementById("stepLabel").textContent = STEPS[K].label;
   document.getElementById("stepCount").textContent = "step " + (K+1) + " / " + STEPS.length;
   document.getElementById("progressFill").style.width = (100 * (K+1) / STEPS.length) + "%";
+  var pb = document.getElementById("progress");
+  pb.setAttribute("aria-valuenow", String(K+1));
+  pb.setAttribute("aria-valuemax", String(STEPS.length));
   document.getElementById("backBtn").disabled = (K === 0);
   document.getElementById("nextBtn").disabled = (K === STEPS.length - 1);
   document.getElementById("overlay").classList.toggle("show", !!view.overlay);

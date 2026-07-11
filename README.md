@@ -41,7 +41,7 @@ Built on [HealthCraft](https://github.com/GOATnote-Inc/healthcraft)
 and clinical tools Attending reuses. Scoped for the *Future of Agentic AI in
 Healthcare* hackathon (Abridge × Anthropic × Lightspeed).
 
-## The demo — one encounter, both surfaces
+## The demo — one encounter, three surfaces
 
 ```bash
 make demo        # deterministic replay: pure function of the fixture, rehearsable

@@ -2,7 +2,7 @@
   "fixture": "demo-chest-pain-two-surfaces",
   "synthetic": true,
   "mode": "replay",
-  "title": "58M chest pressure \u2014 one encounter, both surfaces",
+  "title": "58M chest pressure \u2014 one encounter, three surfaces",
   "encounter": {
     "encounter_id": "DEMO-001",
     "chief_complaint": "Chest pressure radiating to left arm, started 40 minutes ago",

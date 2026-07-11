@@ -1,6 +1,6 @@
 # Attending — mini system card
 
-*2026-07-09 · ruleset `esi-v4-attending-0.3.1` · format modeled on Anthropic
+*2026-07-09, updated 2026-07-11 (v0.2.1) · ruleset `esi-v4-attending-0.3.1` · format modeled on Anthropic
 system cards: evidence with intervals, negative findings published, grader
 prompts in the appendix, independence labeled, changelog included.*
 

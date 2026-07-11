@@ -9,6 +9,6 @@ from .encounter import Encounter, ProposedTriage, Vitals
 from .supervisor import supervise
 from .verdict import Decision, Verdict
 
-__version__ = "0.1.0"
+__version__ = "0.2.1"
 __all__ = ["Encounter", "ProposedTriage", "Vitals", "supervise", "Decision",
            "Verdict"]

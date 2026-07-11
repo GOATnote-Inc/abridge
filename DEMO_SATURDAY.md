@@ -38,7 +38,7 @@ one fail-closed loop. We extended the chassis, not built a new vehicle."
 
 **Close (15s).** "Criteria pack is versioned, hashed, and labeled DRAFT
 pending physician review — sign-off flips the label through the same review
-flow the triage rules went through. 250 tests, 22 mutation targets all
+flow the triage rules went through. 256 tests, 22 mutation targets all
 load-bearing, FN=0 enforced in CI."
 
 **Sources:** KFF, "Nearly 50 Million Prior Authorization Requests…" (2023

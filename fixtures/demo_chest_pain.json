@@ -1,6 +1,6 @@
 {
   "id": "demo-chest-pain-two-surfaces",
-  "title": "58M chest pressure — one encounter, both surfaces",
+  "title": "58M chest pressure — one encounter, three surfaces",
   "synthetic": true,
   "encounter": {
     "encounter_id": "DEMO-001",

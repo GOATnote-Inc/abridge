@@ -1,4 +1,4 @@
-# The journey tracker — product design (build pending citation research)
+# The journey tracker — product design (shipped 2026-07-10; clinical content from the verified citation research pass)
 
 *2026-07-10. Direction set by the project's physician owner: the core product
 is a communication tool so ED patients constantly know the next step. The

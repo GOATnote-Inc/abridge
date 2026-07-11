@@ -45,7 +45,7 @@ Healthcare* hackathon (Abridge × Anthropic × Lightspeed).
 
 ```bash
 make demo        # deterministic replay: pure function of the fixture, rehearsable
-make demo-live   # identical choreography, drafts from the live Fable 5 performer
+make demo-live   # identical choreography, drafts from the live model performer
 make serve       # gateway + browser UI:  /ui (replay)  ·  /ui/playground.html
 ```
 
@@ -152,10 +152,11 @@ Two layers, deliberately split by what code can and can't do:
   - `hallucination` — numeric claims in the rationale checked against the
     record ("SpO2 98%" when the chart says 97).
 
-**LLM-augmented (Fable 5, optional):** the anchoring and hallucination detectors
-expose an `llm_augment` hook so a Claude **Fable 5** pass can extend the
+**LLM-augmented (optional):** the anchoring and hallucination detectors
+expose an `llm_augment` hook so a screener-model pass can extend the
 deterministic floor to subtler, non-numeric reasoning — LLM only for what code
-can't do. `claude-fable-5` runs natively through HealthCraft's Anthropic client.
+can't do. Model selection is one knob: `ATTENDING_MODEL` (default
+`claude-opus-4-8`).
 
 ## Run it
 
@@ -225,7 +226,7 @@ ingestion, (4) human red-team hours against the gates.
 
 ## Status
 
-Two-surface supervisor + supervised control loop + Fable 5 performer + demo +
+Two-surface supervisor + supervised control loop + live performer + demo +
 gateway + four-pane UI; 152 tests, ruff + mypy clean, gold-set FN=0 enforced in
 CI, mutation-checked gates (disabling one fails 6 tests across 5 layers).
 Evidence is guideline-level (ESI Handbook v4, ACEP, AHA/ASA, Surviving Sepsis,

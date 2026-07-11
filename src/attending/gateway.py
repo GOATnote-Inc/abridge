@@ -26,7 +26,7 @@ mutates the gold set or fixtures; ``/demo`` replays the frozen fixture
 read-only.
 
 Live mode (``/loop/triage`` with ``{"performer": "live"}``, ``/demo?live=1``)
-routes drafting through the Fable 5 performer in ``attending.agent`` and needs
+routes drafting through the live performer in ``attending.agent`` and needs
 ANTHROPIC_API_KEY (see ``attending.llm``); without a key the performer returns
 None and the loop fails closed to a human. The default is always scripted.
 """
@@ -345,7 +345,7 @@ def create_app() -> Any:
     @app.get("/demo")
     def get_demo(live: bool = False) -> dict[str, Any]:
         """The two-surface demo transcript. Replay by default (a pure function
-        of the frozen fixture); ``?live=1`` drafts via the Fable 5 performer
+        of the frozen fixture); ``?live=1`` drafts via the live performer
         and needs ANTHROPIC_API_KEY. Read-only in both modes."""
         try:
             fixture = json.loads(_DEFAULT_FIXTURE.read_text())

@@ -3,7 +3,7 @@
 Anchoring = the proposer fixates on the first / dominant complaint and discounts
 a red flag mentioned later in the encounter. Deterministic proxy: a red flag
 fired, but the proposal's acuity and orders don't reflect it (low ESI, none of
-the flag's required workup ordered). The `llm_augment` hook lets a Fable 5 pass
+the flag's required workup ordered). The `llm_augment` hook lets a screener-model pass
 re-read the transcript independently to catch subtler anchoring the proxy misses.
 """
 

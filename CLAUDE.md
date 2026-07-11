@@ -39,12 +39,18 @@ grades; the supervisor never proposes.
 ## Deterministic / LLM split
 
 - The ESI spine, confidence interval, and detector floor are **program-aided: no LLM, no API key, reproducible**.
-- **IMPORTANT: never move a safety decision into a non-deterministic path.** Fable 5 (`claude-fable-5`) may only AUGMENT the anchoring/hallucination detectors via their `llm_augment` hooks, and any LLM failure must degrade gracefully to the deterministic floor (augment can add findings, never suppress or downgrade one).
+- **IMPORTANT: never move a safety decision into a non-deterministic path.** the configured model (`ATTENDING_MODEL`, default `claude-opus-4-8`) may only AUGMENT the anchoring/hallucination detectors via their `llm_augment` hooks, and any LLM failure must degrade gracefully to the deterministic floor (augment can add findings, never suppress or downgrade one).
 
 ## Clinical safety
 
 - Every rule carries a citation (see `knowledge.py` header). Rule **values** — thresholds, red flags, peds bands — are `DRAFT — pending physician/board sign-off`; never present them as authoritative or drop the approval-status surfacing.
 - **YOU MUST NOT silently weaken or delete a safety criterion.** Changes to `knowledge.py` or the grading rubric require explicit human review; bump `RULESET_VERSION`.
+
+## Model seam
+
+One knob selects the model for everything LLM-shaped (screener judges and
+the demo performer): `ATTENDING_MODEL`, default `claude-opus-4-8`, read in
+`llm.model_name()`. Never hardcode a model id elsewhere.
 
 ## Repo etiquette
 

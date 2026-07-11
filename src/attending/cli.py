@@ -51,7 +51,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--json", action="store_true", help="emit JSON verdict")
     ap.add_argument("--no-color", action="store_true")
     ap.add_argument("--llm", action="store_true",
-                    help="enable Fable 5 augmentation of the anchoring/hallucination "
+                    help="enable LLM augmentation of the anchoring/hallucination "
                          "detectors (needs ANTHROPIC_API_KEY in .env)")
     args = ap.parse_args(argv)
 

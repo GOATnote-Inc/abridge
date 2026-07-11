@@ -1,4 +1,4 @@
-"""Fable 5 augmentation: opt-in, additive, and fail-soft.
+"""LLM augmentation: opt-in, additive, and fail-soft.
 
 No network here — `llm.judge` is monkeypatched. These tests pin the contract:
 augmentation is OFF by default, when ON it can ADD a finding, and any transport

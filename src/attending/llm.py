@@ -1,8 +1,8 @@
-"""Fable 5 runtime augmentation for the anchoring + hallucination detectors.
+"""Runtime LLM augmentation for the anchoring + hallucination detectors.
 
 Per Anthropic's eval guidance, the LLM here is a *screener judge*, not a
 performer: isolated per-dimension prompts, forced-then-discarded reasoning, a
-structured verdict, and a model (Fable 5) distinct from whatever generated the
+structured verdict, and a screener model distinct from whatever generated the
 proposal. It is strictly ADDITIVE to the deterministic detector floor — it can
 raise a finding the code missed, never suppress or downgrade one — and it
 degrades to a no-op when no key / SDK / network is available.
@@ -23,7 +23,7 @@ from pathlib import Path
 from .encounter import Encounter, ProposedTriage
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-_DEFAULT_MODEL = "claude-fable-5"
+_DEFAULT_MODEL = "claude-opus-4-8"
 _KEY_ENV = "ANTHROPIC_API_KEY"
 
 
@@ -71,7 +71,12 @@ def augmentation_enabled() -> bool:
 
 
 def model_name() -> str:
-    return os.environ.get("ATTENDING_LLM_MODEL", _DEFAULT_MODEL)
+    """The single model seam: every LLM call (screener judges and the demo
+    performer) resolves its model here. ATTENDING_MODEL is the one knob;
+    the legacy ATTENDING_LLM_MODEL name is honored for compatibility."""
+    return (os.environ.get("ATTENDING_MODEL")
+            or os.environ.get("ATTENDING_LLM_MODEL")
+            or _DEFAULT_MODEL)
 
 
 def _client():
@@ -105,7 +110,7 @@ def complete_json(
     validation in each caller remains authoritative.
     """
     client = _client()
-    # Temperature omitted deliberately: Fable 5 / frontier models reject temp=0
+    # Temperature omitted deliberately: frontier models reject temp=0
     # and the SDK default is fine for a low-variance structured judgment.
     try:
         resp = client.messages.create(

@@ -6,14 +6,12 @@ necessary — but the guarantee lives in the deterministic gates outside the
 model (prompts drift under pressure; middleware does not). The supervisor's
 findings are fed back verbatim between attempts via `attending.loop`.
 
-Model: ATTENDING_AGENT_MODEL if set, else the session model (claude-fable-5).
+Model: the single ATTENDING_MODEL seam in llm.py (default claude-opus-4-8).
 Any transport/parse failure returns None, which the loop treats as "performer
 gave up" and fails closed to a human.
 """
 
 from __future__ import annotations
-
-import os
 
 from . import llm
 from .encounter import Encounter, ProposedTriage
@@ -21,7 +19,7 @@ from .llm import _encounter_brief  # same package; the brief is the shared recor
 
 
 def agent_model() -> str:
-    return os.environ.get("ATTENDING_AGENT_MODEL", llm.model_name())
+    return llm.model_name()
 
 
 _TRIAGE_SYSTEM = """You are an emergency-department triage agent. Given one \

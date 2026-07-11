@@ -8,7 +8,7 @@ Deterministic floor, two checks (no LLM, no key):
      pressure). Detected by running the SAME red-flag patterns that fired on
      the encounter over negated spans of the rationale.
 
-The `llm_augment` hook lets Fable 5 extend this floor to broader semantic
+The `llm_augment` hook lets a screener model extend this floor to broader semantic
 grounding ("no cardiac history" vs. the medication list). Augmentation is
 ADDITIVE-ONLY: it can raise a finding, never suppress one, and its failure
 leaves the deterministic floor untouched.

@@ -45,7 +45,7 @@ smoke:
 demo:
 	PYTHONPATH=src $(PY) -m attending.demo
 
-# Same choreography, drafts from the live Fable 5 performer (needs .env key).
+# Same choreography, drafts from the live performer (ATTENDING_MODEL; needs key).
 demo-live:
 	PYTHONPATH=src $(PY) -m attending.demo --live
 

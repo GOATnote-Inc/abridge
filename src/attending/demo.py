@@ -19,7 +19,8 @@ Modes:
   replay (default) — scripted drafts from the fixture; pure function of the
       fixture (no clock, randomness, or network) so the demo replays
       byte-identically (INVERSION F11).
-  --live — the drafts come from the Fable 5 performer (`attending.agent`);
+  --live — the drafts come from the live performer (`attending.agent`,
+      model = ATTENDING_MODEL);
       the choreography and every gate are identical.
 
     python -m attending.demo                # replay, terminal narrative
@@ -370,7 +371,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="attending-demo", description=__doc__)
     ap.add_argument("fixture", nargs="?", default=str(_DEFAULT_FIXTURE))
     ap.add_argument("--live", action="store_true",
-                    help="drafts come from the Fable 5 performer (needs key)")
+                    help="drafts come from the live performer (ATTENDING_MODEL; needs key)")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--no-color", action="store_true")
     args = ap.parse_args(argv)

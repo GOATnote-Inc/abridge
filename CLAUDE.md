@@ -84,10 +84,20 @@ stdlib-only). Invariants (every one has a test; do not regress):
 - If a gate lexicon misses a phrase seen in the wild, ADD THE PHRASE AND A TEST
   in the same change. Lexicons are physician-owned and versioned (reviewed 2026-07-09, demo scope).
 
-## Day-of build lanes (July 18)
+## Day-of build lanes (worktrees + /loop)
 
-Parallel build agents get **worktree isolation** (`EnterWorktree` / `isolation:
-"worktree"`) — one lane per surface: `gateway/` hardening, `renderers/` (pane
-prompts), `web/` UI, `demo/` rehearsal wiring. Merge gate for every lane:
-`make check` + `make mutation` green. One session owns git; lanes never run
-git themselves (two writers + git in one repo has burned us before).
+Parallel build agents get **worktree isolation** — one lane per surface:
+`gateway/` hardening, `renderers/` (pane prompts), `web/` UI, `demo/`
+rehearsal wiring. Mechanics (rehearsed on the counts-guard change,
+2026-07-12): `git worktree add ../attending-wt-<lane> -b <lane>` (or
+EnterWorktree when the session is rooted in the repo), build inside the
+worktree, gate there with `make check` + `make mutation`, then `git merge
+--ff-only` from the primary session and `git worktree remove`. One session
+owns git; lanes never run git themselves (two writers + git in one repo has
+burned us before).
+
+**/loop cadence:** iterative build work runs as a /loop with `make check` as
+the oracle — implement → run the gate → feed failures back verbatim →
+revise. That is the same propose→verify→revise shape as `attending.loop`;
+the development process and the product make the same argument. For long
+waits (CI, Pages) prefer background watches over polling.

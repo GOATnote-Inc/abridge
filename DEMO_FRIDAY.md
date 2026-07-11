@@ -29,6 +29,14 @@ raised live). LoopTrace instruments every attempt: {proposal hash, decision,
 findings by criterion, latency} as JSONL — strictly opt-in, so the replay
 demo stays byte-identical.
 
+**Beat 4 — we build with the same loop (20s).** "This repo was built the way
+it runs: every change is an agent loop with `make check` + a 22-mechanism
+mutation harness + an evidence-count drift guard as the deterministic
+oracle, in isolated git worktrees, failures fed back verbatim. The commit
+history shows the oracle catching the builder twice — the red commits and
+their repairs are on the record. Loop engineering, applied to the loop
+engineers."
+
 **Close (15s).** "Self-critique asks the model to grade its own homework.
 A deterministic oracle names the exact rule you broke. The loop is the same;
 the feedback source is the whole difference."
@@ -41,6 +49,7 @@ the feedback source is the whole difference."
 - **Contingency (if hosts require fresh code that morning):** extract the
   loop runner + trace/metrics into a standalone `gateloop/` package
   (Apache-2.0: `run_loop(propose, oracle, max_revisions, trace)` +
-  `render_chart`) built that morning; this repo becomes the showcase adapter.
-  The extraction is mechanical — `loop.py` and `loop_exhibit.py` have no
+  `render_chart`) built that morning **in a fresh worktree under a /loop
+  with `make check` as the oracle** — the extraction session is itself the
+  live demonstration. Mechanical: `loop.py` and `loop_exhibit.py` have no
   clinical imports in the loop path.

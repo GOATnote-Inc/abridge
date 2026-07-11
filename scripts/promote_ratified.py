@@ -189,7 +189,8 @@ def execute(name: str, date: str, item4_escalate: bool) -> int:
                 and not item4_escalate):
             rec["expect"]["decision"] = "BLOCK"
             rec["expect"]["criterion"] = "COV-F16"
-            rec["note"] = rec.get("note", "") + " [expectation held at BLOCK: Item-4 ruling not applied]"
+            rec["note"] = (rec.get("note", "")
+                           + " [expectation held at BLOCK: Item-4 ruling not applied]")
         rec["status"] = f"ratified ({name}, {date})"
         promoted.append(rec)
     with open(OUT, "w") as fh:

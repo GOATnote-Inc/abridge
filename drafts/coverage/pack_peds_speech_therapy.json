@@ -1,0 +1,67 @@
+{
+  "schema": "coverage-pack/v1",
+  "synthetic": true,
+  "status": "DRAFT — pending physician review",
+  "service": "outpatient speech-language therapy",
+  "population": "Medicaid EPSDT beneficiaries under 21",
+  "version": "0.1.0-draft",
+  "notes": "QUARANTINED DRAFT. All clause texts are PARAPHRASES of the public sources listed in 'authorities'; no proprietary payer criteria text (InterQual, MCG, plan-internal policies) is included or may be added. Values marked 'state-plan variable' (score cutoffs, re-evaluation intervals) are placeholders for the operative state's published standard and are a primary physician-review item. Nothing in this file is wired into a live gate; it enters the product only through the clinical review packet with physician sign-off.",
+  "clauses": [
+    {
+      "id": "SLT-01",
+      "text": "A communication disorder is documented by a standardized, norm-referenced assessment administered and interpreted by a licensed speech-language pathologist, with a score demonstrating significant delay relative to age norms (commonly at or below 1.5 standard deviations below the mean, or below approximately the 7th percentile — the exact cutoff is a state-plan variable), or by an equivalent criterion-referenced evaluation where standardized testing is not developmentally feasible.",
+      "evidence_needed": "Name and edition of the instrument, the standard score and/or percentile, the date of administration, and the administering clinician's licensure or credential."
+    },
+    {
+      "id": "SLT-02",
+      "text": "The documented disorder has a functional impact on the child: it measurably limits the ability to communicate wants and needs, to participate in age-appropriate daily activities (feeding, play, preschool), or it produces secondary effects such as frustration behaviors or safety risk. Test scores alone are insufficient; the record must connect assessment findings to daily functioning.",
+      "evidence_needed": "Clinician or caregiver report in the clinical record describing specific functional limitations (for example: cannot request basic needs, daily frustration behaviors, feeding or safety impact)."
+    },
+    {
+      "id": "SLT-03",
+      "text": "The proposed treatment requires the skills, clinical judgment, and ongoing assessment of a licensed speech-language pathologist and cannot be met by a caregiver-implemented home program or general developmental stimulation alone. Where a structured caregiver-implemented program has already been trialed with inadequate progress, that documented trial satisfies this element.",
+      "evidence_needed": "Statement of why skilled service is required; documentation of any caregiver-implemented program already trialed, including its duration and the child's response."
+    },
+    {
+      "id": "SLT-04",
+      "text": "There is a written plan of care stating discipline, frequency, and expected duration of treatment, with objective, measurable goals and a defined re-evaluation interval at which progress against those goals will be formally measured (re-evaluation intervals of 12 weeks to 6 months are typical — the exact interval is a state-plan variable).",
+      "evidence_needed": "Plan of care with frequency (sessions per week), measurable goals with target criteria, and the scheduled re-evaluation interval."
+    },
+    {
+      "id": "SLT-05",
+      "text": "Hearing has been evaluated and the result documented, so that hearing loss is identified or excluded as a cause of the communication disorder. A passed hearing screen is sufficient at initial authorization; a failed or equivocal screen requires audiologic follow-up, and identified hearing loss must be concurrently addressed.",
+      "evidence_needed": "Hearing screen or audiologic evaluation result recorded in the clinical record."
+    },
+    {
+      "id": "SLT-06",
+      "text": "EPSDT federal floor: for Medicaid beneficiaries under 21, a service is medically necessary when it will correct OR ameliorate the identified condition, where 'ameliorate' includes improving function, maintaining function, or preventing or slowing deterioration. Adult-style limitations — restorative-potential-only rules, 'no maintenance therapy' exclusions, or fixed visit caps — cannot by themselves justify a denial for an under-21 beneficiary; any such limit must yield to individual medical-necessity review under the EPSDT standard.",
+      "evidence_needed": "Beneficiary age (under 21) and Medicaid/EPSDT eligibility. A denial rationale that relies solely on restorative-only or maintenance-exclusion language is a conflict with this clause, not an evidence gap."
+    }
+  ],
+  "authorities": [
+    {
+      "id": "AUTH-EPSDT-1396D-R",
+      "name": "42 U.S.C. § 1396d(r) — EPSDT definition (Social Security Act § 1905(r))",
+      "kind": "public",
+      "paraphrase": "Defines EPSDT to include necessary health care, diagnostic services, treatment, and other measures within the federal Medicaid categories to correct or ameliorate defects and physical and mental illnesses and conditions discovered by screening, whether or not those services are otherwise covered under the state plan."
+    },
+    {
+      "id": "AUTH-CMS-EPSDT-GUIDE-2014",
+      "name": "CMS, 'EPSDT — A Guide for States: Coverage in the Medicaid Benefit for Children and Adolescents' (June 2014)",
+      "kind": "public",
+      "paraphrase": "CMS guidance that the correct-or-ameliorate standard includes services that maintain function or prevent a condition from worsening; that medical necessity for children must be decided individually, case by case; and that fixed limits such as visit caps must give way to individual EPSDT review for beneficiaries under 21."
+    },
+    {
+      "id": "AUTH-STATE-EPSDT-SLT-MANUALS",
+      "name": "State Medicaid EPSDT / therapy-services provider manuals (composite paraphrase — substitute the operative state's manual at physician review)",
+      "kind": "public",
+      "paraphrase": "State manuals for pediatric speech-language therapy typically require: a standardized assessment demonstrating significant delay, a plan of care signed by a licensed speech-language pathologist with measurable goals and a re-evaluation interval, evidence that skilled services (rather than a caregiver program alone) are required, and documentation of hearing status. Cutoff scores and re-evaluation intervals vary by state; this pack marks them as state-plan variables."
+    },
+    {
+      "id": "AUTH-ASHA-SLT-PRESCHOOL",
+      "name": "ASHA practice guidance — late language emergence and preschool spoken-language disorders (ASHA Practice Portal)",
+      "kind": "public",
+      "paraphrase": "Children substantially below expressive-vocabulary expectations (for example, fewer than 50 words or no two-word combinations by 24 months) are at risk for persistent language disorder; assessment by a speech-language pathologist is indicated. Parent-implemented intervention is an evidence-based component of care, but persistent significant delay despite such support warrants direct skilled intervention with measurable goals and periodic re-assessment."
+    }
+  ]
+}

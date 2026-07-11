@@ -27,7 +27,7 @@ jobs:
           pip install -e ".[dev,llm]" ruff mypy
 
       - name: Lint (ruff)
-        run: ruff check src tests
+        run: ruff check src tests scripts
 
       - name: Typecheck (mypy)
         run: mypy src/attending
@@ -45,3 +45,8 @@ jobs:
       # fail its tests; the clean run must be green.
       - name: Mutation check (gates are load-bearing)
         run: python3 scripts/mutation_check.py
+
+      # Counts in the evidence docs must match reality (collection is
+      # environment-invariant by construction) or the build fails.
+      - name: Evidence-count drift guard
+        run: python3 scripts/evidence_counts.py --check

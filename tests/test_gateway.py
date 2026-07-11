@@ -1,7 +1,9 @@
 """Gateway contract: the supervised loop over HTTP, fail-closed at the edge.
 
-Skips entirely when the gateway extra is not installed (CI installs only the
-core/dev deps — same pattern as the healthcraft integration suite). Locally:
+These tests COLLECT everywhere and SKIP cleanly when the gateway extra is
+absent (a module-level importorskip aborts collection, which made the repo's
+test count vary by install — the drift the counts guard exists to prevent).
+Locally:
 
     .venv/bin/python -m pip install fastapi uvicorn httpx
 
@@ -14,9 +16,16 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("fastapi")
+try:
+    from fastapi.testclient import TestClient
+    _HAS_FASTAPI = True
+except ImportError:  # gateway extra not installed (e.g. bare CI install)
+    TestClient = None  # type: ignore[assignment,misc]
+    _HAS_FASTAPI = False
 
-from fastapi.testclient import TestClient  # noqa: E402
+pytestmark = pytest.mark.skipif(
+    not _HAS_FASTAPI,
+    reason="gateway extra not installed (pip install '.[gateway]')")
 
 import attending  # noqa: E402
 from attending import gateway  # noqa: E402

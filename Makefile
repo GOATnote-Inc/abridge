@@ -7,7 +7,7 @@
 VENV_PY := $(wildcard .venv/bin/python)
 PY      := $(if $(VENV_PY),$(VENV_PY),python3)
 
-.PHONY: install test lint format typecheck goldset smoke check demo demo-live serve mutation coverage review-packet
+.PHONY: install test lint format typecheck goldset smoke check demo demo-live serve mutation coverage review-packet counts
 
 install:
 	python3 -m venv .venv
@@ -20,7 +20,7 @@ test:
 	PYTHONPATH=src $(PY) -m pytest -q
 
 lint:
-	$(PY) -m ruff check src tests
+	$(PY) -m ruff check src tests scripts
 
 format:
 	$(PY) -m ruff format src tests
@@ -54,6 +54,11 @@ demo-live:
 serve:
 	PYTHONPATH=src $(PY) -m attending.gateway
 
+# Evidence-count drift guard: every count in the evidence docs must match
+# reality (pytest collection, mutation GATES, goldset, adversarial suite).
+counts:
+	$(PY) scripts/evidence_counts.py --check
+
 # Prove every communication gate is load-bearing: disable each in turn and
 # demand test failures, then a green clean run. The stage claim as a command.
 mutation:
@@ -66,4 +71,4 @@ coverage:
 review-packet:
 	$(PY) scripts/clinical_review_packet.py
 
-check: lint typecheck test goldset
+check: lint typecheck test goldset counts

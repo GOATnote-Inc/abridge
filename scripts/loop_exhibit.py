@@ -138,7 +138,8 @@ def toy_case_runner(case_id: str, source: list[str], regime: str, trace: list) -
 
 # --- Act 2: coverage appeals (real stakes) --------------------------------------
 
-_APPEAL_SYSTEM = """You draft a prior-authorization APPEAL as AT MOST FOUR concise structured claims. \
+_APPEAL_SYSTEM = """You draft a prior-authorization APPEAL as AT MOST \
+FOUR concise structured claims. \
 Each claim needs cites: criteria clause ids from the CLAUSES list (type \
 "clause"), and/or exact quotes from the note (type "note", ref "auto", quote = the \
 EXACT text copied verbatim from the note). Only cite authorities from AUTHORITIES. Fields: claims \
@@ -291,13 +292,16 @@ def render_chart(trace_rows: list[dict], results: list[dict]) -> str:
     footer = ('mean attempts among converged runs · trace: '
               'evaluation/exhibit/trace.jsonl · rerun: '
               'scripts/loop_exhibit.py --live')
-    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" \
+height="{H}" viewBox="0 0 {W} {H}">
 <rect width="{W}" height="{H}" fill="#0d1117"/>
-<text x="24" y="34" fill="#e6edf3" font-size="18" font-weight="bold">Iterations to ALLOW — oracle findings vs self-critique</text>
+<text x="24" y="34" fill="#e6edf3" font-size="18" font-weight="bold">Iterations \
+to ALLOW — oracle findings vs self-critique</text>
 <text x="24" y="54" fill="#8b949e" font-size="12">{subtitle}</text>
 {bar(80, m_o, "#3fb950", "oracle feedback", f"{c_o}/{n_o} converged")}
 {bar(230, m_s, "#f85149", "self-critique", f"{c_s}/{n_s} converged")}
-<text x="24" y="290" fill="#e6edf3" font-size="14" font-weight="bold">What self-critique kept missing</text>
+<text x="24" y="290" fill="#e6edf3" font-size="14" \
+font-weight="bold">What self-critique kept missing</text>
 {rows}
 <text x="24" y="{H - 16}" fill="#8b949e" font-size="11">{footer}</text>
 </svg>'''

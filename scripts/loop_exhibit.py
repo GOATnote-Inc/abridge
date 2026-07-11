@@ -74,7 +74,9 @@ _STOP = {"the", "a", "an", "is", "are", "to", "of", "on", "and", "every", "by", 
 def toy_oracle(source: list[str], summary: str) -> list[str]:
     """Deterministic findings for a cited summary. Empty list == ALLOW."""
     findings = []
-    sentences = [x.strip() for x in re.split(r"(?<=[.!?])\s+", summary.strip()) if x.strip()]
+    sentences = [x.strip()
+                 for x in re.split(r"(?<=[.!?])\s+", summary.strip())
+                 if x.strip()]
     if not sentences:
         return ["TOY-EMPTY: no sentences"]
     for i, sent in enumerate(sentences, 1):
@@ -269,25 +271,35 @@ def render_chart(trace_rows: list[dict], results: list[dict]) -> str:
     def bar(x, val, color, label, sub):
         h = max(6, val * scale)
         y = 210 - h
-        return (f'<rect x="{x}" y="{y}" width="{bar_w}" height="{h}" fill="{color}" rx="4"/>'
-                f'<text x="{x + bar_w/2}" y="{y - 8}" text-anchor="middle" '
-                f'fill="#e6edf3" font-size="15" font-weight="bold">{val:.2f}</text>'
-                f'<text x="{x + bar_w/2}" y="232" text-anchor="middle" fill="#e6edf3" font-size="13">{label}</text>'
-                f'<text x="{x + bar_w/2}" y="248" text-anchor="middle" fill="#8b949e" font-size="11">{sub}</text>')
+        cx = x + bar_w / 2
+        return (f'<rect x="{x}" y="{y}" width="{bar_w}" height="{h}" '
+                f'fill="{color}" rx="4"/>'
+                f'<text x="{cx}" y="{y - 8}" text-anchor="middle" '
+                f'fill="#e6edf3" font-size="15" font-weight="bold">'
+                f'{val:.2f}</text>'
+                f'<text x="{cx}" y="232" text-anchor="middle" '
+                f'fill="#e6edf3" font-size="13">{label}</text>'
+                f'<text x="{cx}" y="248" text-anchor="middle" '
+                f'fill="#8b949e" font-size="11">{sub}</text>')
 
     rows = "".join(
         f'<text x="420" y="{300 + i * 18}" fill="#8b949e" font-size="12">'
         f'{cid}: {n} repeat violation(s) under self-critique</text>'
         for i, (cid, n) in enumerate(top))
+    subtitle = (f'performer: {EXHIBIT_MODEL} · same cases, cap {MAX_ATTEMPTS} '
+                'attempts · deterministic gates as the oracle')
+    footer = ('mean attempts among converged runs · trace: '
+              'evaluation/exhibit/trace.jsonl · rerun: '
+              'scripts/loop_exhibit.py --live')
     svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">
 <rect width="{W}" height="{H}" fill="#0d1117"/>
 <text x="24" y="34" fill="#e6edf3" font-size="18" font-weight="bold">Iterations to ALLOW — oracle findings vs self-critique</text>
-<text x="24" y="54" fill="#8b949e" font-size="12">performer: {EXHIBIT_MODEL} · same cases, cap {MAX_ATTEMPTS} attempts · deterministic gates as the oracle</text>
+<text x="24" y="54" fill="#8b949e" font-size="12">{subtitle}</text>
 {bar(80, m_o, "#3fb950", "oracle feedback", f"{c_o}/{n_o} converged")}
 {bar(230, m_s, "#f85149", "self-critique", f"{c_s}/{n_s} converged")}
 <text x="24" y="290" fill="#e6edf3" font-size="14" font-weight="bold">What self-critique kept missing</text>
 {rows}
-<text x="24" y="{H - 16}" fill="#8b949e" font-size="11">mean attempts among converged runs · trace: evaluation/exhibit/trace.jsonl · rerun: scripts/loop_exhibit.py --live</text>
+<text x="24" y="{H - 16}" fill="#8b949e" font-size="11">{footer}</text>
 </svg>'''
     return svg
 

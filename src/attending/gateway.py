@@ -343,7 +343,7 @@ def create_app() -> Any:
         return _comms_verdict_dict(supervise_rendering(rendering, state))
 
     @app.post("/coverage/preset")
-    async def coverage_preset(body: dict):  # type: ignore[no-untyped-def]
+    async def coverage_preset(body: dict):
         """Run one canned coverage scenario against the DRAFT pack (status
         surfaced). Presets mirror the demo's Act 3 beats; read-only."""
         from . import coverage as cov

@@ -42,6 +42,13 @@ GATES = [
     "anchoring_bias",
     "incomplete_audio",
     "transcription_error",
+    # coverage surface (F14-F19)
+    "coverage_grounding",
+    "coverage_frankenfacts",
+    "fabricated_authority",
+    "coverage_provenance",
+    "coverage_outcome",
+    "denial_signoff",
 ]
 
 _SUMMARY = re.compile(r"(\d+) failed")

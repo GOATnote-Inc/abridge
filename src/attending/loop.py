@@ -25,6 +25,13 @@ from sitrep.gates import Rendering
 from sitrep.state import EncounterState
 
 from .comms import CommsVerdict, supervise_rendering
+from .coverage import (
+    CoverageCase,
+    CoveragePack,
+    CoverageProposal,
+    CoverageVerdict,
+    supervise_determination,
+)
 from .encounter import Encounter, ProposedTriage
 from .supervisor import supervise
 from .verdict import Decision, Finding, Severity, Verdict
@@ -150,3 +157,54 @@ def run_rendering_loop(
         tuple(attempts), None, True,
         f"revision cap ({max_revisions}) exhausted — nothing was sent",
     )
+
+
+# --- Coverage surface ---------------------------------------------------------
+
+CoverageProposeFn = Callable[["str | None"], "CoverageProposal | None"]
+
+
+@dataclass(frozen=True)
+class CoverageAttempt:
+    proposal: CoverageProposal
+    verdict: CoverageVerdict
+
+
+@dataclass(frozen=True)
+class CoverageLoopResult:
+    attempts: tuple[CoverageAttempt, ...]
+    shipped: CoverageProposal | None
+    escalated: bool
+    reason: str
+
+
+def run_coverage_loop(
+    case: CoverageCase,
+    pack: CoveragePack,
+    propose: CoverageProposeFn,
+    max_revisions: int = 2,
+) -> CoverageLoopResult:
+    """Same loop semantics as the other two surfaces: BLOCK feeds the findings
+    back verbatim; ESCALATE stops immediately (a human decides — automated
+    denial does not exist); a None proposal escalates fail-closed."""
+    attempts: list[CoverageAttempt] = []
+    feedback: str | None = None
+    for _ in range(max_revisions + 1):
+        proposal = propose(feedback)
+        if proposal is None:
+            return CoverageLoopResult(
+                tuple(attempts), None, True,
+                "performer produced no usable proposal — fail closed to a human")
+        verdict = supervise_determination(case, pack, proposal)
+        attempts.append(CoverageAttempt(proposal, verdict))
+        if verdict.decision is Decision.ALLOW:
+            return CoverageLoopResult(tuple(attempts), proposal, False, "allowed")
+        if verdict.decision is Decision.ESCALATE:
+            return CoverageLoopResult(
+                tuple(attempts), None, True,
+                "evidence indeterminate or unmet — human review required; "
+                "automated denial does not exist on this surface")
+        feedback = format_feedback(verdict.findings)
+    return CoverageLoopResult(
+        tuple(attempts), None, True,
+        f"revision cap ({max_revisions}) exhausted — routed to a human")

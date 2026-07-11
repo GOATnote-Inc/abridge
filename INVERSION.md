@@ -23,6 +23,12 @@ in code, not prompts). Tests are the ledger. CI is the enforcement.
 | F11 | Demo-day failure: replayer nondeterminism → un-rehearsable demo | replayer is pure/deterministic over fixture timelines | — | `test_replay.py::TestF11*`, `test_scenario_loader.py::TestFullRunDeterminism` |
 | F12 | Orphan result files against an order the chart never saw → panes render a test nobody ordered | `EncounterState.add_result` rejects at ingestion | BLOCK (raise) | `test_state.py::TestOrphanResult` |
 | F13 | Non-attested or identifier-bearing scenario data enters the pipeline (PHI-shaped habits) | `load_scenario` requires `"synthetic": true`, bans identifier keys | BLOCK (raise) | `test_scenario_loader.py::TestSyntheticAttestation` |
+| F14 | Denial artifact emitted without physician sign-off token | structural: `build_denial` raises `PhysicianSignoffRequired` | BLOCK (raise) | `test_coverage.py::TestF14*` |
+| F15 | Determination/appeal text asserts a clinical fact with no resolvable citation to a transcript/note span or criteria clause id | `gate_coverage_grounding` (F7 pattern) | BLOCK | `test_coverage.py::TestF15*` |
+| F16 | Indeterminate evidence resolved toward denial | loop/verdict ESCALATE, never deny | BLOCK | `test_coverage.py::TestF16*` |
+| F17 | Cited authority absent from the criteria pack's authorities list | `gate_no_fabricated_authority` | BLOCK | `test_coverage.py::TestF17*` |
+| F18 | Artifact missing criteria-pack version+hash, model id, or timestamp | `gate_provenance` | BLOCK | `test_coverage.py::TestF18*` |
+| F19 | Appeal references chart facts that contradict the note (frankenfacts) | span-quote verification + note-facts contradiction | BLOCK | `test_coverage.py::TestF19*` |
 
 Two-tier severity by design: **BLOCK** stops the render; **WARN** ships with
 annotation — mirrors the dual-layer safety-gated rubric pattern.

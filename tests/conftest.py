@@ -71,6 +71,37 @@ def _mutate_decision(name: str) -> None:
         raise RuntimeError(f"unknown decision mutant: {name}")
 
 
+def _mutate_coverage(name: str) -> None:
+    import attending.coverage as cov
+
+    noop = lambda *a, **k: []  # noqa: E731
+    if name == "coverage_grounding":
+        cov.gate_coverage_grounding = noop  # type: ignore[assignment]
+    elif name == "coverage_frankenfacts":
+        cov.gate_frankenfacts = noop  # type: ignore[assignment]
+    elif name == "fabricated_authority":
+        cov.gate_no_fabricated_authority = noop  # type: ignore[assignment]
+    elif name == "coverage_provenance":
+        cov.gate_provenance = noop  # type: ignore[assignment]
+    elif name == "coverage_outcome":
+        cov.gate_outcome = noop  # type: ignore[assignment]
+    elif name == "denial_signoff":
+        real = cov.build_denial
+
+        def unsigned(case, pack, *, physician_signoff=None, model_id="", timestamp=""):
+            return real(case, pack,
+                        physician_signoff=cov.PhysicianSignoff("BYPASS", "X", "X"),
+                        model_id=model_id, timestamp=timestamp)
+        cov.build_denial = unsigned  # type: ignore[assignment]
+    else:
+        raise RuntimeError(f"unknown coverage mutant: {name}")
+
+
+COVERAGE_MUTANTS = {
+    "coverage_grounding", "coverage_frankenfacts", "fabricated_authority",
+    "coverage_provenance", "coverage_outcome", "denial_signoff",
+}
+
 DECISION_MUTANTS = {
     "esi_independent_assessment", "red_flag_matching", "requirement_group_and",
     "hallucination", "anchoring_bias", "incomplete_audio", "transcription_error",
@@ -80,5 +111,7 @@ _target = os.environ.get("ATTENDING_MUTATE_GATE")
 if _target:
     if _target in DECISION_MUTANTS:
         _mutate_decision(_target)
+    elif _target in COVERAGE_MUTANTS:
+        _mutate_coverage(_target)
     else:
         _mutate_comms_gate(_target)

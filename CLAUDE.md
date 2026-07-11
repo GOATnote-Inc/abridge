@@ -59,7 +59,8 @@ the demo performer): `ATTENDING_MODEL`, default `claude-opus-4-8`, read in
 
 ## Communication safety gates (`src/sitrep`)
 
-Attending has two surfaces. The triage layer above governs what the agent
+Attending has three surfaces (Decision, Communication, Coverage — see
+INVERSION F14-F19 for the coverage ledger). The triage layer above governs what the agent
 **decides**; `sitrep` governs what it **says** — `run_gates(rendering, state)`
 over patient/nurse/physician/consultant panes, mapped into this repo's shared
 `Finding`/`Severity`/`Decision` vocabulary by `attending/comms.py`. Failure

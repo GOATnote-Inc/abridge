@@ -207,8 +207,8 @@ Stated plainly, because a safety layer that hides its own attack surface isn't o
 ## Validation status & roadmap
 
 What is validated today: regression (23-case synthetic gold set, FN=0 in CI),
-mutation coverage (`make mutation` — all 8 gates load-bearing, enforced in
-CI), an adversarial pre-publication red-team (secrets/claims/fail-open/ReDoS),
+mutation coverage (`make mutation` — all 22 safety mechanisms across the
+three surfaces load-bearing, enforced in CI), an adversarial pre-publication red-team (secrets/claims/fail-open/ReDoS),
 live-model runs whose unsafe drafts were blocked by deterministic gates, and a
 structured **physician review of every clinical value and gold case**
 (2026-07-09, single EM reviewer — the dated record is
@@ -226,9 +226,10 @@ ingestion, (4) human red-team hours against the gates.
 
 ## Status
 
-Two-surface supervisor + supervised control loop + live performer + demo +
+Three-surface supervisor (Decision, Communication, Coverage) + supervised
+control loop + live performer + demo +
 gateway + four-pane UI; 152 tests, ruff + mypy clean, gold-set FN=0 enforced in
-CI, mutation-checked gates (disabling one fails 6 tests across 5 layers).
+CI, mutation-checked gates (22 mechanisms; disabling any one fails its tests).
 Evidence is guideline-level (ESI Handbook v4, ACEP, AHA/ASA, Surviving Sepsis,
 Joint Commission, Cures Act, CA AB 3030); criterion→page mapping and all
 clinical values **pending physician/board review**.

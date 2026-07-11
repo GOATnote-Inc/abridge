@@ -6,7 +6,10 @@ prompts in the appendix, independence labeled, changelog included.*
 
 ## 1. What this is, and the release decision
 
-A fail-closed supervising layer over assistive clinical agents in the ED.
+A fail-closed supervising layer over assistive clinical agents across three
+surfaces — Decision (triage drafts for the RN), Communication (every
+patient/team rendering), and Coverage (prior-auth determinations and appeals,
+F14-F19) — one verdict vocabulary, one loop semantics.
 Workflow truth: triage acuity is a nursing function under per-hospital
 protocols — the supervised agent drafts protocol-aligned suggestions for the
 triage RN, never assigns acuity, and Attending checks drafts against the
@@ -34,7 +37,9 @@ omission-class harms.
 | Evidence | Result | Notes |
 |---|---|---|
 | Gold-set regression | FN **0/23**; 95% CI upper bound **12.2%** (Clopper–Pearson) | A regression gate, not a precision claim. A ~1% upper bound needs ≈300 cases — that target is the roadmap, stated rather than implied. FP 0/23 (upper bound 12.2%). |
-| Mutation harness | **15/15 mechanisms load-bearing** | 8 comms gates + 7 decision-side (independent ESI assessment, red-flag matching, requirement-group AND, 4 detectors). Each disabled in turn → suite must fail; clean run green. In CI on every push. |
+| Mutation harness | **22/22 mechanisms load-bearing** | 9 communication gates + 7 decision-side mechanisms + 6 coverage gates (incl. a denial-signoff bypass mutant). Each disabled in turn → suite must fail; clean run green. In CI on every push. |
+| Coverage surface (F14-F19) | structural fail-closed | `build_denial` raises `PhysicianSignoffRequired` without a physician token — no demo path supplies one and no override exists; `determine()` approves or escalates, never denies; quote-anchored grounding; hashed, versioned criteria packs (DRAFT status surfaced verbatim). 26 tests. |
+| Loop exhibit (oracle vs self-critique) | oracle 7/9 @ 1.43 mean attempts; self-critique 5/9 @ 2.00 | Same small performer on identical cases incl. planted traps; committed trace + offline-re-renderable chart (`evaluation/exhibit/`). |
 | Boundary-adversarial suite | **22 automated attacks, 0 gate bypasses** | Prompt injection via transcript/rationale/message content; order-token spoofing; Unicode lexicon evasion (zero-width, fullwidth); demographic invariance; consent-waiver arguments. *Automated probes — no human red-team hours yet; stated plainly.* |
 | Seeded invariant fuzz | 300 adversarial encounter/proposal pairs, all invariants hold | Never crashes; decision always consistent with finding severities; acuity in range. |
 | ReDoS regression | 156 KB pathological text in **0.049 s** (was 64 s) | Bounded gaps enforced by a lexicon-lint test. |
@@ -149,6 +154,15 @@ from the running prompt).
 
 ## Changelog
 
+- 2026-07-11 (v0.2.0): third supervised surface — COVERAGE (INVERSION
+  F14-F19): structural physician-signoff denial gating, quote-anchored
+  citation grounding, hashed criteria packs (drafts quarantined pending
+  physician ratification). Model seam consolidated to `ATTENDING_MODEL`
+  (default `claude-opus-4-8`) with archived dual-model live runs showing
+  verdict-level equivalence. Loop exhibit committed (oracle-feedback vs
+  self-critique). Mutation harness 15 → 22 mechanisms; suite 176 → 256 tests.
+  One process failure on record: commit `5bdca4a` shipped with `make check`
+  red (lint/typecheck) and one CI failure, repaired in `d977a6c`.
 - 2026-07-09: first edition, ruleset 0.3.1 — after two external reviews, one
   physician review, mutation coverage of both surfaces, and the adversarial
   suite. Known-stale risk: none at publication (drift tests enforce).

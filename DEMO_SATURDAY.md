@@ -40,7 +40,7 @@ one fail-closed loop. We extended the chassis, not built a new vehicle."
 
 **Close (15s).** "Criteria pack is versioned, hashed, and labeled DRAFT
 pending physician review — sign-off flips the label through the same review
-flow the triage rules went through. 310 tests, 23 mutation targets all
+flow the triage rules went through. 323 tests, 23 mutation targets all
 load-bearing, FN=0 enforced in CI."
 
 *Beats total 2:55 against a 3:00 slot. If running over in rehearsal, cut

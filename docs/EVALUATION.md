@@ -133,8 +133,23 @@ Surviving mutants, classified: message/citation string mutations in
 branches without field-level assertions (cosmetic to safety semantics),
 fail-closed-direction vocabulary variants (a stricter gate is not a
 weaker one), and equivalents (e.g. `+=`→`=` on the first accumulation
-after an empty init). Same recipe queued for `esi.py` and
-`sitrep/gates.py`.
+after an empty init).
+
+**Fine-grained round 2 (same day, `esi.py` — the decision spine):** 268
+mutants; the goldset/invariants/knowledge/adversarial suites alone killed
+69.4%, and the round exposed the sharpest gap yet: **no test pinned the
+exact boundary of any physician-reviewed clinical threshold** — `GCS ≤8`
+vs `<8` survived, `SpO2 <90` vs `≤90` survived, and so on for every
+life-saving vital. `tests/test_esi_boundaries.py` now pins each threshold
+at and adjacent to its reviewed value (a silent one-unit drift is exactly
+the "silently weaken a safety criterion" failure the charter forbids),
+plus the altered-consciousness interval, danger-zone strict inequalities,
+the peds band edge, plausibility-envelope edges (a vital *at* the bound
+is a patient, not a typo), the multi-vital quarantine walk, and the
+pipeline property that a quarantined capture-error HR of 400 cannot mint
+an ESI-1. Final kill: **223/268 (83.2%)**; survivors are
+getattr-default/label-string equivalents and falsy-equivalent rewrites,
+classified the same way. `sitrep/gates.py` round queued.
 
 **Known limits, stated:** whole-mechanism disables are coarse mutants — a
 subtle within-mechanism boundary bug can escape them (and ~17% of real

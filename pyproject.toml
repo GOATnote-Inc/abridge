@@ -68,5 +68,10 @@ disallow_untyped_defs = true
 # mechanism-level harness (make mutation) stays the headline; this catches
 # within-mechanism boundary bugs whole-disables cannot.
 source_paths = ["src"]
-only_mutate = ["src/attending/coverage.py"]
-pytest_add_cli_args_test_selection = ["tests/test_coverage.py"]
+also_copy = ["evaluation/", "configs/", "fixtures/", "drafts/"]
+only_mutate = ["src/attending/esi.py"]
+pytest_add_cli_args_test_selection = [
+    "tests/test_goldset.py", "tests/test_invariants.py",
+    "tests/test_knowledge.py", "tests/test_adversarial.py",
+    "tests/test_esi_boundaries.py",
+]

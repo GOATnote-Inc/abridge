@@ -49,6 +49,7 @@ GATES = [
     "coverage_provenance",
     "coverage_outcome",
     "denial_signoff",
+    "denial_justification",
 ]
 
 _SUMMARY = re.compile(r"(\d+) failed")

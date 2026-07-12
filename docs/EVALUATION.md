@@ -102,7 +102,7 @@ operation* — the only way to test a gate is to break something (the
 fault-injection rationale of ISO 26262; IEC 61508 calls the result
 diagnostic coverage).
 
-So the headline claim is **mechanism-level mutation adequacy: 22/22
+So the headline claim is **mechanism-level mutation adequacy: 23/23
 fault-injected safety mechanisms are detected** — disabling any gate via the
 `ATTENDING_MUTATE_GATE` conftest hook fails at least one named test with the
 other mechanisms intact (single-fault logic), and the clean run passes

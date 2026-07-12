@@ -37,8 +37,8 @@ omission-class harms.
 | Evidence | Result | Notes |
 |---|---|---|
 | Gold-set regression | FN **0/23**; 95% CI upper bound **12.2%** (Clopper–Pearson) | A regression gate, not a precision claim. A ~1% upper bound needs ≈300 cases — that target is the roadmap, stated rather than implied. FP 0/23 (upper bound 12.2%). |
-| Mutation harness | **22/22 mechanisms load-bearing** | 9 communication gates + 7 decision-side mechanisms + 6 coverage gates (incl. a denial-signoff bypass mutant). Each disabled in turn → suite must fail; clean run green. In CI on every push. |
-| Coverage surface (F14-F19) | structural fail-closed | `build_denial` raises `PhysicianSignoffRequired` without a physician token — no demo path supplies one and no override exists; `determine()` approves or escalates, never denies; quote-anchored grounding; hashed, versioned criteria packs (DRAFT status surfaced verbatim). 38 dedicated tests. |
+| Mutation harness | **23/23 mechanisms load-bearing** | 9 communication gates + 7 decision-side mechanisms + 7 coverage gates (incl. denial-signoff bypass and denial-justification mutants). Each disabled in turn → suite must fail; clean run green. In CI on every push. |
+| Coverage surface (F14-F19) | structural fail-closed | `build_denial` raises `PhysicianSignoffRequired` without a physician token — no demo path supplies one and no override exists; `determine()` approves or escalates, never denies; quote-anchored grounding; hashed, versioned criteria packs (DRAFT status surfaced verbatim). 51 dedicated tests. |
 | Loop exhibit (oracle vs self-critique) | oracle 7/9 @ 1.43 mean attempts; self-critique 5/9 @ 2.00 | Same small performer on identical cases incl. planted traps; committed trace + offline-re-renderable chart (`evaluation/exhibit/`). |
 | Boundary-adversarial suite | **22 automated attacks, 0 gate bypasses** | Prompt injection via transcript/rationale/message content; order-token spoofing; Unicode lexicon evasion (zero-width, fullwidth); demographic invariance; consent-waiver arguments. *Automated probes — no human red-team hours yet; stated plainly.* |
 | Seeded invariant fuzz | 300 adversarial encounter/proposal pairs, all invariants hold | Never crashes; decision always consistent with finding severities; acuity in range. |
@@ -163,7 +163,7 @@ from the running prompt).
   injected-authority trap holds under both feedback regimes — COV-F15 on
   every attempt — rather than being an oracle-only catch; the docs now
   tell the trace's story). The same review independently verified gold-set
-  FN 0/23, all 22 mutation mechanisms load-bearing, byte-identical replay
+  FN 0/23, every mutation mechanism (then 22) load-bearing, byte-identical replay
   with sha256-identical hosted pages, and the exhibit numbers recomputed
   from the committed trace. Also this week: revision diff view and
   `?present` projector mode in the replay UI, WCAG

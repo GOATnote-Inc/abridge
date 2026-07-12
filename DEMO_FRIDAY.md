@@ -43,7 +43,7 @@ findings by criterion, latency} as JSONL — strictly opt-in, so the replay
 demo stays byte-identical.
 
 **Beat 4 — we build with the same loop (20s).** "This repo was built the way
-it runs: every change is an agent loop with `make check` + a 22-mechanism
+it runs: every change is an agent loop with `make check` + a 23-mechanism
 mutation harness + an evidence-count drift guard as the deterministic
 oracle, in isolated git worktrees, failures fed back verbatim. The commit
 history shows the oracle catching the builder twice — the red commits and

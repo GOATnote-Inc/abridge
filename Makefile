@@ -31,6 +31,7 @@ typecheck:
 # Safety gate: synthetic gold set (physician-reviewed; board governance pending). Exits 1 on ANY false-negative.
 goldset:
 	PYTHONPATH=src $(PY) -m attending.evaluate
+	PYTHONPATH=src $(PY) -m attending.evaluate_coverage
 
 # CLI exit code doubles as a gate: 0 allow, 2 block, 3 escalate.
 # The chest-pain undertriage example MUST be blocked, so expect exit 2.
@@ -71,4 +72,6 @@ coverage:
 review-packet:
 	$(PY) scripts/clinical_review_packet.py
 
+# mutation (23 fault-injected mechanisms) runs as its own target — minutes, not seconds —
+# and is REQUIRED in CI; check is the fast local gate.
 check: lint typecheck test goldset counts

@@ -131,7 +131,7 @@ def _candidates() -> list[dict]:
 def dry_run(item4_escalate: bool) -> int:
     hashes = _pack_hashes()
     ec._PACK_CACHE.clear()
-    needs_ruling, mismatches = [], []
+    needs_ruling, needs_evidence, mismatches = [], [], []
     print(f"{'id':8s} {'expect':22s} {'actual':10s} finding_ids")
     for raw in _candidates():
         rec = _normalize(raw, hashes)
@@ -146,6 +146,11 @@ def dry_run(item4_escalate: bool) -> int:
         if exp == "ESCALATE" and got == "BLOCK" and signoff:
             flag = "ITEM-4 RULING NEEDED" if not item4_escalate else "item4:apply"
             needs_ruling.append(rec["id"])
+        elif exp == "ALLOW" and got == "ESCALATE" and "evidence" not in rec:
+            # Fail-closed harness default: absent evidence is indeterminate.
+            # Only the physician can rule which clauses this case meets.
+            flag = "EVIDENCE RULING NEEDED"
+            needs_evidence.append(rec["id"])
         elif got != exp or (crit and crit not in ids):
             mismatches.append(rec["id"])
             flag = "MISMATCH"
@@ -154,6 +159,7 @@ def dry_run(item4_escalate: bool) -> int:
     print(f"\npack hashes (current bytes): "
           f"{ {k: v[:12] for k, v in hashes.items()} }")
     print(f"needs Item-4 ruling: {needs_ruling or 'none'}")
+    print(f"needs per-clause evidence ruling: {needs_evidence or 'none'}")
     print(f"true mismatches: {mismatches or 'none'}")
     return 1 if mismatches else 0
 
@@ -191,6 +197,15 @@ def execute(name: str, date: str, item4_escalate: bool) -> int:
             rec["expect"]["criterion"] = "COV-F16"
             rec["note"] = (rec.get("note", "")
                            + " [expectation held at BLOCK: Item-4 ruling not applied]")
+        if rec["expect"]["decision"] == "ALLOW" and "evidence" not in rec:
+            # No physician-ruled evidence map: the fail-closed harness
+            # default (indeterminate) escalates — the expectation follows
+            # the engine until the physician supplies per-clause evidence.
+            rec["expect"]["decision"] = "ESCALATE"
+            rec["expect"]["criterion"] = "COV-F16"
+            rec["note"] = (rec.get("note", "")
+                           + " [expectation held at ESCALATE: per-clause "
+                             "evidence not yet physician-ruled]")
         rec["status"] = f"ratified ({name}, {date})"
         promoted.append(rec)
     with open(OUT, "w") as fh:

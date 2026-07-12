@@ -70,3 +70,28 @@ trailer.*
 - **Date:** ______________________________________________
 - **Role:** physician reviewer (single-reviewer, demonstration scope;
   hospital/board governance not implied)
+
+## Engineering addendum — 2026-07-12 (read before ruling; no action required)
+
+State changes since the six items were drafted, from the second external
+review's findings — all fail-closed, none pre-empting your rulings:
+
+- **Item 4 is now real machinery, not paperwork.** The engine carries a
+  physician-signoff field end-to-end; a complete signoff on a deny-shaped
+  proposal routes per `SIGNED_DENY_SEVERITY` in `coverage.py` — currently
+  **BLOCK** pending your ruling; your "escalate" ruling flips that one
+  constant (both postures are test-pinned, neither is ALLOW). A signature
+  assigns responsibility; it never manufactures evidence, and `build_denial`
+  now refuses outright unless at least one clause is affirmatively unmet —
+  met or indeterminate evidence cannot ground a denial, signed or not.
+- **New flagged item (with GSC-04): `GSC-07` needs a per-clause evidence
+  ruling.** The harness default for absent evidence is now *indeterminate*
+  (fail-closed), so the clean-approval candidate escalates until you rule
+  which clauses its documentation actually meets (`"evidence": {"SLT-01":
+  "met", ...}` on the candidate). Promotion without that ruling holds its
+  expectation at ESCALATE, explicitly annotated.
+- Grounding tightened: a clause id links a criterion but can no longer
+  ground a fact — every claim needs chart evidence (a locatable quote).
+  Outcome *and* kind vocabularies are closed (casing/synonyms/unknown words
+  block). Dry-run remains: **zero true mismatches**, GSC-04 + GSC-07 flagged
+  for your session.

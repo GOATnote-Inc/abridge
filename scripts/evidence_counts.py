@@ -68,6 +68,7 @@ def actuals() -> dict:
             x for x in (REPO / "evaluation" / "goldset.jsonl")
             .read_text().splitlines() if x.strip()]),
         "adversarial_attacks": _collected("tests/test_adversarial.py"),
+        "coverage_tests": _collected("tests/test_coverage.py"),
     }
 
 
@@ -78,10 +79,9 @@ def _claims(line: str) -> list[tuple[str, int]]:
         found.append(("tests_collected", int(m.group(1))))
     for m in re.finditer(r"\b(\d+)/(\d+)\b", line):
         a, b = int(m.group(1)), int(m.group(2))
-        if a == b and b > 5:          # 22/22, 23/23 style totals
-            key = ("mutation_mechanisms" if b != 23 else "goldset_cases")
-            found.append((key, b))
-        elif b == 23:                  # 0/23, x/23 goldset fractions
+        if a == b and b > 5:          # 23/23-style totals: mutation OR goldset
+            found.append(("mutation_or_goldset", b))
+        elif b > 5 and re.search(r"gold|FN", line):   # 0/23 goldset fractions
             found.append(("goldset_cases", b))
     for m in re.finditer(r"\b(\d+)\s+mutation (?:targets|mechanisms)\b", line):
         found.append(("mutation_mechanisms", int(m.group(1))))
@@ -89,6 +89,10 @@ def _claims(line: str) -> list[tuple[str, int]]:
         found.append(("mutation_mechanisms", int(m.group(1))))
     for m in re.finditer(r"\b(\d+) automated attacks\b", line):
         found.append(("adversarial_attacks", int(m.group(1))))
+    for m in re.finditer(r"\b(\d+) dedicated tests\b", line):
+        found.append(("coverage_tests", int(m.group(1))))
+    for m in re.finditer(r"\b(\d+) passed\b", line):
+        found.append(("tests_passed_min", int(m.group(1))))
     return found
 
 
@@ -99,9 +103,21 @@ def check(act: dict) -> list[str]:
             if "->" in line or "→" in line:      # historical transitions
                 continue
             for key, claimed in _claims(line):
-                if claimed != act[key]:
+                if key == "mutation_or_goldset":
+                    ok = claimed in (act["mutation_mechanisms"],
+                                     act["goldset_cases"])
+                elif key == "tests_passed_min":
+                    # "N passed" claims: at most collected, within the skip
+                    # margin (stale 256-style claims fail; the one
+                    # legitimate skip class passes).
+                    ok = (act["tests_collected"] - 5 <= claimed
+                          <= act["tests_collected"])
+                else:
+                    ok = claimed == act[key]
+                if not ok:
                     errors.append(
-                        f"{rel}:{n}: claims {key}={claimed}, actual {act[key]}"
+                        f"{rel}:{n}: claims {key}={claimed}, "
+                        f"actual {act.get(key, act)}"
                         f" | {line.strip()[:80]}")
     return errors
 

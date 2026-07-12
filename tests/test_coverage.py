@@ -21,7 +21,7 @@ from attending.coverage import (
     supervise_determination,
 )
 from attending.loop import run_coverage_loop
-from attending.verdict import Decision
+from attending.verdict import Decision, Severity
 
 # --- shared vectors -----------------------------------------------------------
 
@@ -125,12 +125,33 @@ class TestF14Denial:
                          model_id="test-model", timestamp="2026-07-11T00:00:00Z")
 
     def test_denial_with_signoff_carries_it(self, tmp_path):
+        case = _case()
+        case.evidence["T-02"] = "unmet"      # a denial must be justified
         art = build_denial(
-            _case(), _pack(tmp_path),
+            case, _pack(tmp_path),
             physician_signoff=PhysicianSignoff("A. Physician", "MD", "2026-07-11"),
             model_id="test-model", timestamp="2026-07-11T00:00:00Z")
         assert art["signoff"]["name"] == "A. Physician"
         assert art["type"] == "denial"
+
+    # A signature assigns responsibility; it does not manufacture grounds.
+    # (red-team follow-up 2026-07-12: signed denials were emitted with all
+    # clauses met or merely indeterminate.)
+    def test_denial_with_all_clauses_met_refuses_even_signed(self, tmp_path):
+        with pytest.raises(ValueError, match="unmet"):
+            build_denial(
+                _case(), _pack(tmp_path),  # every clause met
+                physician_signoff=PhysicianSignoff("A. P.", "MD", "2026-07-11"),
+                model_id="test-model", timestamp="2026-07-11T00:00:00Z")
+
+    def test_denial_on_indeterminate_only_refuses_even_signed(self, tmp_path):
+        case = _case()
+        case.evidence = {cid: "indeterminate" for cid in case.evidence}
+        with pytest.raises(ValueError, match="unmet"):
+            build_denial(
+                case, _pack(tmp_path),
+                physician_signoff=PhysicianSignoff("A. P.", "MD", "2026-07-11"),
+                model_id="test-model", timestamp="2026-07-11T00:00:00Z")
 
 
 # --- F15: unsupported clinical claim ------------------------------------------
@@ -143,6 +164,24 @@ class TestF15Grounding:
         v = supervise_determination(_case(), pack, p)
         assert v.decision is Decision.BLOCK
         assert any(f.criterion_id == "COV-F15" for f in v.findings)
+
+    # A clause id links a criterion; it can never ground a FACT. The exact
+    # attack (red-team follow-up 2026-07-12): fabricate a clinical claim and
+    # cite any valid clause — syntax existed, support didn't.
+    def test_valid_clause_cite_cannot_ground_a_fabricated_fact(self, tmp_path):
+        pack = _pack(tmp_path)
+        p = _proposal(pack, claims=_good_claims() + [
+            Claim("The patient also has severe childhood apraxia of speech.",
+                  cites=(Cite("clause", "T-01"),))])   # valid clause, no chart
+        v = supervise_determination(_case(), pack, p)
+        assert v.decision is Decision.BLOCK
+        assert any(f.criterion_id == "COV-F15" and "chart evidence"
+                   in f.message for f in v.findings)
+
+    def test_claim_with_clause_and_chart_quote_passes(self, tmp_path):
+        pack = _pack(tmp_path)
+        v = supervise_determination(_case(), pack, _proposal(pack))
+        assert v.decision is Decision.ALLOW
 
     def test_unknown_clause_ref_blocks(self, tmp_path):
         pack = _pack(tmp_path)
@@ -221,6 +260,40 @@ class TestF16Indeterminate:
         assert v.decision is not Decision.ALLOW
         assert any(f.criterion_id == "COV-F16" for f in v.findings)
 
+    # Item-4 machinery: the engine SEES a physician signoff on a deny-shaped
+    # proposal. Current ratified posture is BLOCK (Item 4 pending); the
+    # physician's ruling flips exactly one constant — proven here.
+    def test_signed_deny_current_posture_blocks_pending_item4(self, tmp_path):
+        pack = _pack(tmp_path)
+        p = _proposal(pack, kind="determination", outcome="deny",
+                      physician_signoff={"name": "A. P.", "credential": "MD",
+                                         "date": "2026-07-12"})
+        v = supervise_determination(_case(), pack, p)
+        assert v.decision is Decision.BLOCK
+        assert any(f.criterion_id == "COV-F16" for f in v.findings)
+
+    def test_item4_ruling_flips_signed_deny_to_escalate(self, tmp_path,
+                                                        monkeypatch):
+        import attending.coverage as cov
+        monkeypatch.setattr(cov, "SIGNED_DENY_SEVERITY", Severity.ESCALATE)
+        pack = _pack(tmp_path)
+        p = _proposal(pack, kind="determination", outcome="deny",
+                      physician_signoff={"name": "A. P.", "credential": "MD",
+                                         "date": "2026-07-12"})
+        v = supervise_determination(_case(), pack, p)
+        assert v.decision is Decision.ESCALATE   # human owns it; never ALLOW
+        assert any(f.criterion_id == "COV-F16" for f in v.findings)
+
+    def test_incomplete_signoff_never_softens_a_deny(self, tmp_path,
+                                                     monkeypatch):
+        import attending.coverage as cov
+        monkeypatch.setattr(cov, "SIGNED_DENY_SEVERITY", Severity.ESCALATE)
+        pack = _pack(tmp_path)
+        p = _proposal(pack, kind="determination", outcome="deny",
+                      physician_signoff={"name": "A. P."})   # missing fields
+        v = supervise_determination(_case(), pack, p)
+        assert v.decision is Decision.BLOCK
+
     def test_unknown_cite_type_is_refused_not_guessed(self, tmp_path):
         pack = _pack(tmp_path)
         ref, quote = _span(_NOTE, "below the 5th percentile")
@@ -230,6 +303,41 @@ class TestF16Indeterminate:
         v = supervise_determination(_case(), pack, p)
         assert v.decision is Decision.BLOCK
         assert any(f.criterion_id == "COV-F15" for f in v.findings)
+
+    # The kind vocabulary is closed exactly like the outcome vocabulary
+    # (red-team follow-up 2026-07-12: "Determination"/" determination "
+    # skipped the every-clause-met check).
+    @pytest.mark.parametrize("kind", ["Determination", " determination ",
+                                      "DETERMINATION"])
+    def test_cased_determination_still_requires_every_clause(self, tmp_path,
+                                                             kind):
+        pack = _pack(tmp_path)
+        case = _case()
+        case.evidence["T-03"] = "indeterminate"
+        p = _proposal(pack, kind=kind, outcome="approve")
+        v = supervise_determination(case, pack, p)
+        assert v.decision is not Decision.ALLOW
+        assert any(f.criterion_id == "COV-F16" for f in v.findings)
+
+    def test_unrecognized_kind_blocks_not_allows(self, tmp_path):
+        pack = _pack(tmp_path)
+        p = _proposal(pack, kind="claim-review", outcome="approve")
+        v = supervise_determination(_case(), pack, p)
+        assert v.decision is Decision.BLOCK
+        assert any(f.criterion_id == "COV-F16" for f in v.findings)
+
+    def test_cased_appeal_still_treated_as_appeal(self, tmp_path):
+        pack = _pack(tmp_path)
+        p = _proposal(pack, kind=" Appeal ")
+        v = supervise_determination(_case(), pack, p)
+        assert v.decision is Decision.ALLOW
+
+    def test_cased_determination_without_outcome_escalates(self, tmp_path):
+        pack = _pack(tmp_path)
+        p = _proposal(pack, kind="Determination", outcome=None)
+        v = supervise_determination(_case(), pack, p)
+        assert v.decision is not Decision.ALLOW
+        assert any(f.criterion_id == "COV-F16" for f in v.findings)
 
 
 # --- F17: fabricated authority --------------------------------------------------

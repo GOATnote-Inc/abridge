@@ -93,6 +93,9 @@ def _mutate_coverage(name: str) -> None:
                         physician_signoff=cov.PhysicianSignoff("BYPASS", "X", "X"),
                         model_id=model_id, timestamp=timestamp)
         cov.build_denial = unsigned  # type: ignore[assignment]
+    elif name == "denial_justification":
+        # a signature manufacturing grounds: the unmet-clause guard vanishes
+        cov._denial_justified = lambda statuses: True  # type: ignore[assignment]
     else:
         raise RuntimeError(f"unknown coverage mutant: {name}")
 
@@ -100,6 +103,7 @@ def _mutate_coverage(name: str) -> None:
 COVERAGE_MUTANTS = {
     "coverage_grounding", "coverage_frankenfacts", "fabricated_authority",
     "coverage_provenance", "coverage_outcome", "denial_signoff",
+    "denial_justification",
 }
 
 DECISION_MUTANTS = {

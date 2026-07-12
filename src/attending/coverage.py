@@ -118,6 +118,11 @@ class CoverageProposal:
     claims: tuple[Claim, ...] | list
     authorities_cited: tuple[str, ...] | list
     provenance: dict
+    # A physician sign-off ATTESTATION riding a deny-shaped proposal
+    # ({name, credential, date}). It assigns responsibility; it does not
+    # authenticate (deployment binds identity to the IdP) and it never
+    # manufactures evidence — see SIGNED_DENY_SEVERITY (Item 4).
+    physician_signoff: dict | None = None
 
 
 def make_provenance(pack: CoveragePack, *, model_id: str, timestamp: str) -> dict:
@@ -158,7 +163,12 @@ def _resolve_span(case: CoverageCase, cite: Cite) -> tuple[bool, str]:
 
 def gate_coverage_grounding(case: CoverageCase, pack: CoveragePack,
                             proposal: CoverageProposal) -> list[Finding]:
-    """F15 + F19 (span half): every claim resolvably cited; quotes must match."""
+    """F15 + F19 (span half): every claim resolvably cited; quotes must match.
+
+    A clause id links a CRITERION; it can never ground a FACT — every claim
+    must also carry chart evidence (a note/transcript quote the engine can
+    locate). Otherwise "the patient has severe apraxia [any-valid-clause]"
+    would pass on citation syntax alone."""
     out: list[Finding] = []
     for i, claim in enumerate(proposal.claims):
         if not claim.cites:
@@ -170,6 +180,15 @@ def gate_coverage_grounding(case: CoverageCase, pack: CoveragePack,
                 citation="INVERSION F15 — uncited clinical claims are blocked",
             ))
             continue
+        if not any(c.type in ("note", "transcript") for c in claim.cites):
+            out.append(Finding(
+                "coverage_grounding", Severity.BLOCK,
+                f"claim {i + 1} cites only criteria clauses — no chart "
+                f"evidence; a clause id links a criterion, it cannot ground "
+                f"a fact: \"{claim.text[:80]}\"",
+                criterion_id="COV-F15",
+                citation="INVERSION F15 — facts require chart evidence",
+            ))
         for cite in claim.cites:
             if cite.type == "clause":
                 if cite.ref not in pack.clauses:
@@ -296,6 +315,19 @@ def gate_provenance(pack: CoveragePack, proposal: CoverageProposal) -> list[Find
 
 _DENY_SHAPED = frozenset({"deny", "denial", "denied", "reject", "rejected"})
 _APPROVE_SHAPED = frozenset({"approve", "approved", "approval"})
+_KNOWN_KINDS = frozenset({"appeal", "determination"})
+
+# Item 4 (RATIFICATION.md, physician ruling PENDING): the severity of a
+# deny-shaped proposal that carries a COMPLETE physician sign-off attestation.
+# Current posture: BLOCK (the deny path remains build_denial only). The
+# candidate ruling is ESCALATE — a signature assigns responsibility to a
+# human, it does not manufacture evidence. The ruling flips this ONE constant;
+# both postures are pinned by tests, and neither is ALLOW.
+SIGNED_DENY_SEVERITY: Severity = Severity.BLOCK
+
+
+def _signoff_complete(s: dict | None) -> bool:
+    return bool(s and s.get("name") and s.get("credential") and s.get("date"))
 
 
 def gate_outcome(case: CoverageCase, pack: CoveragePack,
@@ -303,20 +335,44 @@ def gate_outcome(case: CoverageCase, pack: CoveragePack,
     """F16: a deny outcome is never permitted here (the only deny path is
     build_denial with a physician sign-off token); approvals require every
     clause met — anything unmet or indeterminate escalates to a human.
-    Outcome vocabulary is normalized and closed: casing, whitespace, or a
-    word this gate does not recognize must never widen what it permits."""
+    BOTH vocabularies (outcome, kind) are normalized and closed: casing,
+    whitespace, or a word this gate does not recognize must never widen
+    what it permits."""
     out: list[Finding] = []
     outcome = (proposal.outcome or "").strip().casefold()
-    if outcome in _DENY_SHAPED:
+    kind = (proposal.kind or "").strip().casefold()
+    if kind not in _KNOWN_KINDS:
         out.append(Finding(
             "outcome", Severity.BLOCK,
-            "automated deny attempted — denial requires the physician-signoff "
-            "path (build_denial), which this proposal did not and cannot use",
+            f"unrecognized proposal kind {proposal.kind!r} — this gate "
+            "recognizes appeal and determination; unknown vocabulary is "
+            "blocked, never waved through",
             criterion_id="COV-F16",
-            citation="INVERSION F14/F16 — no automated denials",
+            citation="INVERSION F16 — fail closed on unrecognized vocabulary",
         ))
+        return out
+    if outcome in _DENY_SHAPED:
+        if _signoff_complete(proposal.physician_signoff):
+            out.append(Finding(
+                "outcome", SIGNED_DENY_SEVERITY,
+                "physician-signed deny proposal — a signature assigns "
+                "responsibility but does not manufacture evidence; routed "
+                f"per Item-4 posture ({SIGNED_DENY_SEVERITY.value}, "
+                "ratification pending)",
+                criterion_id="COV-F16",
+                citation="INVERSION F14/F16 — denials are physician-owned",
+            ))
+        else:
+            out.append(Finding(
+                "outcome", Severity.BLOCK,
+                "automated deny attempted — denial requires the "
+                "physician-signoff path (build_denial), which this proposal "
+                "did not and cannot use",
+                criterion_id="COV-F16",
+                citation="INVERSION F14/F16 — no automated denials",
+            ))
     elif outcome in _APPROVE_SHAPED:
-        if proposal.kind == "determination":
+        if kind == "determination":
             for cid in pack.clauses:
                 status = case.evidence.get(cid, "indeterminate")
                 if status != "met":
@@ -338,7 +394,7 @@ def gate_outcome(case: CoverageCase, pack: CoveragePack,
             criterion_id="COV-F16",
             citation="INVERSION F16 — fail closed on unrecognized outcomes",
         ))
-    elif proposal.kind == "determination":
+    elif kind == "determination":
         out.append(Finding(
             "outcome", Severity.ESCALATE,
             "determination proposes no outcome — a human reviewer decides",
@@ -438,11 +494,21 @@ def determine(case: CoverageCase, pack: CoveragePack, *, model_id: str,
                        "human reviewer; automated denial does not exist here")}
 
 
+def _denial_justified(statuses: dict[str, str]) -> bool:
+    """A denial is justified only by the pack's own logic: at least one
+    clause affirmatively unmet. Met evidence cannot ground a denial;
+    indeterminate evidence routes to human review, never to a denial."""
+    return any(s == "unmet" for s in statuses.values())
+
+
 def build_denial(case: CoverageCase, pack: CoveragePack, *,
                  physician_signoff: PhysicianSignoff | None, model_id: str,
                  timestamp: str) -> dict:
     """F14: the ONLY path to a denial artifact — and it is gated, structurally,
-    on a physician sign-off token. No token, no artifact, no exceptions."""
+    on a physician sign-off token. No token, no artifact, no exceptions.
+    The token is a liability-assignment record, not authentication —
+    deployment binds the signing identity to the IdP. And a signature does
+    not manufacture grounds: without an unmet clause there is no denial."""
     if physician_signoff is None or not (physician_signoff.name
                                          and physician_signoff.credential
                                          and physician_signoff.date):
@@ -451,6 +517,11 @@ def build_denial(case: CoverageCase, pack: CoveragePack, *,
             "(name, credential, date) — INVERSION F14")
     statuses = {cid: case.evidence.get(cid, "indeterminate")
                 for cid in pack.clauses}
+    if not _denial_justified(statuses):
+        raise ValueError(
+            "denial unjustified: no clause is affirmatively unmet — met "
+            "evidence cannot ground a denial and indeterminate evidence "
+            "routes to a human reviewer (INVERSION F16), signature or not")
     text = (f"DENIAL (physician-signed) — {pack.service} "
             f"(criteria pack {pack.version})\n\n"
             + "\n".join(f"- {pack.clauses[c].text}: evidence {s} [{c}]"

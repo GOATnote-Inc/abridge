@@ -27,6 +27,14 @@ _DRAFTS = _REPO / "drafts" / "coverage"
 _STOP = {Decision.BLOCK.value, Decision.ESCALATE.value}
 
 
+def _evidence(rec: dict) -> dict:
+    # Fail-closed default: absent evidence is INDETERMINATE, never "met".
+    # A candidate that needs met clauses must say so explicitly — the
+    # physician rules per-clause evidence during ratification.
+    return (rec.get("evidence")
+            or {cid: "indeterminate" for cid in _load_pack(rec).clauses})
+
+
 def _load_case(rec: dict) -> cov.CoverageCase:
     ref = rec["case_ref"]
     if isinstance(ref, dict):  # inline mini-case (e.g. the DME cross-pack one)
@@ -34,8 +42,7 @@ def _load_case(rec: dict) -> cov.CoverageCase:
             case_id=ref.get("service", "inline-case"), synthetic=True,
             note=ref.get("summary", ""), transcript="",
             note_facts=ref.get("note_facts", {}),
-            evidence=rec.get("evidence")
-            or {cid: "met" for cid in _load_pack(rec).clauses},
+            evidence=_evidence(rec),
         )
     raw = json.loads((_DRAFTS / f"{ref}.json").read_text())
     return cov.CoverageCase(
@@ -43,8 +50,7 @@ def _load_case(rec: dict) -> cov.CoverageCase:
         transcript="\n".join(f"{t['speaker']}: {t['text']}"
                              for t in raw.get("encounter_transcript", [])),
         note_facts=raw.get("note_facts", {}),
-        evidence=rec.get("evidence")
-        or {cid: "met" for cid in _load_pack(rec).clauses},
+        evidence=_evidence(rec),
     )
 
 
@@ -72,6 +78,7 @@ def _proposal(rec: dict) -> cov.CoverageProposal:
             for c in p.get("claims", [])),
         authorities_cited=tuple(p.get("authorities_cited", [])),
         provenance=dict(p.get("provenance", {})),
+        physician_signoff=p.get("physician_signoff"),  # Item-4 state travels
     )
 
 
@@ -127,7 +134,9 @@ def main(argv: list[str] | None = None) -> int:
               f"(must be 0)   false-positives {fp}")
         print(f"  FN rate {fn/n:.1%} (95% CI upper bound "
               f"{binom_upper(fn, n):.1%}, Clopper-Pearson, n={n})")
-    return 1 if fn else 0
+    # Every expectation is a regression pin: ANY mismatch fails, not just the
+    # cardinal FN (a BLOCK-vs-ESCALATE flip is still a behavior change).
+    return 1 if passed != n else 0
 
 
 if __name__ == "__main__":

@@ -69,9 +69,11 @@ disallow_untyped_defs = true
 # within-mechanism boundary bugs whole-disables cannot.
 source_paths = ["src"]
 also_copy = ["evaluation/", "configs/", "fixtures/", "drafts/"]
-only_mutate = ["src/attending/esi.py"]
+# only_mutate rotates per round: coverage.py (round 1), esi.py (round 2),
+# sitrep/gates.py (round 3). Scores and survivor classifications live in
+# docs/EVALUATION.md section 3.
+only_mutate = ["src/sitrep/gates.py"]
 pytest_add_cli_args_test_selection = [
-    "tests/test_goldset.py", "tests/test_invariants.py",
-    "tests/test_knowledge.py", "tests/test_adversarial.py",
-    "tests/test_esi_boundaries.py",
+    "tests/test_gates.py", "tests/test_comms.py",
+    "tests/test_adversarial.py", "tests/test_pathway.py",
 ]

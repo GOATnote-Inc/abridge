@@ -383,3 +383,65 @@ def test_generated_automatically_is_a_valid_disclosure(state_with_critical_tropo
     assert "compliance" not in fired or all(
         "disclosure" not in v.detail for v in run_gates(r, state_with_critical_troponin)
         if v.gate == "compliance")
+
+
+# --- mutation round 3 (2026-07-12): pins for surviving gates.py mutants in
+# load-bearing anti-embargo logic. Each names its mutant class.
+
+class TestMutationRound3Pins:
+    def _state_with(self, **result_kw):
+        s = EncounterState(patient={"age": 52, "sex": "M",
+                                    "chief_complaint": "chest pain"})
+        s.add_order(Order(id="ord-x", name="CBC", status="completed"))
+        base = dict(id="res-x", order_id="ord-x", name="CBC",
+                    value="normal", flag="normal", status="final",
+                    released=True, viewed=False, discussed=False)
+        base.update(result_kw)
+        s.add_result(Result(**base))
+        return s
+
+    def test_preliminary_released_result_needs_no_acknowledgment(self):
+        # kills or->and on the release-status guard: preliminary results are
+        # not embargo-relevant even when released.
+        from sitrep.gates import Rendering, gate_info_blocking
+        s = self._state_with(status="preliminary")
+        r = Rendering(audience="patient",
+                      text="We are still waiting on some tests. This update "
+                           "was generated with AI. Press your call button to "
+                           "reach your nurse.", refs=["res-x"])
+        assert gate_info_blocking(r, s) == []
+
+    def test_final_unreleased_result_needs_no_acknowledgment(self):
+        from sitrep.gates import Rendering, gate_info_blocking
+        s = self._state_with(released=False)
+        r = Rendering(audience="patient",
+                      text="We are still waiting on some tests.",
+                      refs=["res-x"])
+        assert gate_info_blocking(r, s) == []
+
+    def test_noncritical_released_result_with_zero_acknowledgment_blocks(self):
+        # kills the inverted availability-marker scan (a fail-open: with
+        # `not in`, "generic" is nearly always true and an unacknowledged
+        # NON-critical result sails through).
+        from sitrep.gates import Rendering, gate_info_blocking
+        s = self._state_with()   # normal flag, final, released
+        r = Rendering(audience="patient",
+                      text="The care team will see you shortly.",
+                      refs=["res-x"])
+        v = gate_info_blocking(r, s)
+        assert v and v[0].gate == "info_blocking"
+
+    def test_second_released_result_still_checked_after_a_skipped_first(self):
+        # kills continue->break: the result walk must not stop at a
+        # non-embargo-relevant result.
+        from sitrep.gates import Rendering, gate_info_blocking
+        s = self._state_with(status="preliminary")          # skipped
+        s.add_order(Order(id="ord-y", name="Troponin I", status="completed"))
+        s.add_result(Result(id="res-y", order_id="ord-y", name="Troponin I",
+                            value="0.42", flag="critical", status="final",
+                            released=True, viewed=False, discussed=False))
+        r = Rendering(audience="patient",
+                      text="Nothing to report right now.",
+                      refs=["res-x", "res-y"])
+        v = gate_info_blocking(r, s)
+        assert any("Troponin" in x.detail for x in v)

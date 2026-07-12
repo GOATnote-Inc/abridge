@@ -149,7 +149,30 @@ is a patient, not a typo), the multi-vital quarantine walk, and the
 pipeline property that a quarantined capture-error HR of 400 cannot mint
 an ESI-1. Final kill: **223/268 (83.2%)**; survivors are
 getattr-default/label-string equivalents and falsy-equivalent rewrites,
-classified the same way. `sitrep/gates.py` round queued.
+classified the same way.
+
+**Fine-grained round 3 (same day, `sitrep/gates.py` — the communication
+gates):** 348 mutants, final kill **252/348 (72.4%)**. Real gaps pinned
+(`TestMutationRound3Pins`): a release-status guard whose `or`→`and`
+mutation would have made *preliminary-but-released* results
+embargo-relevant combinations no test covered; an **inverted
+availability-marker scan that was a genuine fail-open** (an
+unacknowledged non-critical released result would sail through — the
+anti-embargo gate's own blind spot); and a result-walk `continue`→`break`
+truncation (the second released result went unchecked after a skipped
+first). One scope lesson: the label-gate pins live in `test_pathway.py`,
+initially outside the killer selection — widened, not duplicated.
+Remaining survivors: marker/message-string variants (fail-closed
+direction), readability-estimator arithmetic (a heuristic with stated
+tolerance, not a safety boundary), and message-casing equivalents.
+
+Three-module summary: coverage 59.8% · esi 83.2% · gates 72.4% by each
+module's dedicated fast suites, with every triaged survivor either
+killed by a new pinned test or classified (fail-closed-direction /
+cosmetic-string / equivalent / heuristic-tolerance). The program's yield
+was nine load-bearing test gaps including three fail-open inversions and
+the unpinned clinical threshold boundaries — found by fault injection,
+invisible to line coverage and to the mechanism-level harness alike.
 
 **Known limits, stated:** whole-mechanism disables are coarse mutants — a
 subtle within-mechanism boundary bug can escape them (and ~17% of real

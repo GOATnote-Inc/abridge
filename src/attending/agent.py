@@ -157,8 +157,12 @@ def propose_appeal(case, pack, provenance: dict, denial_letter: str,
             f"PAYER DENIAL LETTER (you are appealing this):\n{denial_letter}\n\n"
             "Draft the appeal."
         )
+        # Appeals are long-form (several claims, each carrying a verbatim
+        # quote) — the default 1024-token cap truncates and fails closed
+        # (found in the 2026-07-12 live run: stop_reason=max_tokens).
         out = llm.complete_json(_APPEAL_SYSTEM, _with_feedback(user, feedback),
-                                schema=_APPEAL_SCHEMA, model=agent_model())
+                                schema=_APPEAL_SCHEMA, model=agent_model(),
+                                max_tokens=4096)
         claims = tuple(
             Claim(str(c["text"]),
                   cites=tuple(Cite(str(x["type"]), str(x.get("ref") or "auto"),

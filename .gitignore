@@ -22,3 +22,8 @@ htmlcov/
 .DS_Store
 .idea/
 .vscode/
+
+# mutmut fine-grained mutation artifacts
+mutants/
+.mutmut-cache
+mutmut-stats.json

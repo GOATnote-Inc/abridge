@@ -116,10 +116,30 @@ loop 97%, comms and pathway 100%, detectors 90–100%); repository-wide 84%.
 `evaluate_coverage.py` shows 0% by design — it is the ratified-goldset
 harness and no ratified goldset exists yet (quarantine is working).
 
+**Fine-grained round 1 (2026-07-12, `mutmut` on `coverage.py`):** 814
+operator-level mutants, **487 killed (59.8%) by the module's dedicated
+51-test suite alone** (config in `pyproject.toml [tool.mutmut]`; the
+number is deliberately per-module-suite — the full suite exercises this
+code further but would blur which tests carry which control). The round's
+real yield was five test gaps in load-bearing logic, all now pinned
+(`TestMutationRoundGaps`): **two fail-open inversions that a redundant
+gate was masking** (`_resolve_span` returning ok on unknown cite types and
+unparseable refs — invisible to the mechanism-level harness because the
+chart-evidence rule blocked those cases anyway; the single-fault lesson,
+live), a `continue`→`break` that would have reported only the first
+violating claim, a crash path on claim facts absent from the note, span
+boundary off-by-ones, and unasserted verdict traceability fields.
+Surviving mutants, classified: message/citation string mutations in
+branches without field-level assertions (cosmetic to safety semantics),
+fail-closed-direction vocabulary variants (a stricter gate is not a
+weaker one), and equivalents (e.g. `+=`→`=` on the first accumulation
+after an empty init). Same recipe queued for `esi.py` and
+`sitrep/gates.py`.
+
 **Known limits, stated:** whole-mechanism disables are coarse mutants — a
 subtle within-mechanism boundary bug can escape them (and ~17% of real
-faults couple to no mutant at all, Just 2014); fine-grained mutation inside
-gate modules is the roadmap item. A mechanism killed by one test is
+faults couple to no mutant at all, Just 2014) — which is exactly what
+round 1 above demonstrated. A mechanism killed by one test is
 single-point verification; the current spread is 1–26 killing tests per
 mechanism, reported as diagnostic detail, never as the headline.
 

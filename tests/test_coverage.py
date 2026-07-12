@@ -513,3 +513,95 @@ def test_matching_numbers_do_not_false_positive(tmp_path):
               cites=(Cite("clause", "T-03"), Cite("note", "auto", quote="2x/week")))])
     v = supervise_determination(_case(), pack, p)
     assert not any(f.criterion_id == "COV-F19" for f in v.findings)
+
+
+# --- fine-grained mutation round (2026-07-12): killing tests for surviving
+# operator-level mutants in load-bearing logic. Each test names its mutant
+# class; the masking lesson: a redundant gate can hide a fail-open inversion,
+# so these pin the SPECIFIC mechanism with the mask dodged.
+
+class TestMutationRoundGaps:
+    def test_unknown_cite_type_blocks_even_beside_good_chart_evidence(
+            self, tmp_path):
+        # _resolve_span unknown-type refusal inverted to True survived when
+        # the claim had no note cite (chart-evidence rule masked it). Here
+        # the claim HAS good chart evidence; only the refusal blocks.
+        pack = _pack(tmp_path)
+        ref, quote = _span(_NOTE, "below the 5th percentile")
+        p = _proposal(pack, claims=[
+            Claim("Assessment shows a deficit.",
+                  cites=(Cite("note", ref, quote=quote),
+                         Cite("chart", "auto", quote="anything")))])
+        v = supervise_determination(_case(), pack, p)
+        assert v.decision is Decision.BLOCK
+        assert any("unknown cite type" in f.message for f in v.findings)
+
+    def test_unparseable_span_ref_blocks_not_passes(self, tmp_path):
+        pack = _pack(tmp_path)
+        p = _proposal(pack, claims=[
+            Claim("Assessment shows a deficit.",
+                  cites=(Cite("note", "note:banana", quote=""),))])
+        v = supervise_determination(_case(), pack, p)
+        assert v.decision is Decision.BLOCK
+        assert any("unparseable" in f.message for f in v.findings)
+
+    def test_span_boundaries_full_source_and_zero_start_are_legal(
+            self, tmp_path):
+        # kills <=/< boundary mutants: a span covering [0, len(source)]
+        # exactly must resolve.
+        pack = _pack(tmp_path)
+        p = _proposal(pack, claims=[
+            Claim("The full note supports this.",
+                  cites=(Cite("note", f"note:0:{len(_NOTE)}", quote=_NOTE),))])
+        v = supervise_determination(_case(), pack, p)
+        assert v.decision is Decision.ALLOW
+
+    def test_every_violating_claim_is_reported_not_just_the_first(
+            self, tmp_path):
+        # kills continue->break: the gate must keep walking the claim list.
+        pack = _pack(tmp_path)
+        p = _proposal(pack, claims=[
+            Claim("Uncited claim one.", cites=()),
+            Claim("Unknown clause claim.", cites=(Cite("clause", "T-99"),)),
+        ])
+        v = supervise_determination(_case(), pack, p)
+        msgs = [f.message for f in v.findings if f.criterion_id == "COV-F15"]
+        assert any("claim 1" in m for m in msgs)
+        assert any("claim 2" in m for m in msgs)
+
+    def test_claim_fact_key_absent_from_note_facts_is_not_a_crash(
+            self, tmp_path):
+        # kills and->or in gate_frankenfacts (KeyError crash path).
+        pack = _pack(tmp_path)
+        ref, quote = _span(_NOTE, "below the 5th percentile")
+        p = _proposal(pack, claims=[
+            Claim("Assessment shows a deficit.",
+                  cites=(Cite("note", ref, quote=quote),),
+                  facts={"not_a_note_fact_key": 42})])
+        v = supervise_determination(_case(), pack, p)   # must not raise
+        assert not any(f.criterion_id == "COV-F19" for f in v.findings)
+
+    def test_verdict_carries_traceability_fields(self, tmp_path):
+        # kills CoverageVerdict field-None mutants: the audit chain is data,
+        # not decoration.
+        pack = _pack(tmp_path)
+        v = supervise_determination(_case(), pack, _proposal(pack))
+        assert v.case_id == "TC-1"
+        assert v.pack_version == "0.0.1-test"
+        assert v.pack_hash == pack.hash and len(v.pack_hash) == 64
+
+    def test_every_finding_carries_citation_and_kind(self, tmp_path):
+        # kills the citation=None / kind=None string mutants across gates:
+        # every finding must say which rule and cite its source.
+        pack = _pack(tmp_path)
+        bad = _proposal(pack, kind="determination", outcome="deny", claims=[
+            Claim("Uncited.", cites=()),
+            Claim("Bad clause.", cites=(Cite("clause", "T-99"),)),
+        ], authorities_cited=("NOT-IN-PACK",), provenance={})
+        v = supervise_determination(_case(), pack, bad)
+        assert v.decision is Decision.BLOCK
+        assert len(v.findings) >= 4
+        for f in v.findings:
+            assert f.kind, "finding.kind must name the gate"
+            assert f.citation, f"finding without citation: {f.message[:60]}"
+            assert f.criterion_id and f.criterion_id.startswith("COV-")

@@ -1,7 +1,7 @@
 {
-  "tests_collected": 303,
+  "tests_collected": 310,
   "mutation_mechanisms": 23,
   "goldset_cases": 23,
   "adversarial_attacks": 22,
-  "coverage_tests": 51
+  "coverage_tests": 58
 }

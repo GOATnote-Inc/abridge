@@ -186,6 +186,51 @@ class TestF16Indeterminate:
                             timestamp="2026-07-11T00:00:00Z")
         assert outcome["decision"] == "ESCALATE" and outcome["artifact"] is None
 
+    # Outcome vocabulary is closed: casing/whitespace/synonyms/typos must never
+    # widen what the gate permits (red-team 2026-07-12: "DENY" bypassed F16).
+    @pytest.mark.parametrize("cased", ["DENY", "Deny", " deny ", "Denied",
+                                       "REJECTED"])
+    def test_cased_or_synonym_deny_still_blocks(self, tmp_path, cased):
+        pack = _pack(tmp_path)
+        p = _proposal(pack, kind="determination", outcome=cased)
+        v = supervise_determination(_case(), pack, p)
+        assert v.decision is Decision.BLOCK
+        assert any(f.criterion_id == "COV-F16" for f in v.findings)
+
+    def test_unrecognized_outcome_blocks_not_allows(self, tmp_path):
+        pack = _pack(tmp_path)
+        p = _proposal(pack, kind="determination",
+                      outcome="approve-with-conditions")
+        v = supervise_determination(_case(), pack, p)
+        assert v.decision is Decision.BLOCK
+        assert any(f.criterion_id == "COV-F16" for f in v.findings)
+
+    def test_cased_approve_still_requires_every_clause(self, tmp_path):
+        pack = _pack(tmp_path)
+        case = _case()
+        case.evidence["T-03"] = "indeterminate"
+        p = _proposal(pack, kind="determination", outcome="Approve")
+        v = supervise_determination(case, pack, p)
+        assert v.decision is not Decision.ALLOW
+        assert any(f.criterion_id == "COV-F16" for f in v.findings)
+
+    def test_determination_without_outcome_escalates(self, tmp_path):
+        pack = _pack(tmp_path)
+        p = _proposal(pack, kind="determination", outcome=None)
+        v = supervise_determination(_case(), pack, p)
+        assert v.decision is not Decision.ALLOW
+        assert any(f.criterion_id == "COV-F16" for f in v.findings)
+
+    def test_unknown_cite_type_is_refused_not_guessed(self, tmp_path):
+        pack = _pack(tmp_path)
+        ref, quote = _span(_NOTE, "below the 5th percentile")
+        p = _proposal(pack, claims=[
+            Claim("Assessment shows a deficit.",
+                  cites=(Cite("chart", "auto", quote=quote),))])
+        v = supervise_determination(_case(), pack, p)
+        assert v.decision is Decision.BLOCK
+        assert any(f.criterion_id == "COV-F15" for f in v.findings)
+
 
 # --- F17: fabricated authority --------------------------------------------------
 

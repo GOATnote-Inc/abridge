@@ -131,6 +131,8 @@ _SPAN_RE = re.compile(r"^(note|transcript):(\d+):(\d+)$")
 
 
 def _resolve_span(case: CoverageCase, cite: Cite) -> tuple[bool, str]:
+    if cite.type not in ("note", "transcript"):
+        return False, f"unknown cite type {cite.type!r} — refused, not guessed"
     source = case.note if cite.type == "note" else case.transcript
     # Quote-anchored citation: the performer supplies the exact quote and the
     # DETERMINISTIC engine locates it (models cannot count character offsets;
@@ -292,13 +294,20 @@ def gate_provenance(pack: CoveragePack, proposal: CoverageProposal) -> list[Find
     return out
 
 
+_DENY_SHAPED = frozenset({"deny", "denial", "denied", "reject", "rejected"})
+_APPROVE_SHAPED = frozenset({"approve", "approved", "approval"})
+
+
 def gate_outcome(case: CoverageCase, pack: CoveragePack,
                  proposal: CoverageProposal) -> list[Finding]:
     """F16: a deny outcome is never permitted here (the only deny path is
     build_denial with a physician sign-off token); approvals require every
-    clause met — anything unmet or indeterminate escalates to a human."""
+    clause met — anything unmet or indeterminate escalates to a human.
+    Outcome vocabulary is normalized and closed: casing, whitespace, or a
+    word this gate does not recognize must never widen what it permits."""
     out: list[Finding] = []
-    if proposal.outcome == "deny":
+    outcome = (proposal.outcome or "").strip().casefold()
+    if outcome in _DENY_SHAPED:
         out.append(Finding(
             "outcome", Severity.BLOCK,
             "automated deny attempted — denial requires the physician-signoff "
@@ -306,18 +315,36 @@ def gate_outcome(case: CoverageCase, pack: CoveragePack,
             criterion_id="COV-F16",
             citation="INVERSION F14/F16 — no automated denials",
         ))
-    if proposal.kind == "determination" and proposal.outcome == "approve":
-        for cid in pack.clauses:
-            status = case.evidence.get(cid, "indeterminate")
-            if status != "met":
-                out.append(Finding(
-                    "outcome", Severity.ESCALATE,
-                    f"clause {cid} evidence is '{status}' — approval requires "
-                    "every clause met; escalate to a human reviewer",
-                    criterion_id="COV-F16",
-                    citation="INVERSION F16 — indeterminate never resolves "
-                             "toward denial (or unearned approval)",
-                ))
+    elif outcome in _APPROVE_SHAPED:
+        if proposal.kind == "determination":
+            for cid in pack.clauses:
+                status = case.evidence.get(cid, "indeterminate")
+                if status != "met":
+                    out.append(Finding(
+                        "outcome", Severity.ESCALATE,
+                        f"clause {cid} evidence is '{status}' — approval "
+                        "requires every clause met; escalate to a human "
+                        "reviewer",
+                        criterion_id="COV-F16",
+                        citation="INVERSION F16 — indeterminate never resolves "
+                                 "toward denial (or unearned approval)",
+                    ))
+    elif outcome:
+        out.append(Finding(
+            "outcome", Severity.BLOCK,
+            f"unrecognized outcome {proposal.outcome!r} — this gate permits "
+            "only a fully-evidenced approve; unknown outcome vocabulary is "
+            "blocked, never waved through",
+            criterion_id="COV-F16",
+            citation="INVERSION F16 — fail closed on unrecognized outcomes",
+        ))
+    elif proposal.kind == "determination":
+        out.append(Finding(
+            "outcome", Severity.ESCALATE,
+            "determination proposes no outcome — a human reviewer decides",
+            criterion_id="COV-F16",
+            citation="INVERSION F16 — absence of an outcome is not approval",
+        ))
     return out
 
 

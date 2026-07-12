@@ -38,9 +38,9 @@ def _candidate_env_files() -> list[Path]:
     canonical .env) without copying the secret into the repo.
     """
     paths: list[Path] = []
-    override = os.environ.get("ATTENDING_ENV_FILE")
-    if override:
-        paths.append(Path(override))
+    env_file = os.environ.get("ATTENDING_ENV_FILE")
+    if env_file:
+        paths.append(Path(env_file))
     paths.append(_REPO_ROOT / ".env")
     paths.append(Path.cwd() / ".env")
     return paths

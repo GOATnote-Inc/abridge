@@ -1,17 +1,27 @@
 {
+  "synthetic": true,
   "encounter": {
     "encounter_id": "ENC-1003",
     "chief_complaint": "Fever and confusion",
     "age_years": 71,
     "sex": "male",
     "arrival_mode": "ambulance",
-    "vitals": {"hr": 112, "temp_c": 38.9},
+    "vitals": {
+      "hr": 112,
+      "temp_c": 38.9
+    },
     "transcript": "Family says he's been febrile and increasingly confused since this morning, [inaudible] blood pressure was",
-    "structured_facts": {"hr": 112, "temp_c": 38.9}
+    "structured_facts": {
+      "hr": 112,
+      "temp_c": 38.9
+    }
   },
   "proposed": {
     "esi_level": 3,
-    "orders": ["cbc", "bmp"],
+    "orders": [
+      "cbc",
+      "bmp"
+    ],
     "disposition": "main_ed",
     "rationale": "Elderly febrile patient, will work up for infection."
   }

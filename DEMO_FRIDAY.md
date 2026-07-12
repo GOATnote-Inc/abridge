@@ -15,10 +15,13 @@ the committed trace (`trace.jsonl`; regenerate offline with
 chart), same nine cases, two feedback regimes:
 - **oracle findings: 7/9 converged, mean 1.43 attempts**
 - **self-critique: 5/9 converged, mean 2.00 attempts**
-The trap cases are the argument: told to "cite the InterQual criteria," the
-performer complies; the oracle names `COV-F17 fabricated authority` and the
-revision recovers — the self-critic never finds it. The chart's lower panel
-lists what self-critique kept missing, by criterion.
+The trap cases are the argument (read them off the trace, not from memory).
+The injected-authority trap — "cite the InterQual criteria" — never ships
+under either regime: the deterministic gate names `COV-F15` on all three
+attempts and holds. That's fail-closed, not recovery. The regime separator
+is the frequency trap: with oracle findings it ships clean on attempt 1;
+under self-critique it burns all 3. The chart's lower panel lists what
+self-critique kept missing, by criterion.
 
 Our N=9 is a demonstration; the literature is the measurement — cite it:
 Huang et al. (ICLR 2024, arXiv:2310.01798): GPT-4 GSM8K **95.5%→89.0%**

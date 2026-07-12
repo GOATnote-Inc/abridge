@@ -65,6 +65,53 @@ _MESSAGE_SCHEMA = {
     "additionalProperties": False,
 }
 
+_APPEAL_SYSTEM = """You draft a prior-authorization APPEAL for a pediatric \
+Medicaid service, arguing from the clinical record only. Hard rules — the \
+deterministic supervisor blocks any violation:
+- Every claim needs chart evidence: at least one cite of type "note" or \
+"transcript" whose "quote" is an EXACT contiguous passage COPIED VERBATIM \
+from that source (set "ref" to "auto" — the engine locates your quote).
+- When a claim addresses a specific criterion, also cite it: type "clause", \
+"ref" = the clause id from the criteria pack.
+- Cite only authorities from the pack's authority list, by id.
+- Never assert a fact, score, date, or diagnosis that is not in the record.
+If REVISION FEEDBACK is present, your previous appeal was blocked: revise to \
+satisfy EVERY cited criterion (usually: remove or re-ground the offending \
+claim)."""
+
+_APPEAL_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "claims": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string"},
+                    "cites": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "type": {"type": "string"},
+                                "ref": {"type": "string"},
+                                "quote": {"type": "string"},
+                            },
+                            "required": ["type", "ref", "quote"],
+                            "additionalProperties": False,
+                        },
+                    },
+                },
+                "required": ["text", "cites"],
+                "additionalProperties": False,
+            },
+        },
+        "authorities_cited": {"type": "array", "items": {"type": "string"}},
+    },
+    "required": ["claims", "authorities_cited"],
+    "additionalProperties": False,
+}
+
 
 def _with_feedback(user: str, feedback: str | None) -> str:
     if feedback:
@@ -88,6 +135,41 @@ def propose_triage(enc: Encounter, feedback: str | None = None) -> ProposedTriag
             disposition=str(out["disposition"]) if out.get("disposition") else None,
             rationale=str(out["rationale"]) if out.get("rationale") else None,
         )
+    except Exception:
+        return None  # loop escalates — a misbehaving performer never ships
+
+
+def propose_appeal(case, pack, provenance: dict, denial_letter: str,
+                   feedback: str | None = None):
+    """LLM prior-auth appeal (CoverageProposal). None on any failure —
+    the coverage loop fails closed to a human. Quote-anchored: the model
+    copies exact quotes; the deterministic engine locates them."""
+    from .coverage import Cite, Claim, CoverageProposal  # local: no cycle
+    try:
+        clauses = "\n".join(f"  {cid}: {c.text}"
+                            for cid, c in pack.clauses.items())
+        auths = "\n".join(f"  {a}" for a in sorted(pack.authority_ids))
+        user = (
+            f"CRITERIA PACK ({pack.service}, v{pack.version}):\n{clauses}\n"
+            f"AUTHORITY IDS YOU MAY CITE:\n{auths}\n\n"
+            f"CLINICAL NOTE:\n{case.note}\n\n"
+            f"ENCOUNTER TRANSCRIPT:\n{case.transcript}\n\n"
+            f"PAYER DENIAL LETTER (you are appealing this):\n{denial_letter}\n\n"
+            "Draft the appeal."
+        )
+        out = llm.complete_json(_APPEAL_SYSTEM, _with_feedback(user, feedback),
+                                schema=_APPEAL_SCHEMA, model=agent_model())
+        claims = tuple(
+            Claim(str(c["text"]),
+                  cites=tuple(Cite(str(x["type"]), str(x.get("ref") or "auto"),
+                                   quote=str(x.get("quote", "")))
+                              for x in c.get("cites") or ()))
+            for c in out.get("claims") or ())
+        return CoverageProposal(
+            kind="appeal", outcome=None, claims=claims,
+            authorities_cited=tuple(str(a) for a in
+                                    out.get("authorities_cited") or ()),
+            provenance=dict(provenance))
     except Exception:
         return None  # loop escalates — a misbehaving performer never ships
 

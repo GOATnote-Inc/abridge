@@ -223,8 +223,14 @@ def _span_cite(note: str, quote: str) -> cov.Cite:
     return cov.Cite("note", f"note:{i}:{i + len(quote)}", quote=quote)
 
 
-def _coverage_scene() -> dict | None:
-    """Act 3 — the COVERAGE surface, fully scripted and deterministic.
+def _coverage_scene(live: bool = False) -> dict | None:
+    """Act 3 — the COVERAGE surface.
+
+    Replay (default): fully scripted and deterministic — byte-identical.
+    Live: the appeal drafts come from the model performer
+    (`agent.propose_appeal`) through the SAME `run_coverage_loop`; the
+    denial audit, Mode B, and the F14 raise stay deterministic engine calls
+    in both modes — a novel appeal is graded by the same gates.
 
     Uses the DRAFT criteria pack (status surfaced verbatim: pending physician
     review); clinical pack content is ratified only via the clinical-review-
@@ -294,8 +300,18 @@ def _coverage_scene() -> dict | None:
         kind="appeal", outcome=None, claims=good_claims,
         authorities_cited=("AUTH-EPSDT-1396D-R", "AUTH-ASHA-SLT-PRESCHOOL"),
         provenance=dict(prov))
-    queue = [bad, good]
-    appeal = run_coverage_loop(case, pack, lambda fb: queue.pop(0) if queue else None)
+    if live:
+        letter = raw.get("denial_letter", "")
+        prov_live = cov.make_provenance(pack, model_id=agent.agent_model(),
+                                        timestamp=_DEMO_TS)
+
+        def appeal_draft(fb: str | None):
+            return agent.propose_appeal(case, pack, prov_live, letter, fb)
+        appeal = run_coverage_loop(case, pack, appeal_draft, max_revisions=2)
+    else:
+        queue = [bad, good]
+        appeal = run_coverage_loop(
+            case, pack, lambda fb: queue.pop(0) if queue else None)
     appeal_artifact = (cov.build_appeal(case, pack, appeal.shipped)
                        if appeal.shipped else None)
 
@@ -428,7 +444,7 @@ def run_demo(fixture: dict, live: bool = False) -> dict:
     final_reply = run_rendering_loop(
         state, "patient", ["res-troponin"], final_draft, max_revisions=2)
 
-    transcript["stage_c"] = _coverage_scene()
+    transcript["stage_c"] = _coverage_scene(live=live)
     transcript["stage_b"] = {
         "event": stage_b_cfg["event"],
         "journey_pre": pathway.journey_to_dict(journey_pre),

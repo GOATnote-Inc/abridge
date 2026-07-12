@@ -12,7 +12,8 @@
   is drafting labor and vague denials — exactly what an agent can do, and
   exactly where an unsupervised agent is dangerous.
 
-**Beat 1 — the vague denial (30s).** Open the hosted replay, Act 3. A real-
+**Beat 1 — the vague denial (30s).** Open the hosted replay with `?present`
+appended (projector type), Act 3. A real-
 shaped denial letter: "not medically necessary," no criteria cited. Attending
 audits it as a determination: **BLOCK on four gate families at once** — no
 resolvable citation (F15), deny outcome (F16), authority not in the pack

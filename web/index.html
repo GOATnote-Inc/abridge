@@ -236,6 +236,38 @@
 #pane-patient .wb-next{background:#fff8e8;border-color:#c8981e;color:#182430}
 #pane-patient .wb-nk{color:#7a5200}
 #pane-patient .wb-lb{color:#5a6e81;font-size:12px}
+
+/* ---- revision diffs (rail only): semantic del/ins with +/− glyphs so the
+   change reads in grayscale and to screen readers ---- */
+.diffbox{margin-top:8px;padding:7px 9px;border:1px solid var(--line2);
+  border-radius:8px;background:#0b1118}
+.diffbox .dk{color:var(--faint);font-size:10px;text-transform:uppercase;
+  letter-spacing:.09em;font-weight:700;margin-bottom:4px}
+.diffline{font-size:12px;margin:2px 0;line-height:1.7}
+.dlab{color:var(--faint);font-size:10px;text-transform:uppercase;
+  letter-spacing:.06em;margin-right:7px}
+del.d-del{color:#ff9da2;background:rgba(229,72,77,.14);
+  text-decoration:line-through;border-radius:3px;padding:0 3px}
+ins.d-ins{color:#7ee2a8;background:rgba(48,164,108,.14);
+  text-decoration:underline;border-radius:3px;padding:0 3px}
+del.d-del::before{content:"− "}
+ins.d-ins::before{content:"+ "}
+.dwhy{color:var(--amber);font-size:11px}
+
+/* ---- ?present — projector mode: larger type for the back of the room ---- */
+body.present{font-size:15px}
+body.present .rail-entry{font-size:14px}
+body.present .rail-entry .re-title{font-size:14px}
+body.present .fmsg{font-size:13.5px}
+body.present .crit{font-size:13px}
+body.present .card{font-size:15px}
+body.present .bubble{font-size:15px}
+body.present .wb-l{font-size:14.5px}
+body.present #pane-patient .bubble{font-size:18px}
+body.present #pane-patient .wb-l{font-size:17px}
+body.present .diffline{font-size:13.5px}
+body.present #stepLabel{font-size:16px}
+body.present .chip{font-size:11px}
 </style>
 </head>
 <body>
@@ -292,6 +324,8 @@
 "use strict";
 /* Attending demo UI — zero build, zero network deps, pure re-render of steps 0..k. */
 
+if (location.search.indexOf("present") >= 0) document.body.className += " present";
+
 var T = null;        // transcript
 var STEPS = [];      // derived steps
 var K = 0;           // current step index
@@ -305,6 +339,108 @@ function el(tag, cls, text){
   return e;
 }
 function chip(kind, label){ return el("span","chip "+kind, label); }
+
+/* ---------- revision diffs: the oracle's effect, made visible.
+   LCS word diff; semantic <del>/<ins> so state survives grayscale and
+   screen readers. Render-time only — the transcript stays untouched. */
+function diffWords(a, b){
+  var A = String(a || "").split(/\s+/).filter(Boolean);
+  var B = String(b || "").split(/\s+/).filter(Boolean);
+  var n = A.length, m = B.length, i, j;
+  var L = [];
+  for (i = 0; i <= n; i++){ L[i] = []; for (j = 0; j <= m; j++){ L[i][j] = 0; } }
+  for (i = n - 1; i >= 0; i--)
+    for (j = m - 1; j >= 0; j--)
+      L[i][j] = A[i] === B[j] ? L[i+1][j+1] + 1 : Math.max(L[i+1][j], L[i][j+1]);
+  var out = []; i = 0; j = 0;
+  while (i < n && j < m){
+    if (A[i] === B[j]){ out.push({t:"eq", w:A[i]}); i++; j++; }
+    else if (L[i+1][j] >= L[i][j+1]){ out.push({t:"del", w:A[i]}); i++; }
+    else { out.push({t:"ins", w:B[j]}); j++; }
+  }
+  while (i < n){ out.push({t:"del", w:A[i]}); i++; }
+  while (j < m){ out.push({t:"ins", w:B[j]}); j++; }
+  return out;
+}
+function diffText(prev, curr){
+  var span = el("span","dtext");
+  diffWords(prev, curr).forEach(function(tk){
+    span.appendChild(tk.t === "del" ? el("del","d-del", tk.w)
+                   : tk.t === "ins" ? el("ins","d-ins", tk.w)
+                   : el("span", null, tk.w));
+    span.appendChild(document.createTextNode(" "));
+  });
+  return span;
+}
+function diffRow(label){
+  var row = el("div","diffline");
+  if (label) row.appendChild(el("span","dlab", label));
+  return row;
+}
+function triageRevisionDiff(prev, curr){
+  var box = el("div","diffbox");
+  box.appendChild(el("div","dk","revision — what the findings changed"));
+  if (get(prev,"esi_level") !== get(curr,"esi_level")){
+    var r = diffRow("esi");
+    r.appendChild(el("del","d-del", String(get(prev,"esi_level"))));
+    r.appendChild(document.createTextNode(" "));
+    r.appendChild(el("ins","d-ins", String(get(curr,"esi_level"))));
+    box.appendChild(r);
+  }
+  var po = (prev && prev.orders) || [], co = (curr && curr.orders) || [];
+  var removed = po.filter(function(o){ return co.indexOf(o) < 0; });
+  var added = co.filter(function(o){ return po.indexOf(o) < 0; });
+  if (removed.length || added.length){
+    var r2 = diffRow("orders");
+    removed.forEach(function(o){
+      r2.appendChild(el("del","d-del", o));
+      r2.appendChild(document.createTextNode(" "));
+    });
+    added.forEach(function(o){
+      r2.appendChild(el("ins","d-ins", o));
+      r2.appendChild(document.createTextNode(" "));
+    });
+    box.appendChild(r2);
+  }
+  if ((get(prev,"rationale") || "") !== (get(curr,"rationale") || "")){
+    var r3 = diffRow("rationale");
+    r3.appendChild(diffText(get(prev,"rationale"), get(curr,"rationale")));
+    box.appendChild(r3);
+  }
+  return box;
+}
+function appealRevisionDiff(prev, curr){
+  var box = el("div","diffbox");
+  box.appendChild(el("div","dk","revision — what the findings changed"));
+  var key = function(c){ return (c && c.text) || ""; };
+  var pk = (prev.claims || []).map(key), ck = (curr.claims || []).map(key);
+  (prev.claims || []).forEach(function(c){
+    if (ck.indexOf(key(c)) < 0){
+      var row = diffRow("");
+      row.appendChild(el("del","d-del","claim withheld: " + c.text));
+      if (!(c.cites || []).length) row.appendChild(el("span","dwhy"," — no citation"));
+      box.appendChild(row);
+    }
+  });
+  (curr.claims || []).forEach(function(c){
+    if (pk.indexOf(key(c)) < 0){
+      var row2 = diffRow("");
+      row2.appendChild(el("ins","d-ins","claim added: " + c.text));
+      box.appendChild(row2);
+    }
+  });
+  var pa = prev.authorities_cited || [], ca = curr.authorities_cited || [];
+  var authRow = null;
+  pa.concat(ca).filter(function(x, ix, arr){ return arr.indexOf(x) === ix; })
+    .forEach(function(auth){
+      var inP = pa.indexOf(auth) >= 0, inC = ca.indexOf(auth) >= 0;
+      if (inP === inC) return;
+      if (!authRow){ authRow = diffRow("authority"); box.appendChild(authRow); }
+      authRow.appendChild(inC ? el("ins","d-ins", auth) : el("del","d-del", auth));
+      authRow.appendChild(document.createTextNode(" "));
+    });
+  return box;
+}
 
 /* ---------- shared renderers ------------------------------------------- */
 function findingNode(f){
@@ -514,7 +650,11 @@ function deriveSteps(t){
       active:["physician"],
       apply:function(view){
         view.panes.physician.push(proposalCard(a.proposal, i, decision));
-        view.rail.push(triageVerdictEntry(a, i));
+        var entry = triageVerdictEntry(a, i);
+        if (i > 0 && attempts[i-1] && attempts[i-1].proposal){
+          entry.appendChild(triageRevisionDiff(attempts[i-1].proposal, a.proposal));
+        }
+        view.rail.push(entry);
       }
     });
   });
@@ -708,14 +848,19 @@ function deriveSteps(t){
               "appeal · every claim cited [clause] [note:span]",
               sc.appeal.artifact_text));
           }
-          view.rail.push(railEntry({
+          var entry = railEntry({
             tone: allow ? "allow" : "block",
             chipKind: allow ? "allow" : "block",
             chipLabel: v.decision || "?",
             title:"Appeal draft " + (i+1) + (allow ? " — shipped" : " — withheld"),
             meta:(a.proposal && a.proposal.claims ? a.proposal.claims.length + " claims" : ""),
             findings: v.findings || []
-          }));
+          });
+          var appealAtts = get(sc,"appeal","attempts") || [];
+          if (i > 0 && appealAtts[i-1] && appealAtts[i-1].proposal && a.proposal){
+            entry.appendChild(appealRevisionDiff(appealAtts[i-1].proposal, a.proposal));
+          }
+          view.rail.push(entry);
         }
       });
     });

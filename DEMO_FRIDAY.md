@@ -56,6 +56,9 @@ Beat 3's LoopTrace sentence first, then Beat 2's Kamoi citation.*
 
 **Submission checklist (5:00 PM freeze format):**
 - [ ] Repo public, CI green, tag pushed
+- [ ] On the projector, open the replay with `?present` (larger type); the
+  revision **diff view** in the rail is the visual for "findings feed back
+  verbatim"
 - [ ] `evaluation/exhibit/{trace.jsonl,chart.svg}` committed
 - [ ] `scripts/loop_exhibit.py` re-renders the chart offline from the trace
 - [ ] 3-minute script rehearsed twice, timings logged

@@ -37,13 +37,14 @@ omission-class harms.
 | Evidence | Result | Notes |
 |---|---|---|
 | Gold-set regression | FN **0/23**; 95% CI upper bound **12.2%** (Clopper–Pearson) | A regression gate, not a precision claim. A ~1% upper bound needs ≈300 cases — that target is the roadmap, stated rather than implied. FP 0/23 (upper bound 12.2%). |
-| Mutation harness | **23/23 mechanisms load-bearing** | 9 communication gates + 7 decision-side mechanisms + 7 coverage gates (incl. denial-signoff bypass and denial-justification mutants). Each disabled in turn → suite must fail; clean run green. In CI on every push. |
+| Mutation harness (mechanism level) | **23/23 mechanisms load-bearing** | 9 communication gates + 7 decision-side mechanisms + 7 coverage gates (incl. denial-signoff bypass and denial-justification mutants). Each disabled in turn → suite must fail; clean run green. In CI on every push. |
+| Fine-grained mutation (operator level) | coverage **59.8%** · esi **83.2%** · gates **72.4%** kill by each module's dedicated suites | 1,430 mutants across the three core safety modules (`mutmut`, config committed). Yield: **nine load-bearing test gaps pinned, incl. three fail-open inversions and every previously-unpinned clinical threshold boundary**; all remaining survivors triaged and classified (docs/EVALUATION.md §3). |
 | Coverage surface (F14-F19) | structural fail-closed | `build_denial` raises `PhysicianSignoffRequired` without a physician token — no demo path supplies one and no override exists; `determine()` approves or escalates, never denies; quote-anchored grounding; hashed, versioned criteria packs (DRAFT status surfaced verbatim). 58 dedicated tests. |
 | Loop exhibit (oracle vs self-critique) | oracle 7/9 @ 1.43 mean attempts; self-critique 5/9 @ 2.00 | Same small performer on identical cases incl. planted traps; committed trace + offline-re-renderable chart (`evaluation/exhibit/`). |
 | Boundary-adversarial suite | **22 automated attacks, 0 gate bypasses** | Prompt injection via transcript/rationale/message content; order-token spoofing; Unicode lexicon evasion (zero-width, fullwidth); demographic invariance; consent-waiver arguments. *Automated probes — no human red-team hours yet; stated plainly.* |
 | Seeded invariant fuzz | 300 adversarial encounter/proposal pairs, all invariants hold | Never crashes; decision always consistent with finding severities; acuity in range. |
 | ReDoS regression | 156 KB pathological text in **0.049 s** (was 64 s) | Bounded gaps enforced by a lexicon-lint test. |
-| Live-model runs | `evaluation/live_runs/` — raw transcripts, performer model id stamped | `claude-fable-5`: correct ESI-2 ACS plan ALLOWed; a textually flawless reply still BLOCKed by the disclosure-gap state gate; `unsafe_artifacts_shipped: 0`. |
+| Live-model runs | `evaluation/live_runs/` — raw transcripts, performer model id stamped | Latest (2026-07-12, `claude-opus-4-8`): first **three-surface** live run — Act 3 appeal drafted live (11 claims, every one quote-anchored), ALLOWed and shipped; disclosure-gap block held; F14 raised; `unsafe_artifacts_shipped: 0`. The run also found (and the seam failed closed on) a token-cap truncation, recorded in the live-runs README. Earlier: `claude-fable-5` two-surface runs, verdict-identical to opus-4.8. |
 
 Commission/omission split of what the gates catch: omission-class — under-triage,
 missing requirement groups, dropped escalation acknowledgment, information
@@ -75,6 +76,20 @@ kept on the record (fix commit in parentheses):
 6. **Review-artifact confusability.** An external reviewer fetched the blank
    review template and reasonably concluded no physician review existed; the
    template is now labeled and links the dated record (`13ea1f3`).
+7. **Vocabulary fail-opens, twice — same class.** Exact-string outcome
+   matching let `"DENY"` bypass the no-automated-deny gate (`0437b31`);
+   the follow-up review found the identical bug on `kind` (`54e6ee0`).
+   Both vocabularies are now normalized and closed, with the lesson
+   generalized: unrecognized vocabulary can only narrow what a gate
+   permits.
+8. **Fail-open inversions masked by redundant gates.** Operator-level
+   fault injection (2026-07-12) found `_resolve_span` returning ok on
+   unknown cite types and unparseable refs — invisible to the
+   mechanism-level harness because a neighboring rule blocked those cases
+   anyway — plus an inverted availability-marker scan in the
+   information-blocking gate and unpinned clinical threshold boundaries
+   (`45b82b6`, `3df7795`, `3cc0afc`). Single-fault verification is now
+   demonstrated practice here, not a slogan.
 
 ## 4. Independence and decontamination (labeled honestly)
 

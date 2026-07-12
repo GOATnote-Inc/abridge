@@ -3,13 +3,13 @@
 **The exhibit is the loop itself:** self-correction against a deterministic
 oracle instead of self-assessment.
 
-**Beat 1 — the pattern in 90 seconds (toy, domain-neutral).** Cited-summary
+**Beat 1 — the pattern in 60 seconds (toy, domain-neutral).** Cited-summary
 task: two sentences, each must end with `[L<n>]` that resolves to a source
 line and shares a content word with it. The oracle is ~20 lines of stdlib.
 Loop: performer drafts → oracle returns findings verbatim → performer
 revises. No vibes, no rubric prose — named violations.
 
-**Beat 2 — the chart (60s).** `evaluation/exhibit/chart.svg`, rendered from
+**Beat 2 — the chart (45s).** `evaluation/exhibit/chart.svg`, rendered from
 the committed trace (`trace.jsonl`; regenerate offline with
 `scripts/loop_exhibit.py`). Same small performer (model id printed on the
 chart), same nine cases, two feedback regimes:
@@ -30,7 +30,7 @@ reliable external feedback. Name-drop for this room: Anthropic's
 evaluator-optimizer pattern — with the evaluator replaced by a deterministic
 oracle — and Wei's verifier's-law framing.
 
-**Beat 3 — real stakes (45s).** The same loop shape gates a prior-auth
+**Beat 3 — real stakes (35s).** The same loop shape gates a prior-auth
 surface: appeals where every claim must carry a resolvable citation
 (quote-anchored — the performer quotes, the deterministic engine locates),
 authorities must exist in a hashed criteria pack, and the deny path
@@ -50,6 +50,9 @@ engineers."
 **Close (15s).** "Self-critique asks the model to grade its own homework.
 A deterministic oracle names the exact rule you broke. The loop is the same;
 the feedback source is the whole difference."
+
+*Beats total 2:55 against a 3:00 slot. If running over in rehearsal, cut
+Beat 3's LoopTrace sentence first, then Beat 2's Kamoi citation.*
 
 **Submission checklist (5:00 PM freeze format):**
 - [ ] Repo public, CI green, tag pushed

@@ -1,6 +1,6 @@
 # Saturday — Abridge × Anthropic × Lightspeed (3-minute script)
 
-**Stats up top (say these, sourced):**
+**Stats up top (25s — say these, sourced):**
 - Medicare Advantage insurers made **52.8M** prior-auth determinations in
   2024; **4.1M denied (7.7%)**. **Only 11.5% of denials were appealed — and
   80.7% of appeals were overturned** (KFF, 2024 data, published Jan 2026).
@@ -41,6 +41,10 @@ one fail-closed loop. We extended the chassis, not built a new vehicle."
 pending physician review — sign-off flips the label through the same review
 flow the triage rules went through. 260 tests, 22 mutation targets all
 load-bearing, FN=0 enforced in CI."
+
+*Beats total 2:55 against a 3:00 slot. If running over in rehearsal, cut
+the insurer-spread sentence from the stats block first, then Beat 4's
+quoted line.*
 
 **Vocabulary for this room:** say "confabulation" (Abridge's term); the
 quote-anchored citations are the same instinct as their Linked Evidence —

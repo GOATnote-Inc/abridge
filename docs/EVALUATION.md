@@ -151,7 +151,12 @@ every exported resource carries the `HTEST` ("test health data") security
 label — the standards-native form of this repo's `synthetic: true`
 attestation — and the exporter refuses non-attested input. The committed
 example (`evaluation/fhir_export_demo.json`) regenerates byte-identically
-(`tests/test_fhir.py`). The HIPAA posture — zero PHI by construction,
+(`tests/test_fhir.py`) and validates against the **official HL7 FHIR
+Validator** (v6.9.11, FHIR 4.0.1, run 2026-07-12): **0 errors**; the four
+remaining warnings are the validator noting it cannot resolve this repo's
+own criterion CodeSystem URI (the codes live in `INVERSION.md`, not a
+published FHIR CodeSystem — by design), plus two informational notes on
+example-strength bindings. The HIPAA posture — zero PHI by construction,
 Safe-Harbor-aligned schema bans, §164.312 safeguard mapping, deployment
 behind a covered entity's BAA — is `docs/COMPLIANCE.md`. No FHIR or HIPAA
 certification exists or is claimed (HHS recognizes none; HL7 does not

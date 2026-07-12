@@ -65,7 +65,7 @@ def test_bundle_shape_and_required_fields():
     obs = _resources(b, "Observation")[0]
     assert obs["code"]["coding"][0] == {
         "system": "http://loinc.org", "code": "75636-1",
-        "display": "Emergency severity index"}
+        "display": "Emergency severity index [ESI]"}
     assert obs["valueInteger"] == 2
     prov = _resources(b, "Provenance")[0]
     assert prov["recorded"] == _REC and prov["target"] and prov["agent"]

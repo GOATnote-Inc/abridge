@@ -40,7 +40,7 @@ _HTEST = {
     "display": "test health data",
 }
 _LOINC_ESI = {"system": "http://loinc.org", "code": "75636-1",
-              "display": "Emergency severity index"}
+              "display": "Emergency severity index [ESI]"}
 _RISK_PROBABILITY = "http://terminology.hl7.org/CodeSystem/risk-probability"
 _DCM = "http://dicom.nema.org/resources/ontology/DCM"
 
@@ -54,6 +54,14 @@ _SEVERITY_MAP = {  # verdict.Severity -> DetectedIssue.severity (required set)
 
 def _meta() -> dict[str, Any]:
     return {"security": [dict(_HTEST)]}
+
+
+def _narrative(summary: str) -> dict[str, str]:
+    """Minimal generated narrative (dom-6 best practice) — plain text only."""
+    safe = (summary.replace("&", "&amp;").replace("<", "&lt;")
+            .replace(">", "&gt;"))
+    return {"status": "generated",
+            "div": f'<div xmlns="http://www.w3.org/1999/xhtml">{safe}</div>'}
 
 
 def _rid(prefix: str, payload: Any) -> str:
@@ -74,11 +82,13 @@ def _require_synthetic(flag: object, what: str) -> None:
 
 def _detected_issue(f: Finding, *, subject: dict[str, str],
                     author_display: str) -> dict[str, Any]:
+    severity = _SEVERITY_MAP.get(f.severity, "high")  # unknown -> high
     issue: dict[str, Any] = {
         "resourceType": "DetectedIssue",
         "meta": _meta(),
+        "text": _narrative(f"{severity}: {f.message}"),
         "status": "final",
-        "severity": _SEVERITY_MAP.get(f.severity, "high"),  # unknown -> high
+        "severity": severity,
         "code": {
             "coding": [{
                 "system": CRITERION_SYSTEM,
@@ -102,6 +112,7 @@ def _provenance(targets: list[str], *, recorded: str, agent_display: str,
     prov: dict[str, Any] = {
         "resourceType": "Provenance",
         "meta": _meta(),
+        "text": _narrative(f"Provenance: {agent_display}"),
         "target": [{"reference": t} for t in targets],
         "recorded": recorded,
         "agent": [{"who": {"display": agent_display}}],
@@ -118,6 +129,8 @@ def _audit_event(*, recorded: str, decision: Decision, entity_what: str,
     return {
         "resourceType": "AuditEvent",
         "meta": _meta(),
+        "text": _narrative(f"Gate execution: {entity_what} — "
+                           f"{decision.value}"),
         "type": {"system": _DCM, "code": "110100",
                  "display": "Application Activity"},
         "action": "E",
@@ -162,15 +175,21 @@ def triage_export(verdict: Any, encounter: dict[str, Any], *, recorded: str,
     observation = {
         "resourceType": "Observation",
         "meta": _meta(),
+        "text": _narrative(f"Emergency severity index [ESI]: {esi} "
+                           f"(deterministic re-derivation)"),
         "status": "final",
         "code": {"coding": [dict(_LOINC_ESI)]},
         "subject": dict(subject),
+        "effectiveDateTime": recorded,
+        "performer": [{"display": agent}],
         "valueInteger": esi,
         "device": {"display": agent},
     }
     risk = {
         "resourceType": "RiskAssessment",
         "meta": _meta(),
+        "text": _narrative(f"Triage risk: attending ESI {esi} — "
+                           f"decision {verdict.decision.value}"),
         "status": "final",
         "subject": dict(subject),
         "method": {"text": "Emergency Severity Index v4 (deterministic "

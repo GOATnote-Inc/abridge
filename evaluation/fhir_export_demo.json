@@ -14,7 +14,7 @@
   "type": "collection",
   "entry": [
    {
-    "fullUrl": "urn:attending:riskassessment-097a417245b22ae5",
+    "fullUrl": "urn:attending:riskassessment-0a71fc033c4915e1",
     "resource": {
      "resourceType": "RiskAssessment",
      "meta": {
@@ -25,6 +25,10 @@
         "display": "test health data"
        }
       ]
+     },
+     "text": {
+      "status": "generated",
+      "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Triage risk: attending ESI 2 — decision BLOCK</div>"
      },
      "status": "final",
      "subject": {
@@ -68,7 +72,7 @@
     }
    },
    {
-    "fullUrl": "urn:attending:observation-711be92e1c975f55",
+    "fullUrl": "urn:attending:observation-b3910ee65cf2b359",
     "resource": {
      "resourceType": "Observation",
      "meta": {
@@ -80,19 +84,29 @@
        }
       ]
      },
+     "text": {
+      "status": "generated",
+      "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Emergency severity index [ESI]: 2 (deterministic re-derivation)</div>"
+     },
      "status": "final",
      "code": {
       "coding": [
        {
         "system": "http://loinc.org",
         "code": "75636-1",
-        "display": "Emergency severity index"
+        "display": "Emergency severity index [ESI]"
        }
       ]
      },
      "subject": {
       "display": "synthetic patient — encounter DEMO-001"
      },
+     "effectiveDateTime": "2026-07-12T00:00:00Z",
+     "performer": [
+      {
+       "display": "Attending supervisor (deterministic ruleset esi-v4-attending-0.3.1; model seam deterministic (no LLM in the export path))"
+      }
+     ],
      "valueInteger": 2,
      "device": {
       "display": "Attending supervisor (deterministic ruleset esi-v4-attending-0.3.1; model seam deterministic (no LLM in the export path))"
@@ -100,7 +114,7 @@
     }
    },
    {
-    "fullUrl": "urn:attending:detectedissue-816c13adf190b378",
+    "fullUrl": "urn:attending:detectedissue-313b6db7d9adaa09",
     "resource": {
      "resourceType": "DetectedIssue",
      "meta": {
@@ -111,6 +125,10 @@
         "display": "test health data"
        }
       ]
+     },
+     "text": {
+      "status": "generated",
+      "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">high: proposed ESI 3 is less acute than the ESI 2 the tree assigns (Decision B)</div>"
      },
      "status": "final",
      "severity": "high",
@@ -143,7 +161,7 @@
     }
    },
    {
-    "fullUrl": "urn:attending:detectedissue-b36651a319684b30",
+    "fullUrl": "urn:attending:detectedissue-0e4f4906ca36e9cc",
     "resource": {
      "resourceType": "DetectedIssue",
      "meta": {
@@ -154,6 +172,10 @@
         "display": "test health data"
        }
       ]
+     },
+     "text": {
+      "status": "generated",
+      "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">high: Chest pain suggestive of acute coronary syndrome: required workup incomplete — missing ['ecg', 'troponin']; disposition 'fast_track' would release the patient</div>"
      },
      "status": "final",
      "severity": "high",
@@ -186,7 +208,7 @@
     }
    },
    {
-    "fullUrl": "urn:attending:detectedissue-ce00af1b39a673d5",
+    "fullUrl": "urn:attending:detectedissue-c929cd06bc915fbf",
     "resource": {
      "resourceType": "DetectedIssue",
      "meta": {
@@ -197,6 +219,10 @@
         "display": "test health data"
        }
       ]
+     },
+     "text": {
+      "status": "generated",
+      "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">high: proposal appears anchored on the presenting complaint; a red flag is unaddressed at a low acuity</div>"
      },
      "status": "final",
      "severity": "high",
@@ -229,7 +255,7 @@
     }
    },
    {
-    "fullUrl": "urn:attending:detectedissue-a1a19e08a8cacd34",
+    "fullUrl": "urn:attending:detectedissue-3362ac7d6422858f",
     "resource": {
      "resourceType": "DetectedIssue",
      "meta": {
@@ -240,6 +266,10 @@
         "display": "test health data"
        }
       ]
+     },
+     "text": {
+      "status": "generated",
+      "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">high: proposal rationale asserts values not grounded in the record</div>"
      },
      "status": "final",
      "severity": "high",
@@ -272,7 +302,7 @@
     }
    },
    {
-    "fullUrl": "urn:attending:provenance-ec00b184e5a3dcec",
+    "fullUrl": "urn:attending:provenance-407178822a4f48b9",
     "resource": {
      "resourceType": "Provenance",
      "meta": {
@@ -284,24 +314,28 @@
        }
       ]
      },
+     "text": {
+      "status": "generated",
+      "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Provenance: Attending supervisor (deterministic ruleset esi-v4-attending-0.3.1; model seam deterministic (no LLM in the export path))</div>"
+     },
      "target": [
       {
-       "reference": "urn:attending:riskassessment-097a417245b22ae5"
+       "reference": "urn:attending:riskassessment-0a71fc033c4915e1"
       },
       {
-       "reference": "urn:attending:observation-711be92e1c975f55"
+       "reference": "urn:attending:observation-b3910ee65cf2b359"
       },
       {
-       "reference": "urn:attending:detectedissue-816c13adf190b378"
+       "reference": "urn:attending:detectedissue-313b6db7d9adaa09"
       },
       {
-       "reference": "urn:attending:detectedissue-b36651a319684b30"
+       "reference": "urn:attending:detectedissue-0e4f4906ca36e9cc"
       },
       {
-       "reference": "urn:attending:detectedissue-ce00af1b39a673d5"
+       "reference": "urn:attending:detectedissue-c929cd06bc915fbf"
       },
       {
-       "reference": "urn:attending:detectedissue-a1a19e08a8cacd34"
+       "reference": "urn:attending:detectedissue-3362ac7d6422858f"
       }
      ],
      "recorded": "2026-07-12T00:00:00Z",
@@ -341,7 +375,7 @@
     }
    },
    {
-    "fullUrl": "urn:attending:auditevent-3d61a7278d812888",
+    "fullUrl": "urn:attending:auditevent-3340ef716a9c98ff",
     "resource": {
      "resourceType": "AuditEvent",
      "meta": {
@@ -352,6 +386,10 @@
         "display": "test health data"
        }
       ]
+     },
+     "text": {
+      "status": "generated",
+      "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Gate execution: triage verdict — encounter DEMO-001 — BLOCK</div>"
      },
      "type": {
       "system": "http://dicom.nema.org/resources/ontology/DCM",

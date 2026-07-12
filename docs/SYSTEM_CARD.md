@@ -154,6 +154,22 @@ from the running prompt).
 
 ## Changelog
 
+- 2026-07-12: demo-week hardening. A second fresh-context adversarial
+  review (verdict: ship-after-fixes) found — and this repo closed — a
+  cased-outcome fail-open in the coverage outcome gate (`"DENY"` bypassed
+  the no-automated-deny check; outcome vocabulary is now normalized and
+  closed: unrecognized outcomes block, a determination without an outcome
+  escalates) and a trace-vs-narrative drift in the loop-exhibit story (the
+  injected-authority trap holds under both feedback regimes — COV-F15 on
+  every attempt — rather than being an oracle-only catch; the docs now
+  tell the trace's story). The same review independently verified gold-set
+  FN 0/23, all 22 mutation mechanisms load-bearing, byte-identical replay
+  with sha256-identical hosted pages, and the exhibit numbers recomputed
+  from the committed trace. Also this week: revision diff view and
+  `?present` projector mode in the replay UI, WCAG
+  contrast/motion/non-color-verdict pass with a light patient pane, and a
+  web render regression gate (node smoke against the golden transcript).
+  Suite 256 → 272 tests.
 - 2026-07-11 (v0.2.0): third supervised surface — COVERAGE (INVERSION
   F14-F19): structural physician-signoff denial gating, quote-anchored
   citation grounding, hashed criteria packs (drafts quarantined pending

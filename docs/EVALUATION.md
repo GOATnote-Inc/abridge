@@ -45,6 +45,17 @@ deterministic floor (the fail-closed analogue of giving a judge an "Unknown"
 escape), and dual-model live runs are archived showing verdict-level
 equivalence (`evaluation/live_runs/`, fable-5 vs opus-4.8, byte-compared).
 
+**Grader-vs-clinician agreement** (the meta-evaluation HealthBench and
+MedHELM made table stakes) has standing machinery:
+`scripts/adjudication_packet.py` renders the gold-set inputs as a blinded,
+deterministically-shuffled packet (labels and engine verdicts stripped —
+tests assert nothing leaks); the scorer recomputes engine verdicts live and
+reports raw agreement, Cohen's κ, the full confusion table, and every
+disagreement for verbatim publication. Disclosed limitation: the reviewing
+physician saw these cases *with* labels on 2026-07-09, so in-corpus κ is an
+optimistic bound — the sealed held-out set provides the unbiased repeat.
+Result pending the blinded read; it will be published either way.
+
 **Beyond the gold set:** 22 adversarial attacks (`tests/test_adversarial.py`),
 seeded invariant fuzzing (300 generated cases, `tests/test_invariants.py`),
 degraded-input behavior (the four detectors widen the confidence interval

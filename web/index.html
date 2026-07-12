@@ -254,6 +254,17 @@ del.d-del::before{content:"− "}
 ins.d-ins::before{content:"+ "}
 .dwhy{color:var(--amber);font-size:11px}
 
+/* ---- small screens: the fixed three-column grid becomes a single
+   scrollable column (judges open this on phones) ---- */
+@media (max-width: 900px){
+  body{overflow:auto}
+  header{flex-wrap:wrap}
+  header .oneliner{white-space:normal}
+  main{display:flex; flex-direction:column; overflow:visible}
+  .pane{min-height:140px; max-height:70vh}
+  #narration{flex-wrap:wrap}
+}
+
 /* ---- ?present — projector mode: larger type for the back of the room ---- */
 body.present{font-size:15px}
 body.present .rail-entry{font-size:14px}

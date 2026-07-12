@@ -19,6 +19,8 @@ a.btn,button{background:#21262d;border:1px solid var(--line);color:var(--ink);
 padding:6px 12px;border-radius:6px;cursor:pointer;text-decoration:none;font-size:13px}
 button:hover,a.btn:hover{border-color:var(--acc)}
 button.primary{background:#1f6feb;border-color:#1f6feb}
+#recordedNote{display:none;background:#2a2510;border:1px solid var(--amber);color:#e8c96a;
+border-radius:8px;padding:9px 14px;margin:10px 18px;font-size:13px}
 #offline{display:none;background:#3d1d1f;border:1px solid var(--red);color:#ffb3ad;
 padding:8px 16px;font-size:13px}
 main{display:grid;grid-template-columns:minmax(380px,1fr) minmax(380px,1fr);
@@ -76,6 +78,10 @@ select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 </header>
 <div id="offline">Gateway not reachable — this page needs the live API.
 Run <code>make serve</code> in the repo, then open <code>http://127.0.0.1:8000/ui/playground.html</code>.</div>
+<div id="recordedNote"><b>Recorded mode.</b> No live gateway here — the preset
+buttons replay <i>committed verdicts generated offline by the same engine</i>
+(<code>scripts/playground_recorded.py</code>). Typing your own case needs the
+local gateway: <code>make serve</code>.</div>
 
 <div class="tabs">
   <div class="tab on" id="tabT">Triage decision</div>
@@ -227,11 +233,25 @@ function renderFindings(box,findings){findings.forEach(function(f){
  if(f.citation)d.appendChild(el("div","cite","cite: "+f.citation));
  box.appendChild(d)})}
 
+/* Recorded fallback for the hosted page: preset bodies replay committed
+   verdicts generated offline by the same engine. Custom input still
+   requires the live gateway — stated, never faked. */
+var REC=null;
+fetch("playground_recorded.json").then(function(r){return r.json()})
+ .then(function(j){REC=j.recorded||null}).catch(function(){REC=null});
+function stableStr(o){
+ if(o===null||typeof o!=="object")return JSON.stringify(o);
+ if(Array.isArray(o))return "["+o.map(stableStr).join(",")+"]";
+ return "{"+Object.keys(o).sort().map(function(k){
+  return JSON.stringify(k)+":"+stableStr(o[k])}).join(",")+"}"}
 function post(path,body,busy,cb){$(busy).textContent="…";
  fetch(path,{method:"POST",headers:{"Content-Type":"application/json"},
  body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){return[r.status,j]})})
  .then(function(t){$(busy).textContent="";cb(t[0],t[1])})
- .catch(function(){$(busy).textContent="";$("offline").style.display="block"})}
+ .catch(function(){$(busy).textContent="";
+  var hit=REC&&REC[path+"|"+stableStr(body)];
+  if(hit){$("recordedNote").style.display="block";cb(hit.status,hit.json);return}
+  $("offline").style.display="block"})}
 
 $("goT").onclick=function(){
  var num=function(id){var v=$(id).value.trim();return v===""?null:Number(v)};
@@ -291,8 +311,13 @@ $("cvVague").onclick=function(){coveragePreset("vague_denial")};
 $("cvClaim").onclick=function(){coveragePreset("unsupported_claim")};
 $("cvDeny").onclick=function(){coveragePreset("auto_deny")};
 
-/* gateway reachability probe (playground is live-only by design) */
-fetch("/health").then(function(r){if(!r.ok)throw 0}).catch(function(){$("offline").style.display="block"});
+/* gateway reachability probe: live -> nothing; recordings available ->
+   recorded-mode notice; neither -> the red offline banner */
+fetch("/health").then(function(r){if(!r.ok)throw 0}).catch(function(){
+ var later=function(){
+  if(REC){$("recordedNote").style.display="block"}
+  else{$("offline").style.display="block"}};
+ if(REC===null){setTimeout(later, 600)}else{later()}});
 </script>
 </body>
 </html>

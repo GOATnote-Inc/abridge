@@ -11,7 +11,13 @@ Estimate the coverage supervisor's false-negative rate on cases it was not
 built against, with a pre-registered procedure that cannot be quietly
 adjusted after seeing results. Target: **n ≈ 300** cases, sized so that
 zero observed false negatives would bound the FN rate below ~1% (exact
-Clopper–Pearson, 95%; `attending.evaluate.binom_upper(0, 300) < 0.01`).
+Clopper–Pearson, 95%; `attending.evaluate.binom_upper(0, 300) < 0.01`;
+rule-of-three cross-check: 3/300 = 1%).
+
+**Contamination statement:** the supervisor under test has no trainable
+parameters — nothing can memorize this set. Its only tunable surface is the
+versioned, human-reviewed ruleset, and the single-run rule above forbids
+adjusting that ruleset against this set between seal and run.
 
 ## Blinding
 

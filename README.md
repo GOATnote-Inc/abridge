@@ -204,6 +204,20 @@ Stated plainly, because a safety layer that hides its own attack surface isn't o
 - **All data is synthetic.** No PHI anywhere; scenario loading refuses
   non-attested or identifier-bearing fixtures (INVERSION F13).
 
+## The five reviewer questions
+
+How is it evaluated · are results traceable · is the coverage relevant ·
+are results medically valid · are FHIR/HIPAA methods used where
+appropriate — each answered against this repo's own artifacts in
+[`docs/EVALUATION.md`](docs/EVALUATION.md), with the compliance posture
+(zero PHI by construction, §164.312 mapping, Da Vinci PAS/CRD/DTR + CMS-0057-F
+framing) in [`docs/COMPLIANCE.md`](docs/COMPLIANCE.md). Supervision artifacts
+export to FHIR R4 — verdicts as DetectedIssue, lineage as Provenance
+(pack sha256 as an RFC 6920 `ni:` URI), audit as AuditEvent, acuity as
+RiskAssessment + LOINC 75636-1 — via `attending.fhir`, synthetic-labeled
+`HTEST` on every resource, byte-identical committed example in
+[`evaluation/fhir_export_demo.json`](evaluation/fhir_export_demo.json).
+
 ## Validation status & roadmap
 
 What is validated today: regression (23-case synthetic gold set, FN=0 in CI),
@@ -228,7 +242,7 @@ ingestion, (4) human red-team hours against the gates.
 
 Three-surface supervisor (Decision, Communication, Coverage) + supervised
 control loop + live performer + demo +
-gateway + four-pane UI; 272 tests, ruff + mypy clean, gold-set FN=0 enforced in
+gateway + four-pane UI; 282 tests, ruff + mypy clean, gold-set FN=0 enforced in
 CI, mutation-checked gates (22 mechanisms; disabling any one fails its tests).
 Evidence is guideline-level (ESI Handbook v4, ACEP, AHA/ASA, Surviving Sepsis,
 Joint Commission, Cures Act, CA AB 3030); criterion→page mapping and all

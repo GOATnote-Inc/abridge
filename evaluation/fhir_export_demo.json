@@ -1,0 +1,402 @@
+{
+ "_note": "FHIR R4 demonstration export — synthetic data only (every resource carries meta.security HTEST). Not a certified EHR interface; profile conformance not claimed. Regenerate: scripts/fhir_demo_export.py",
+ "triage": {
+  "resourceType": "Bundle",
+  "meta": {
+   "security": [
+    {
+     "system": "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+     "code": "HTEST",
+     "display": "test health data"
+    }
+   ]
+  },
+  "type": "collection",
+  "entry": [
+   {
+    "fullUrl": "urn:attending:riskassessment-097a417245b22ae5",
+    "resource": {
+     "resourceType": "RiskAssessment",
+     "meta": {
+      "security": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+        "code": "HTEST",
+        "display": "test health data"
+       }
+      ]
+     },
+     "status": "final",
+     "subject": {
+      "display": "synthetic patient — encounter DEMO-001"
+     },
+     "method": {
+      "text": "Emergency Severity Index v4 (deterministic re-derivation)"
+     },
+     "performer": {
+      "display": "Attending supervisor (deterministic ruleset esi-v4-attending-0.3.1; model seam deterministic (no LLM in the export path))"
+     },
+     "prediction": [
+      {
+       "outcome": {
+        "text": "attending ESI 2"
+       },
+       "qualitativeRisk": {
+        "coding": [
+         {
+          "system": "http://terminology.hl7.org/CodeSystem/risk-probability",
+          "code": "high"
+         }
+        ]
+       }
+      }
+     ],
+     "basis": [
+      {
+       "display": "RF-ACS: Chest pain suggestive of acute coronary syndrome (evidence: chief_complaint[0:14] \"chest pressure\")"
+      },
+      {
+       "display": "Undifferentiated chest pain requires ECG within 10 min to exclude STEMI; ACS cannot be excluded at triage."
+      },
+      {
+       "display": "RF-ACS (Chest pain suggestive of acute coronary syndrome) fired but none of ['ecg', 'troponin'] ordered"
+      },
+      {
+       "display": "[contradiction] rationale[15:22] claims spo2=99 but record spo2=97"
+      }
+     ]
+    }
+   },
+   {
+    "fullUrl": "urn:attending:observation-711be92e1c975f55",
+    "resource": {
+     "resourceType": "Observation",
+     "meta": {
+      "security": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+        "code": "HTEST",
+        "display": "test health data"
+       }
+      ]
+     },
+     "status": "final",
+     "code": {
+      "coding": [
+       {
+        "system": "http://loinc.org",
+        "code": "75636-1",
+        "display": "Emergency severity index"
+       }
+      ]
+     },
+     "subject": {
+      "display": "synthetic patient — encounter DEMO-001"
+     },
+     "valueInteger": 2,
+     "device": {
+      "display": "Attending supervisor (deterministic ruleset esi-v4-attending-0.3.1; model seam deterministic (no LLM in the export path))"
+     }
+    }
+   },
+   {
+    "fullUrl": "urn:attending:detectedissue-816c13adf190b378",
+    "resource": {
+     "resourceType": "DetectedIssue",
+     "meta": {
+      "security": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+        "code": "HTEST",
+        "display": "test health data"
+       }
+      ]
+     },
+     "status": "final",
+     "severity": "high",
+     "code": {
+      "coding": [
+       {
+        "system": "https://github.com/GOATnote-Inc/abridge/blob/main/INVERSION.md",
+        "code": "ATT-UT1",
+        "display": "under_triage"
+       }
+      ],
+      "text": "ACEP Clinical Policy: Suspected NSTE-ACS (Ann Emerg Med 2018)"
+     },
+     "detail": "proposed ESI 3 is less acute than the ESI 2 the tree assigns (Decision B)",
+     "patient": {
+      "display": "synthetic patient — encounter DEMO-001"
+     },
+     "author": {
+      "display": "Attending supervisor (deterministic ruleset esi-v4-attending-0.3.1; model seam deterministic (no LLM in the export path))"
+     },
+     "evidence": [
+      {
+       "code": [
+        {
+         "text": "RF-ACS: Chest pain suggestive of acute coronary syndrome (evidence: chief_complaint[0:14] \"chest pressure\")"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   {
+    "fullUrl": "urn:attending:detectedissue-b36651a319684b30",
+    "resource": {
+     "resourceType": "DetectedIssue",
+     "meta": {
+      "security": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+        "code": "HTEST",
+        "display": "test health data"
+       }
+      ]
+     },
+     "status": "final",
+     "severity": "high",
+     "code": {
+      "coding": [
+       {
+        "system": "https://github.com/GOATnote-Inc/abridge/blob/main/INVERSION.md",
+        "code": "RF-ACS",
+        "display": "workup_incomplete"
+       }
+      ],
+      "text": "ACEP Clinical Policy: Suspected NSTE-ACS (Ann Emerg Med 2018)"
+     },
+     "detail": "Chest pain suggestive of acute coronary syndrome: required workup incomplete — missing ['ecg', 'troponin']; disposition 'fast_track' would release the patient",
+     "patient": {
+      "display": "synthetic patient — encounter DEMO-001"
+     },
+     "author": {
+      "display": "Attending supervisor (deterministic ruleset esi-v4-attending-0.3.1; model seam deterministic (no LLM in the export path))"
+     },
+     "evidence": [
+      {
+       "code": [
+        {
+         "text": "Undifferentiated chest pain requires ECG within 10 min to exclude STEMI; ACS cannot be excluded at triage."
+        }
+       ]
+      }
+     ]
+    }
+   },
+   {
+    "fullUrl": "urn:attending:detectedissue-ce00af1b39a673d5",
+    "resource": {
+     "resourceType": "DetectedIssue",
+     "meta": {
+      "security": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+        "code": "HTEST",
+        "display": "test health data"
+       }
+      ]
+     },
+     "status": "final",
+     "severity": "high",
+     "code": {
+      "coding": [
+       {
+        "system": "https://github.com/GOATnote-Inc/abridge/blob/main/INVERSION.md",
+        "code": "ATT-anchoring_bias",
+        "display": "detector"
+       }
+      ],
+      "text": "detector"
+     },
+     "detail": "proposal appears anchored on the presenting complaint; a red flag is unaddressed at a low acuity",
+     "patient": {
+      "display": "synthetic patient — encounter DEMO-001"
+     },
+     "author": {
+      "display": "Attending supervisor (deterministic ruleset esi-v4-attending-0.3.1; model seam deterministic (no LLM in the export path))"
+     },
+     "evidence": [
+      {
+       "code": [
+        {
+         "text": "RF-ACS (Chest pain suggestive of acute coronary syndrome) fired but none of ['ecg', 'troponin'] ordered"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   {
+    "fullUrl": "urn:attending:detectedissue-a1a19e08a8cacd34",
+    "resource": {
+     "resourceType": "DetectedIssue",
+     "meta": {
+      "security": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+        "code": "HTEST",
+        "display": "test health data"
+       }
+      ]
+     },
+     "status": "final",
+     "severity": "high",
+     "code": {
+      "coding": [
+       {
+        "system": "https://github.com/GOATnote-Inc/abridge/blob/main/INVERSION.md",
+        "code": "ATT-hallucination",
+        "display": "detector"
+       }
+      ],
+      "text": "detector"
+     },
+     "detail": "proposal rationale asserts values not grounded in the record",
+     "patient": {
+      "display": "synthetic patient — encounter DEMO-001"
+     },
+     "author": {
+      "display": "Attending supervisor (deterministic ruleset esi-v4-attending-0.3.1; model seam deterministic (no LLM in the export path))"
+     },
+     "evidence": [
+      {
+       "code": [
+        {
+         "text": "[contradiction] rationale[15:22] claims spo2=99 but record spo2=97"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   {
+    "fullUrl": "urn:attending:provenance-ec00b184e5a3dcec",
+    "resource": {
+     "resourceType": "Provenance",
+     "meta": {
+      "security": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+        "code": "HTEST",
+        "display": "test health data"
+       }
+      ]
+     },
+     "target": [
+      {
+       "reference": "urn:attending:riskassessment-097a417245b22ae5"
+      },
+      {
+       "reference": "urn:attending:observation-711be92e1c975f55"
+      },
+      {
+       "reference": "urn:attending:detectedissue-816c13adf190b378"
+      },
+      {
+       "reference": "urn:attending:detectedissue-b36651a319684b30"
+      },
+      {
+       "reference": "urn:attending:detectedissue-ce00af1b39a673d5"
+      },
+      {
+       "reference": "urn:attending:detectedissue-a1a19e08a8cacd34"
+      }
+     ],
+     "recorded": "2026-07-12T00:00:00Z",
+     "agent": [
+      {
+       "who": {
+        "display": "Attending supervisor (deterministic ruleset esi-v4-attending-0.3.1; model seam deterministic (no LLM in the export path))"
+       }
+      }
+     ],
+     "entity": [
+      {
+       "role": "quotation",
+       "what": {
+        "display": "RF-ACS: Chest pain suggestive of acute coronary syndrome (evidence: chief_complaint[0:14] \"chest pressure\")"
+       }
+      },
+      {
+       "role": "quotation",
+       "what": {
+        "display": "Undifferentiated chest pain requires ECG within 10 min to exclude STEMI; ACS cannot be excluded at triage."
+       }
+      },
+      {
+       "role": "quotation",
+       "what": {
+        "display": "RF-ACS (Chest pain suggestive of acute coronary syndrome) fired but none of ['ecg', 'troponin'] ordered"
+       }
+      },
+      {
+       "role": "quotation",
+       "what": {
+        "display": "[contradiction] rationale[15:22] claims spo2=99 but record spo2=97"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "fullUrl": "urn:attending:auditevent-3d61a7278d812888",
+    "resource": {
+     "resourceType": "AuditEvent",
+     "meta": {
+      "security": [
+       {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+        "code": "HTEST",
+        "display": "test health data"
+       }
+      ]
+     },
+     "type": {
+      "system": "http://dicom.nema.org/resources/ontology/DCM",
+      "code": "110100",
+      "display": "Application Activity"
+     },
+     "action": "E",
+     "recorded": "2026-07-12T00:00:00Z",
+     "outcome": "0",
+     "agent": [
+      {
+       "who": {
+        "display": "attending supervisor"
+       },
+       "requestor": true
+      }
+     ],
+     "source": {
+      "observer": {
+       "display": "attending"
+      }
+     },
+     "entity": [
+      {
+       "what": {
+        "display": "triage verdict — encounter DEMO-001"
+       },
+       "detail": [
+        {
+         "type": "decision",
+         "valueString": "BLOCK"
+        },
+        {
+         "type": "ruleset",
+         "valueString": "esi-v4-attending-0.3.1"
+        },
+        {
+         "type": "findings",
+         "valueString": "4"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  ]
+ }
+}

@@ -261,6 +261,72 @@ def _loop_request(
     return enc, drafts, performer, cap
 
 
+# --- coverage presets (shared by the REST endpoint and the MCP surface) --------
+
+
+def _coverage_preset_impl(name: Any) -> dict:
+    """Pure preset runner. Raises FileNotFoundError (drafts absent) or
+    ValueError (unknown name). Response shapes are pinned byte-for-byte by
+    web/playground_recorded.json — change nothing lightly."""
+    from . import coverage as cov
+    drafts = Path(__file__).resolve().parents[2] / "drafts" / "coverage"
+    pack_path = drafts / "pack_peds_speech_therapy.json"
+    case_path = drafts / "case_peds_speech_denial.json"
+    if not (pack_path.is_file() and case_path.is_file()):
+        raise FileNotFoundError("coverage drafts not present")
+    if name not in ("vague_denial", "unsupported_claim", "auto_deny"):
+        raise ValueError("unknown preset name")
+    pack = cov.load_pack(pack_path)
+    raw = json.loads(case_path.read_text())
+    note = raw["clinical_note"]
+    case = cov.CoverageCase(
+        case_id=raw["id"], synthetic=True, note=note,
+        transcript="", note_facts=raw["note_facts"],
+        evidence={cid: "met" for cid in pack.clauses})
+    prov = cov.make_provenance(pack, model_id="playground",
+                               timestamp="playground-fixed")
+    if name == "auto_deny":
+        try:
+            cov.build_denial(case, pack, physician_signoff=None,
+                             model_id="playground",
+                             timestamp="playground-fixed")
+            return {"f14": {"raised": False}}
+        except cov.PhysicianSignoffRequired as exc:
+            return {"f14": {"raised": True, "error": str(exc)},
+                    "pack": {"version": pack.version,
+                             "status": pack.approval_status}}
+    if name == "vague_denial":
+        proposal = cov.CoverageProposal(
+            kind="determination", outcome="deny",
+            claims=(cov.Claim("The services requested are not medically "
+                              "necessary.", cites=()),),
+            authorities_cited=("UNSPECIFIED-INTERNAL-CRITERIA",),
+            provenance={})
+    else:  # unsupported_claim
+        i = note.index("below the 5th percentile for age")
+        good = cov.Claim(
+            "PLS-5 places expressive communication below the 5th "
+            "percentile for age.",
+            cites=(cov.Cite("clause", "SLT-01"),
+                   cov.Cite("note", f"note:{i}:{i+32}",
+                            quote=note[i:i+32])))
+        bad = cov.Claim("The patient also demonstrates childhood apraxia "
+                        "of speech.", cites=())
+        proposal = cov.CoverageProposal(
+            kind="appeal", outcome=None, claims=(good, bad),
+            authorities_cited=("AUTH-EPSDT-1396D-R",), provenance=prov)
+    v = cov.supervise_determination(case, pack, proposal)
+    return {
+        "decision": v.decision.value,
+        "pack": {"version": pack.version, "status": pack.approval_status,
+                 "hash": pack.hash[:12]},
+        "findings": [{"criterion_id": f.criterion_id,
+                      "severity": f.severity.value,
+                      "message": f.message, "citation": f.citation}
+                     for f in v.findings],
+    }
+
+
 # --- the app -------------------------------------------------------------------
 
 
@@ -280,11 +346,25 @@ def create_app() -> Any:
 
     # DEMO-ONLY surface: no authN/authZ/rate-limiting (hackathon threat model,
     # mirroring HealthCraft's MCP HTTP note) — do not expose beyond the demo box.
+    # Optional MCP mount: when the [mcp] extra is installed, the same process
+    # serves the judge-facing MCP surface at /mcp (streamable-http). The
+    # session manager's lifespan MUST run or every /mcp request 500s.
+    mcp_app = None
+    try:
+        from .mcp_server import mcp as _mcp
+        mcp_app = _mcp.streamable_http_app()
+        lifespan = lambda _app: _mcp.session_manager.run()  # noqa: E731
+    except ImportError:
+        lifespan = None
+
     app = fastapi.FastAPI(
         title="Attending Gateway",
         version=__version__,
         description="Fail-closed supervised control loop for clinical triage agents, over HTTP.",
+        lifespan=lifespan,
     )
+    if mcp_app is not None:
+        app.mount("/mcp", mcp_app)
 
     def _bad_request(exc: Exception) -> Any:
         return HTTPException(status_code=400, detail=str(exc))
@@ -346,64 +426,13 @@ def create_app() -> Any:
     async def coverage_preset(body: dict):
         """Run one canned coverage scenario against the DRAFT pack (status
         surfaced). Presets mirror the demo's Act 3 beats; read-only."""
-        from . import coverage as cov
-        drafts = Path(__file__).resolve().parents[2] / "drafts" / "coverage"
-        pack_path = drafts / "pack_peds_speech_therapy.json"
-        case_path = drafts / "case_peds_speech_denial.json"
-        if not (pack_path.is_file() and case_path.is_file()):
-            raise HTTPException(404, "coverage drafts not present")
         name = body.get("name") if isinstance(body, dict) else None
-        if name not in ("vague_denial", "unsupported_claim", "auto_deny"):
-            raise HTTPException(400, "unknown preset name")
-        pack = cov.load_pack(pack_path)
-        raw = json.loads(case_path.read_text())
-        note = raw["clinical_note"]
-        case = cov.CoverageCase(
-            case_id=raw["id"], synthetic=True, note=note,
-            transcript="", note_facts=raw["note_facts"],
-            evidence={cid: "met" for cid in pack.clauses})
-        prov = cov.make_provenance(pack, model_id="playground",
-                                   timestamp="playground-fixed")
-        if name == "auto_deny":
-            try:
-                cov.build_denial(case, pack, physician_signoff=None,
-                                 model_id="playground",
-                                 timestamp="playground-fixed")
-                return {"f14": {"raised": False}}
-            except cov.PhysicianSignoffRequired as exc:
-                return {"f14": {"raised": True, "error": str(exc)},
-                        "pack": {"version": pack.version,
-                                 "status": pack.approval_status}}
-        if name == "vague_denial":
-            proposal = cov.CoverageProposal(
-                kind="determination", outcome="deny",
-                claims=(cov.Claim("The services requested are not medically "
-                                  "necessary.", cites=()),),
-                authorities_cited=("UNSPECIFIED-INTERNAL-CRITERIA",),
-                provenance={})
-        else:  # unsupported_claim
-            i = note.index("below the 5th percentile for age")
-            good = cov.Claim(
-                "PLS-5 places expressive communication below the 5th "
-                "percentile for age.",
-                cites=(cov.Cite("clause", "SLT-01"),
-                       cov.Cite("note", f"note:{i}:{i+32}",
-                                quote=note[i:i+32])))
-            bad = cov.Claim("The patient also demonstrates childhood apraxia "
-                            "of speech.", cites=())
-            proposal = cov.CoverageProposal(
-                kind="appeal", outcome=None, claims=(good, bad),
-                authorities_cited=("AUTH-EPSDT-1396D-R",), provenance=prov)
-        v = cov.supervise_determination(case, pack, proposal)
-        return {
-            "decision": v.decision.value,
-            "pack": {"version": pack.version, "status": pack.approval_status,
-                     "hash": pack.hash[:12]},
-            "findings": [{"criterion_id": f.criterion_id,
-                          "severity": f.severity.value,
-                          "message": f.message, "citation": f.citation}
-                         for f in v.findings],
-        }
+        try:
+            return _coverage_preset_impl(name)
+        except FileNotFoundError as exc:
+            raise HTTPException(404, "coverage drafts not present") from exc
+        except ValueError as exc:
+            raise HTTPException(400, "unknown preset name") from exc
 
     @app.get("/demo")
     def get_demo(live: bool = False) -> dict[str, Any]:

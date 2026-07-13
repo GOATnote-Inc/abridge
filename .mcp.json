@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "attending": {
+      "type": "stdio",
+      "command": "python3",
+      "args": ["-m", "attending.mcp_server"],
+      "env": {"PYTHONPATH": "src"}
+    }
+  }
+}

@@ -204,6 +204,20 @@ Stated plainly, because a safety layer that hides its own attack surface isn't o
 - **All data is synthetic.** No PHI anywhere; scenario loading refuses
   non-attested or identifier-bearing fixtures (INVERSION F13).
 
+## Connect YOUR Claude (MCP)
+
+Attending is an MCP server: add it to your own Claude and try to get an
+unsafe action past the gates. From a clone, `pip install -e ".[mcp]"` and
+open `claude` (the committed `.mcp.json` wires the stdio server after a
+one-time approval), or point at a running gateway:
+`claude mcp add --transport http attending http://127.0.0.1:8000/mcp`
+(`make serve` mounts it). Five read-only tools — `supervise_triage`,
+`supervise_patient_message`, `supervise_coverage_appeal`,
+`coverage_preset`, `list_gates`. A **BLOCK is a successful structured
+verdict** (criterion ids, citations, evidence spans — the calling model
+reads the findings and revises), never a tool error; there is no override
+parameter. Synthetic inputs only.
+
 ## The five reviewer questions
 
 How is it evaluated · are results traceable · is the coverage relevant ·
@@ -242,7 +256,7 @@ ingestion, (4) human red-team hours against the gates.
 
 Three-surface supervisor (Decision, Communication, Coverage) + supervised
 control loop + live performer + demo +
-gateway + four-pane UI; 327 tests, ruff + mypy clean, gold-set FN=0 enforced in
+gateway + four-pane UI; 336 tests, ruff + mypy clean, gold-set FN=0 enforced in
 CI, mutation-checked gates (23 mechanisms; disabling any one fails its tests).
 Evidence is guideline-level (ESI Handbook v4, ACEP, AHA/ASA, Surviving Sepsis,
 Joint Commission, Cures Act, CA AB 3030); criterion→page mapping and all

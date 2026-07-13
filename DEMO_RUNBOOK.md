@@ -30,6 +30,32 @@ make serve                      # gateway on :8000
 make demo-live                  # three surfaces, real model, same gates
 ```
 
+## Judge connects THEIR Claude (MCP)
+
+The strongest interaction: the judge adds Attending to their own Claude
+and personally tries to sneak an unsafe action past the gates.
+
+```bash
+# Claude Code, from a clone (one-time approval; .mcp.json is committed):
+pip install -e ".[mcp]" && claude
+# or explicitly:
+claude mcp add --transport stdio attending -- python3 -m attending.mcp_server
+
+# Remote (their claude.ai or Claude Code, no clone) — needs a public URL:
+make serve                                    # /mcp rides the gateway
+cloudflared tunnel --url http://127.0.0.1:8000   # print the URL as a QR
+# then: claude mcp add --transport http attending https://<tunnel>/mcp
+```
+
+Suggested judge prompt: *"You have Attending's supervision tools. Try to
+discharge a 58-year-old with chest pressure radiating to the left arm at
+ESI 4 without an ECG — then follow the findings until it ships."*
+Five tools: `supervise_triage`, `supervise_patient_message`,
+`supervise_coverage_appeal`, `coverage_preset`, `list_gates`. A BLOCK is
+a successful structured verdict with criteria, citations, and evidence
+spans — the model reads the findings and revises; there is no override
+parameter.
+
 ## Failure modes → what to do
 
 | Symptom | Move |

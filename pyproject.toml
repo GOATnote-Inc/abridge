@@ -17,6 +17,9 @@ dependencies = []
 llm = ["anthropic>=0.116"]
 dev = ["pytest>=8.0", "pytest-cov>=5.0"]
 gateway = ["fastapi>=0.110", "uvicorn>=0.29"]
+# Judge-facing MCP surface (stdio + streamable-http). Pinned <2: SDK v2 is a
+# pre-release targeting the 2026-07-28 spec revision.
+mcp = ["mcp[cli]>=1.26,<2"]
 
 [project.scripts]
 attending = "attending.cli:main"

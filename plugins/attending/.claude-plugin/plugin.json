@@ -1,0 +1,9 @@
+{
+  "name": "attending",
+  "description": "Deterministic, fail-closed clinical-safety supervision for agent proposals: ED triage drafts, patient-facing messages, and prior-auth artifacts. Supervise before you commit; a BLOCK is a verdict to satisfy, not an error to retry.",
+  "version": "0.3.0",
+  "author": {
+    "name": "GOATnote Inc.",
+    "url": "https://github.com/GOATnote-Inc/abridge"
+  }
+}

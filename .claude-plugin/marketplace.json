@@ -1,0 +1,18 @@
+{
+  "name": "attending",
+  "owner": {
+    "name": "GOATnote Inc.",
+    "url": "https://github.com/GOATnote-Inc/abridge"
+  },
+  "metadata": {
+    "description": "Attending — deterministic, fail-closed clinical-safety supervision for agent proposals (ED triage, patient communication, prior authorization).",
+    "version": "0.3.0"
+  },
+  "plugins": [
+    {
+      "name": "attending",
+      "source": "./plugins/attending",
+      "description": "Clinical-safety supervisor: five read-only MCP tools plus a skill teaching the supervise-before-commit procedure. BLOCK verdicts carry criterion ids, citations, and evidence spans; there is no override parameter."
+    }
+  ]
+}

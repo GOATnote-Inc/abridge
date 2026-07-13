@@ -36,6 +36,11 @@ The strongest interaction: the judge adds Attending to their own Claude
 and personally tries to sneak an unsafe action past the gates.
 
 ```bash
+# One-liner (no clone) — the repo is a plugin marketplace:
+#   /plugin marketplace add GOATnote-Inc/abridge
+#   /plugin install attending@attending
+# (bundles the MCP server + the clinical-safety-supervisor skill)
+
 # Claude Code, from a clone (one-time approval; .mcp.json is committed):
 pip install -e ".[mcp]" && claude
 # or explicitly:

@@ -20,9 +20,15 @@ Built on HealthCraft (Apache-2.0, arXiv:2605.21496). Hackathon: Abridge × Anthr
 PYTHONPATH=src python3 -m pytest -q                          # tests (gold set included)
 PYTHONPATH=src python3 -m attending.evaluate                 # safety gate; exit 1 if FN>0
 PYTHONPATH=src python3 -m attending.cli <case.json>          # supervise one case (--json)
-PYTHONPATH=src python3 -m attending.demo [--live] [--json]   # two-surface demo (make demo)
-make check                                                   # lint + mypy + tests + goldset
+PYTHONPATH=src python3 -m attending.demo [--live] [--json]   # three-act demo (make demo)
+PYTHONPATH=src python3 -m attending.mcp_server [--http]      # MCP surface ([mcp] extra)
+make check                                                   # lint + mypy + tests + goldsets + counts
+make mutation                                                # 23 fault-injected mechanisms (CI-required)
 ```
+
+The repo is also a Claude Code plugin marketplace (`.claude-plugin/`,
+`plugins/attending/` — MCP server + clinical-safety-supervisor skill);
+`tests/test_plugin.py` pins the packaging against drift.
 
 The deployable unit is `attending.loop` (`run_triage_loop` / `run_rendering_loop`):
 propose → verify → revise-on-BLOCK → ship-on-ALLOW; ESCALATE and chart-state
@@ -55,6 +61,9 @@ the demo performer): `ATTENDING_MODEL`, default `claude-opus-4-8`, read in
 ## Repo etiquette
 
 - Stage files by name — never `git add -A` / `git add .`. Do not commit unless asked.
+- **`main` is the only branch.** Branches exist only as momentary vehicles
+  (a review diff, a worktree lane) and are deleted the same day; no other
+  files or repos unless absolutely needed (owner directive, 2026-07-13).
 - **Never read `.env`** (runtime-only Anthropic key lives there, plain text, gitignored). Use `.env.example` to check key names.
 
 ## Communication safety gates (`src/sitrep`)
@@ -84,20 +93,38 @@ stdlib-only). Invariants (every one has a test; do not regress):
 - If a gate lexicon misses a phrase seen in the wild, ADD THE PHRASE AND A TEST
   in the same change. Lexicons are physician-owned and versioned (reviewed 2026-07-09, demo scope).
 
-## Day-of build lanes (worktrees + /loop)
+## Orchestration doctrine (one Claude drives other Claudes)
 
-Parallel build agents get **worktree isolation** — one lane per surface:
-`gateway/` hardening, `renderers/` (pane prompts), `web/` UI, `demo/`
-rehearsal wiring. Mechanics (rehearsed on the counts-guard change,
-2026-07-12): `git worktree add ../attending-wt-<lane> -b <lane>` (or
-EnterWorktree when the session is rooted in the repo), build inside the
-worktree, gate there with `make check` + `make mutation`, then `git merge
---ff-only` from the primary session and `git worktree remove`. One session
-owns git; lanes never run git themselves (two writers + git in one repo has
-burned us before).
+One long-lived **orchestrator session** owns this repo: it holds context,
+makes decisions, and is the only thing that runs git. Everything else is
+delegated:
 
-**/loop cadence:** iterative build work runs as a /loop with `make check` as
-the oracle — implement → run the gate → feed failures back verbatim →
-revise. That is the same propose→verify→revise shape as `attending.loop`;
-the development process and the product make the same argument. For long
-waits (CI, Pages) prefer background watches over polling.
+- **Investigate in subagents; keep this context for decisions.** Research,
+  broad reads, and reviews run as background subagents that return a
+  conclusion, not a file dump. Adversarial review happens in FRESH context
+  (a reviewer that sees only the diff + criteria, told to report
+  correctness-affecting gaps only).
+- **Nothing is "done" without pasted evidence** from a check that ran:
+  `make check` output, exit code, verdict JSON, screenshot. If there is no
+  check, build the check first — the oracle before the army.
+- **Every mistake becomes a written rule** — append it to this file, a test,
+  or a guard script in the same change; never just accept a chat
+  correction. (The counts guard, the lexicon-lint test, and the mutation
+  registry all exist because of this ratchet.)
+- **Delegate like a brief, not a pairing:** goal + constraints + acceptance
+  criteria up front; workers own **disjoint files**; if parallel work keeps
+  colliding, re-decompose or go single-threaded. After two failed
+  corrections, start fresh with a better brief instead of arguing
+  in-context.
+- **Worktree lanes** for parallel implementation: `git worktree add
+  ../attending-wt-<lane> -b <lane>`, gate inside the lane with `make check`
+  + `make mutation`, then `git merge --ff-only` from the orchestrator and
+  `git worktree remove` — lane branches die the same day (main-only
+  doctrine). Lanes never run git themselves (two writers + git has burned
+  us before).
+- **/loop cadence:** iterative build work runs as a /loop with `make check`
+  as the oracle — implement → run the gate → feed failures back verbatim →
+  revise. Same propose→verify→revise shape as `attending.loop`; the
+  development process and the product make the same argument. For long
+  waits (CI, Pages, background runs) use notifications/watches, never
+  polling.

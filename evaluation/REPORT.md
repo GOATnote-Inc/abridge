@@ -8,7 +8,7 @@
 | Check | Result | Reproduce |
 |---|---|---|
 | Gold-set regression (23 synthetic cases) | 23/23, **FN = 0/23** — 95% CI upper bound **12.2%** (Clopper–Pearson; a regression gate, not a precision claim) | `make goldset` |
-| Full suite | 340 tests collected; full-run green, 1 environment-conditional skip class (venv; gateway tests included) | `make test` |
+| Full suite | 353 tests collected; full-run green, 1 environment-conditional skip class (venv; gateway tests included) | `make test` |
 | **Mutation: all 23 safety mechanisms load-bearing** | 23/23 CAUGHT — 9 communication gates, 7 decision-side mechanisms (independent ESI assessment, red-flag matching, requirement-group AND, four detectors), and 7 coverage gates (grounding, frankenfacts, fabricated authority, provenance, outcome guard, denial-signoff bypass, denial-justification guard); clean run green | `make mutation` (in CI) |
 | **Coverage surface (F14-F19)** | denial artifacts structurally require a physician sign-off token (`PhysicianSignoffRequired` raised otherwise — no override path exists); `determine()` can only approve or escalate; quote-anchored citation grounding (performer quotes, deterministic engine locates); 58 dedicated tests | `tests/test_coverage.py` |
 | **Loop exhibit: oracle feedback vs self-critique** | same small performer (model id on the chart), 9 cases incl. planted traps: oracle findings **7/9 converged, mean 1.43 attempts** vs self-critique **5/9, mean 2.00** — the injected-authority trap never ships under either regime (COV-F15 hold on every attempt); the frequency trap ships in 1 attempt with oracle findings vs 3 under self-critique | `evaluation/exhibit/` (offline re-render: `scripts/loop_exhibit.py`) |

@@ -1,7 +1,7 @@
 """Attending as an MCP server — connect YOUR Claude and try to get an
 unsafe action past the gates.
 
-Five tools wrap the same deterministic engines the replay, gateway, and CLI
+Six tools wrap the same deterministic engines the replay, gateway, and CLI
 use. A BLOCK verdict is a SUCCESSFUL supervision result (refusal with named
 findings, citations, and evidence spans) — never a tool error; `isError` is
 reserved for genuine execution failures, per current MCP guidance.
@@ -150,6 +150,60 @@ def supervise_triage(
         esi_reasons=list(v.esi_reasons), findings=_findings(v.findings),
         ruleset_version=v.ruleset_version,
     )
+
+
+@mcp.tool(annotations=_READ_ONLY)
+def reasoning_graph(
+    chief_complaint: str,
+    proposed_esi: int | None = None,
+    orders: list[str] | None = None,
+    disposition: str | None = None,
+    rationale: str | None = None,
+    age_years: float | None = None,
+    sex: str | None = None,
+    arrival_mode: str | None = None,
+    transcript: str | None = None,
+    hr: float | None = None,
+    rr: float | None = None,
+    spo2: float | None = None,
+    sbp: float | None = None,
+    dbp: float | None = None,
+    temp_c: float | None = None,
+    pain: float | None = None,
+    gcs: float | None = None,
+) -> dict:
+    """Build the deterministic CLINICAL REASONING GRAPH for a synthetic
+    encounter: nodes are clinical entities (complaint, symptom, vital, red
+    flag, ESI decision, required order, citation, proposal) and edges are the
+    references between them (evidences / requires / cites / raises_acuity /
+    ignores). Returns {"nodes": [...], "edges": [...]} plus a rendered context
+    block. This is the reference substrate — pass it into YOUR model's context
+    to reason over which finding, backed by which guideline, drives the acuity
+    and what workup the proposal left unaddressed. No LLM, no safety decision:
+    it summarizes the same spine supervise_triage grades against."""
+    from .graph import build_graph
+    enc = Encounter(
+        encounter_id="MCP", chief_complaint=chief_complaint,
+        age_years=age_years, sex=sex, arrival_mode=arrival_mode,
+        transcript=transcript,
+        vitals=Vitals(
+            hr=int(hr) if hr is not None else None,
+            rr=int(rr) if rr is not None else None,
+            spo2=int(spo2) if spo2 is not None else None,
+            sbp=int(sbp) if sbp is not None else None,
+            dbp=int(dbp) if dbp is not None else None,
+            temp_c=temp_c,
+            pain=int(pain) if pain is not None else None,
+            gcs=int(gcs) if gcs is not None else None),
+    )
+    proposed = ProposedTriage(
+        esi_level=proposed_esi,
+        orders=tuple(o.lower() for o in (orders or ())),
+        disposition=disposition, rationale=rationale)
+    g = build_graph(enc, proposed)
+    out = g.to_dict()
+    out["context"] = g.to_context()
+    return out
 
 
 @mcp.tool(annotations=_READ_ONLY)

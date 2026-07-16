@@ -256,7 +256,7 @@ ingestion, (4) human red-team hours against the gates.
 
 Three-surface supervisor (Decision, Communication, Coverage) + supervised
 control loop + live performer + demo +
-gateway + four-pane UI; 340 tests, ruff + mypy clean, gold-set FN=0 enforced in
+gateway + four-pane UI; 353 tests, ruff + mypy clean, gold-set FN=0 enforced in
 CI, mutation-checked gates (23 mechanisms; disabling any one fails its tests).
 Evidence is guideline-level (ESI Handbook v4, ACEP, AHA/ASA, Surviving Sepsis,
 Joint Commission, Cures Act, CA AB 3030); criterion→page mapping and all

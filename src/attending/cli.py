@@ -49,6 +49,10 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="attending", description=__doc__)
     ap.add_argument("input", help="path to encounter JSON, or '-' for stdin")
     ap.add_argument("--json", action="store_true", help="emit JSON verdict")
+    ap.add_argument("--graph", action="store_true",
+                    help="also emit the clinical reasoning graph (nodes + "
+                         "edges): the encounter's references and how they "
+                         "drive the acuity")
     ap.add_argument("--no-color", action="store_true")
     ap.add_argument("--llm", action="store_true",
                     help="enable LLM augmentation of the anchoring/hallucination "
@@ -65,10 +69,19 @@ def main(argv: list[str] | None = None) -> int:
     proposed = proposed_from_dict(data.get("proposed"))
 
     v = supervise(enc, proposed)
+    graph = None
+    if args.graph:
+        from .graph import build_graph
+        graph = build_graph(enc, proposed)
     if args.json:
-        print(json.dumps(_verdict_to_dict(v), indent=2))
+        out = _verdict_to_dict(v)
+        if graph is not None:
+            out["reasoning_graph"] = graph.to_dict()
+        print(json.dumps(out, indent=2))
     else:
         print(render(v, color=not args.no_color))
+        if graph is not None:
+            print("\n" + graph.to_context())
     # Exit code doubles as a gate: 0 allow, 2 block, 3 escalate.
     return {"ALLOW": 0, "BLOCK": 2, "ESCALATE": 3}[v.decision.value]
 

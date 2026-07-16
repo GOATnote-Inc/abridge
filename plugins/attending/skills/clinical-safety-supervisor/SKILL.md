@@ -4,7 +4,7 @@ description: Supervise clinical agent actions before committing them. Use whenev
 license: Apache-2.0
 metadata:
   version: "0.3.0"
-allowed-tools: mcp__attending__supervise_triage mcp__attending__supervise_patient_message mcp__attending__supervise_coverage_appeal mcp__attending__coverage_preset mcp__attending__list_gates
+allowed-tools: mcp__attending__supervise_triage mcp__attending__reasoning_graph mcp__attending__supervise_patient_message mcp__attending__supervise_coverage_appeal mcp__attending__coverage_preset mcp__attending__list_gates
 ---
 
 # Clinical-safety supervisor (Attending)

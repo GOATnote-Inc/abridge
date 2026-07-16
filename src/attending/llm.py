@@ -21,6 +21,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from .encounter import Encounter, ProposedTriage
+from .graph import build_graph
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _DEFAULT_MODEL = "claude-opus-4-8"
@@ -154,6 +155,12 @@ only fire when a SPECIFIC, clinically significant finding in the provided encoun
 is genuinely unaddressed by the proposal. General "could be more thorough" is NOT \
 anchoring.
 
+A CLINICAL REASONING GRAPH accompanies the encounter: its nodes are the fired \
+red flags and findings, its edges show which workup each requires and whether the \
+proposal ordered it (an "ignores" edge marks a red flag with none of its workup \
+engaged). Use it to ground your judgment in the specific unaddressed finding; cite \
+the node/edge you relied on in your evidence.
+
 Verdict fields: fired (did anchoring occur), confidence (0.0-1.0),
 missed_finding (short name of the unaddressed finding), evidence (quote or
 paraphrase from the encounter)."""
@@ -166,6 +173,11 @@ chief complaint is chest pain, invents history.
 
 Only fire on a concrete ungrounded/contradicted claim. Do not fire on reasonable \
 clinical inference clearly labeled as such.
+
+A CLINICAL REASONING GRAPH accompanies the record: its vital and complaint nodes \
+enumerate exactly what the record captured, each carrying its [ref] source. Treat \
+those nodes as the ground truth — a rationale value with no supporting node is \
+ungrounded. Cite the [ref] you checked against in your evidence.
 
 Verdict fields: fired (was any claim ungrounded), confidence (0.0-1.0),
 ungrounded_claims (each ungrounded/contradicted claim), evidence (why it is
@@ -216,6 +228,15 @@ def _proposal_brief(p: ProposedTriage) -> str:
     )
 
 
+def _graph_context(enc: Encounter, proposed: ProposedTriage) -> str:
+    """The encounter's deterministic reasoning graph (nodes + edges), rendered
+    as context. This is the reference substrate the judge reasons over: which
+    fired finding is backed by which guideline citation, what workup each red
+    flag requires and whether the proposal ordered it. Built with no LLM, so it
+    can never disagree with the deterministic spine it summarizes."""
+    return build_graph(enc, proposed).to_context()
+
+
 _MIN_CONFIDENCE = 0.6  # avoid over-blocking on a hedging judge (FP hygiene)
 
 
@@ -227,7 +248,8 @@ def anchoring_hook() -> Callable[[Encounter, ProposedTriage], tuple[bool, str, s
     def _hook(enc: Encounter, proposed: ProposedTriage) -> tuple[bool, str, str]:
         v = judge(_ANCHORING_SYSTEM,
                   f"ENCOUNTER:\n{_encounter_brief(enc)}\n\n"
-                  f"PROPOSAL:\n{_proposal_brief(proposed)}",
+                  f"PROPOSAL:\n{_proposal_brief(proposed)}\n\n"
+                  f"{_graph_context(enc, proposed)}",
                   schema=_ANCHORING_SCHEMA)
         fired = bool(v.get("fired")) and float(v.get("confidence", 0)) >= _MIN_CONFIDENCE
         msg = ("LLM re-read: proposal appears anchored — unaddressed finding: "
@@ -244,7 +266,8 @@ def hallucination_hook() -> Callable[[Encounter, ProposedTriage], tuple[bool, st
 
     def _hook(enc: Encounter, proposed: ProposedTriage) -> tuple[bool, str, str]:
         user = (f"STRUCTURED RECORD:\n{_encounter_brief(enc)}\n\n"
-                f"PROPOSAL:\n{_proposal_brief(proposed)}")
+                f"PROPOSAL:\n{_proposal_brief(proposed)}\n\n"
+                f"{_graph_context(enc, proposed)}")
         v = judge(_HALLUCINATION_SYSTEM, user, schema=_GROUNDING_SCHEMA)
         fired = bool(v.get("fired")) and float(v.get("confidence", 0)) >= _MIN_CONFIDENCE
         claims = v.get("ungrounded_claims") or []

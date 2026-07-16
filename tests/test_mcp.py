@@ -13,11 +13,12 @@ pytest.importorskip("mcp")
 from attending import mcp_server  # noqa: E402
 
 
-def test_five_tools_registered():
+def test_six_tools_registered():
     import anyio
     tools = anyio.run(mcp_server.mcp.list_tools)
     names = {t.name for t in tools}
-    assert names == {"supervise_triage", "supervise_patient_message",
+    assert names == {"supervise_triage", "reasoning_graph",
+                     "supervise_patient_message",
                      "supervise_coverage_appeal", "coverage_preset",
                      "list_gates"}
     for t in tools:

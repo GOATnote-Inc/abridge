@@ -256,8 +256,13 @@ ingestion, (4) human red-team hours against the gates.
 
 Three-surface supervisor (Decision, Communication, Coverage) + supervised
 control loop + live performer + demo +
-gateway + four-pane UI; 340 tests, ruff + mypy clean, gold-set FN=0 enforced in
+gateway + four-pane UI; 349 tests, ruff + mypy clean, gold-set FN=0 enforced in
 CI, mutation-checked gates (23 mechanisms; disabling any one fails its tests).
 Evidence is guideline-level (ESI Handbook v4, ACEP, AHA/ASA, Surviving Sepsis,
-Joint Commission, Cures Act, CA AB 3030); criterion→page mapping and all
-clinical values **pending physician/board review**.
+Joint Commission, Cures Act, CA AB 3030); clinical values physician-reviewed
+2026-07-09 (single reviewer — the author); criterion→page mapping and
+**board review pending**.
+
+Versioning: the Python package version (`pyproject.toml` / `attending.__version__`)
+and the Claude Code plugin version (`.claude-plugin/marketplace.json`) advance
+independently.

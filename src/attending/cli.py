@@ -57,7 +57,14 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.llm:
         import os
+
+        from . import llm as _llm
         os.environ["ATTENDING_LLM_AUGMENT"] = "1"
+        try:
+            _llm.preflight()  # loud config error beats silent degradation
+        except _llm.LLMUnavailable as exc:
+            print(f"--llm: augmentation unavailable ({exc})", file=sys.stderr)
+            return 4
 
     raw = sys.stdin.read() if args.input == "-" else open(args.input).read()
     data = json.loads(raw)
@@ -69,7 +76,7 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(_verdict_to_dict(v), indent=2))
     else:
         print(render(v, color=not args.no_color))
-    # Exit code doubles as a gate: 0 allow, 2 block, 3 escalate.
+    # Exit code doubles as a gate: 0 allow, 2 block, 3 escalate (4 = --llm preflight failed).
     return {"ALLOW": 0, "BLOCK": 2, "ESCALATE": 3}[v.decision.value]
 
 

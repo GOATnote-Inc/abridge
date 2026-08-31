@@ -46,10 +46,15 @@ pip install -e ".[mcp]" && claude
 # or explicitly:
 claude mcp add --transport stdio attending -- python3 -m attending.mcp_server
 
-# Remote (their claude.ai or Claude Code, no clone) — needs a public URL:
-make serve                                    # /mcp rides the gateway
+# Remote (their claude.ai or Claude Code, no clone) — needs a public URL.
+# /mcp and the live model paths are OFF by default (403): the tunnel URL is
+# public, and anyone holding it could otherwise drive paid model calls.
+# Opt in explicitly, for the session only, and kill the tunnel afterwards:
+ATTENDING_LIVE_ENABLED=1 make serve           # /mcp rides the gateway (opt-in)
 cloudflared tunnel --url http://127.0.0.1:8000   # print the URL as a QR
 # then: claude mcp add --transport http attending https://<tunnel>/mcp
+# To tunnel ONLY the read-only replay UI, run `make serve` without the flag
+# and with ANTHROPIC_API_KEY absent from the serving process.
 ```
 
 Suggested judge prompt: *"You have Attending's supervision tools. Try to

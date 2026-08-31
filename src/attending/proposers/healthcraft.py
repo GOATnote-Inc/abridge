@@ -56,11 +56,30 @@ from typing import Any
 from ..encounter import Encounter, ProposedTriage
 
 # Where a source checkout of HealthCraft lives when it is not pip-installed.
-# Override with HEALTHCRAFT_HOME; defaults to a sibling checkout under $HOME.
-_HEALTHCRAFT_HOME = Path(os.environ.get("HEALTHCRAFT_HOME", str(Path.home() / "healthcraft")))
-HEALTHCRAFT_SRC = _HEALTHCRAFT_HOME / "src"
-WORLD_CONFIG = _HEALTHCRAFT_HOME / "configs" / "world" / "mercy_point_v1.yaml"
+# HEALTHCRAFT_HOME is REQUIRED for checkout discovery — there is deliberately
+# no default: importing whatever happens to live at $HOME/healthcraft would
+# silently couple this package to the operator's disk layout.
 WORLD_SEED = 42
+
+
+def _healthcraft_home() -> Path | None:
+    home = os.environ.get("HEALTHCRAFT_HOME")
+    return Path(home) if home else None
+
+
+def _healthcraft_src() -> Path | None:
+    home = _healthcraft_home()
+    return home / "src" if home else None
+
+
+def _world_config() -> Path:
+    home = _healthcraft_home()
+    if home is None:
+        raise HealthcraftUnavailable(
+            "HEALTHCRAFT_HOME is not set — point it at a HealthCraft source "
+            "checkout to locate the world config."
+        )
+    return home / "configs" / "world" / "mercy_point_v1.yaml"
 
 
 class HealthcraftUnavailable(RuntimeError):
@@ -406,9 +425,11 @@ def _import_healthcraft() -> Any:
     except ImportError:
         pass
 
-    src = str(HEALTHCRAFT_SRC)
-    if HEALTHCRAFT_SRC.is_dir() and src not in sys.path:
-        sys.path.append(src)
+    src_dir = _healthcraft_src()
+    if src_dir is not None and src_dir.is_dir():
+        src = str(src_dir)
+        if src not in sys.path:
+            sys.path.append(src)
         try:
             import healthcraft  # noqa: PLC0415
 
@@ -419,9 +440,8 @@ def _import_healthcraft() -> Any:
             ) from exc
 
     raise HealthcraftUnavailable(
-        "healthcraft is not installed and no source checkout was found at "
-        f"{src}. `pip install -e <healthcraft checkout>` or set HEALTHCRAFT_HOME "
-        "checkout at that path."
+        "healthcraft is not installed. `pip install -e <healthcraft checkout>` "
+        "or set HEALTHCRAFT_HOME to a source checkout."
     )
 
 
@@ -434,8 +454,10 @@ def healthcraft_importable() -> bool:
     return True
 
 
-def _get_world(seed: int = WORLD_SEED, config_path: Path = WORLD_CONFIG) -> Any:
+def _get_world(seed: int = WORLD_SEED, config_path: Path | None = None) -> Any:
     """Seed (once, then cache) the deterministic Mercy Point world."""
+    if config_path is None:
+        config_path = _world_config()
     key = (seed, str(config_path))
     world = _WORLD_CACHE.get(key)
     if world is None:

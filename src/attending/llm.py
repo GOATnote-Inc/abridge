@@ -46,10 +46,17 @@ def _candidate_env_files() -> list[Path]:
     return paths
 
 
+# Only these keys are ever imported from a .env file. Loading everything would
+# silently pull a *different project's* secrets into this process whenever the
+# CLI runs from that project's directory (Path.cwd()/.env is a candidate).
+_DOTENV_ALLOWLIST = ("ANTHROPIC_API_KEY", "ATTENDING_MODEL", "ATTENDING_LLM_MODEL")
+
+
 def _load_dotenv() -> None:
     """Populate os.environ from plain-text .env file(s) for keys not already set.
 
-    Values are loaded into the process environment only; never printed.
+    Only ``_DOTENV_ALLOWLIST`` keys are loaded. Values are loaded into the
+    process environment only; never printed.
     A `.env.rtf` (RTF-wrapped) is deliberately ignored — it cannot be parsed
     as KEY=value and would leak markup, so we require plain `.env`.
     """
@@ -62,7 +69,7 @@ def _load_dotenv() -> None:
                 continue
             key, _, val = line.partition("=")
             key, val = key.strip(), val.strip().strip('"').strip("'")
-            if key and key not in os.environ:
+            if key in _DOTENV_ALLOWLIST and key not in os.environ:
                 os.environ[key] = val
 
 
@@ -89,7 +96,17 @@ def _client():
         import anthropic  # imported lazily; optional [llm] dependency
     except ImportError as e:  # pragma: no cover - env-dependent
         raise LLMUnavailable("anthropic SDK not installed (pip install '.[llm]')") from e
-    return anthropic.Anthropic(api_key=key)
+    # Bounded transport: never hang a triage verdict on a wedged connection.
+    return anthropic.Anthropic(api_key=key, timeout=60, max_retries=2)
+
+
+def preflight() -> None:
+    """Raise LLMUnavailable unless a usable client can be constructed.
+
+    Called by the CLI when --llm is passed, so a missing key/SDK is a loud
+    startup error rather than an indefinitely silent no-op augmentation.
+    """
+    _client()
 
 
 def complete_json(

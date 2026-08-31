@@ -16,11 +16,14 @@ leaves the deterministic floor untouched.
 
 from __future__ import annotations
 
+import logging
 import re
 from collections.abc import Callable
 
 from ..encounter import Encounter, ProposedTriage
 from ..verdict import Detection, Severity
+
+logger = logging.getLogger(__name__)
 
 LlmGrounder = Callable[[Encounter, ProposedTriage], "tuple[bool, str, str]"]
 
@@ -115,8 +118,13 @@ def detect_hallucination(
             if lf:
                 return Detection("hallucination", True, Severity.BLOCK, lmsg,
                                  evidence=lev)
-        except Exception:
-            pass
+        except Exception as exc:
+            # Additive-only: the deterministic floor stands — but the outage is
+            # loud (warning log here; run_all surfaces an INFO detection).
+            logger.warning(
+                "hallucination LLM augmentation unavailable (%s: %s); "
+                "deterministic floor stands", type(exc).__name__, exc,
+            )
 
     if not problems:
         return Detection("hallucination", False, Severity.INFO,

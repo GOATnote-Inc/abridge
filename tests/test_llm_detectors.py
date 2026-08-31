@@ -102,3 +102,63 @@ def test_schema_guaranteed_output_parses_directly(monkeypatch):
     monkeypatch.setattr(llm, "_client",
                         lambda: _stub_client(_StubResp("end_turn")))
     assert llm.complete_json("sys", "user", schema={"type": "object"}) == {"fired": False}
+
+
+def test_run_all_surfaces_augmentation_outage(enable_llm, monkeypatch):
+    # An operator who enabled augmentation must SEE that it stopped: the
+    # deterministic floor stands, and the outage appears as an INFO detection.
+    from attending.detectors import run_all
+
+    def boom(*a, **k):
+        raise llm.LLMUnavailable("ANTHROPIC_API_KEY not set")
+    monkeypatch.setattr(llm, "judge", boom)
+
+    enc = _enc()
+    detections = run_all(enc, ProposedTriage(esi_level=4, rationale="stable"),
+                         compute_esi(enc))
+    outages = [d for d in detections if d.detector == "llm_augment"]
+    assert len(outages) == 2  # anchoring + hallucination hooks both failed
+    for d in outages:
+        assert not d.fired and d.severity == Severity.INFO
+        assert "augmentation unavailable" in d.message
+        assert "LLMUnavailable" in d.message
+
+
+def test_run_all_no_outage_rows_when_disabled(monkeypatch):
+    from attending.detectors import run_all
+
+    monkeypatch.delenv("ATTENDING_LLM_AUGMENT", raising=False)
+    enc = _enc()
+    detections = run_all(enc, ProposedTriage(esi_level=4), compute_esi(enc))
+    assert not [d for d in detections if d.detector == "llm_augment"]
+
+
+def test_augmentation_failure_logs_warning(enable_llm, monkeypatch, caplog):
+    import logging
+
+    def boom(*a, **k):
+        raise llm.LLMUnavailable("network down")
+    monkeypatch.setattr(llm, "judge", boom)
+    enc = _enc()
+    with caplog.at_level(logging.WARNING):
+        d = detect_anchoring(enc, ProposedTriage(esi_level=4), compute_esi(enc),
+                             llm_augment=llm.anchoring_hook())
+    assert not d.fired  # deterministic floor stands
+    assert any("augmentation unavailable" in r.message for r in caplog.records)
+
+
+def test_cli_llm_preflight_fails_loud(monkeypatch, capsys, tmp_path):
+    # --llm with no usable key must be a loud startup error (exit 4), never a
+    # silently degraded run.
+    from attending import cli
+
+    def no_client():
+        raise llm.LLMUnavailable("ANTHROPIC_API_KEY not set")
+    monkeypatch.setattr(llm, "_client", no_client)
+
+    case = tmp_path / "case.json"
+    case.write_text('{"encounter": {"encounter_id": "T", '
+                    '"chief_complaint": "twisted ankle"}, "proposed": {}}')
+    rc = cli.main([str(case), "--llm"])
+    assert rc == 4
+    assert "augmentation unavailable" in capsys.readouterr().err

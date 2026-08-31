@@ -9,6 +9,7 @@ re-read the transcript independently to catch subtler anchoring the proxy misses
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 
 from ..encounter import Encounter, ProposedTriage
@@ -17,6 +18,8 @@ from ..verdict import Detection, Severity
 
 # Optional LLM re-reader: (encounter, proposed) -> (fired, message, evidence).
 LlmReReader = Callable[[Encounter, ProposedTriage], "tuple[bool, str, str]"]
+
+logger = logging.getLogger(__name__)
 
 
 def detect_anchoring(
@@ -45,8 +48,13 @@ def detect_anchoring(
             if lf:
                 return Detection("anchoring_bias", True, Severity.BLOCK,
                                  lmsg, evidence=lev)
-        except Exception:
-            pass  # LLM augmentation is best-effort; deterministic floor stands.
+        except Exception as exc:
+            # Additive-only: the deterministic floor stands — but the outage is
+            # loud (warning log here; run_all surfaces an INFO detection).
+            logger.warning(
+                "anchoring LLM augmentation unavailable (%s: %s); "
+                "deterministic floor stands", type(exc).__name__, exc,
+            )
 
     if not fired:
         return Detection("anchoring_bias", False, Severity.INFO,

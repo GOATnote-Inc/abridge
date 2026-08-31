@@ -309,3 +309,34 @@ def test_coverage_preset_auto_deny_raises_f14(client):
 
 def test_coverage_preset_unknown_name_400(client):
     assert client.post("/coverage/preset", json={"name": "x"}).status_code == 400
+
+
+# --- live-path gating (ATTENDING_LIVE_ENABLED, default off) --------------------
+
+
+def test_live_performer_disabled_by_default(client, example):
+    body = {"encounter": example["encounter"], "performer": "live"}
+    r = client.post("/loop/triage", json=body)
+    assert r.status_code == 403
+    assert "ATTENDING_LIVE_ENABLED" in r.json()["detail"]
+
+
+def test_demo_live_disabled_by_default(client):
+    r = client.get("/demo", params={"live": 1})
+    assert r.status_code == 403
+    assert "ATTENDING_LIVE_ENABLED" in r.json()["detail"]
+
+
+def test_demo_replay_unaffected_by_gate(client):
+    assert client.get("/demo").status_code == 200
+
+
+def test_mcp_disabled_by_default(client):
+    r = client.post("/mcp", json={})
+    assert r.status_code == 403
+    assert "ATTENDING_LIVE_ENABLED" in r.json()["detail"]
+
+
+def test_scripted_loop_unaffected_by_gate(client, example):
+    body = {"encounter": example["encounter"], "drafts": [SAFE_DRAFT]}
+    assert client.post("/loop/triage", json=body).status_code == 200

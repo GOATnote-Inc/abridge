@@ -36,6 +36,8 @@
   .badge.mode-replay{color:var(--blue); border-color:var(--blue-line); background:var(--blue-bg)}
   .badge.mode-live{color:var(--amber); border-color:var(--amber-line); background:var(--amber-bg)}
   .badge.src{cursor:default}
+  .badge.synthetic{color:var(--amber); border-color:var(--amber-line); background:var(--amber-bg); cursor:default}
+  footer{color:var(--dim); font-size:12px; text-align:center; padding:14px; border-top:1px solid var(--line)}
   #narration{
     display:flex; align-items:center; gap:12px;
     padding:9px 20px; border-bottom:1px solid var(--line); background:var(--panel2);
@@ -289,6 +291,7 @@ body.present .chip{font-size:11px}
   <div class="brand">Attending<span class="rx">▮</span></div>
   <div class="oneliner" id="oneliner"></div>
   <div class="spacer"></div>
+  <span class="badge synthetic" title="every encounter, name, and value on this page is synthetic">synthetic data · not for clinical use</span>
   <span class="badge src" id="srcBadge" title="transcript source">local file</span>
   <span class="badge" id="modeBadge"></span>
   <a class="btn subtle" href="playground.html" title="type your own case or message — try to get an unsafe action past the gates">⚡ playground</a>
@@ -1053,5 +1056,8 @@ document.addEventListener("keydown", function(ev){
 
 loadLocal().catch(bootFail);
 </script>
+
+<footer><strong>Synthetic data · demonstration only · not for clinical use.</strong>
+Every patient, clinician, and value shown is synthetic. Research demonstration — not a medical device.</footer>
 </body>
 </html>

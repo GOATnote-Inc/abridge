@@ -38,6 +38,7 @@ None and the loop fails closed to a human. The default is always scripted.
 import argparse
 import importlib
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -327,6 +328,20 @@ def _coverage_preset_impl(name: Any) -> dict:
     }
 
 
+def _live_enabled() -> bool:
+    """Opt-in gate for every path that spends API budget or exposes the MCP
+    surface. Default OFF: a tunnelled or shared gateway must not let anyone
+    holding the URL drive paid model calls (fail-closed posture)."""
+    return os.environ.get("ATTENDING_LIVE_ENABLED", "").lower() in {"1", "true", "yes", "on"}
+
+
+_LIVE_DISABLED = (
+    "live model paths are disabled on this gateway (they spend API budget). "
+    "Start the server with ATTENDING_LIVE_ENABLED=1 on a trusted, non-exposed "
+    "host to opt in."
+)
+
+
 # --- the app -------------------------------------------------------------------
 
 
@@ -346,16 +361,22 @@ def create_app() -> Any:
 
     # DEMO-ONLY surface: no authN/authZ/rate-limiting (hackathon threat model,
     # mirroring HealthCraft's MCP HTTP note) — do not expose beyond the demo box.
-    # Optional MCP mount: when the [mcp] extra is installed, the same process
-    # serves the judge-facing MCP surface at /mcp (streamable-http). The
-    # session manager's lifespan MUST run or every /mcp request 500s.
+    # Everything that spends API budget (live performer, ?live=1) or exposes the
+    # MCP surface is additionally gated behind ATTENDING_LIVE_ENABLED=1
+    # (default off -> 403), so a tunnelled gateway serves only the replay paths.
+    # Optional MCP mount: when the [mcp] extra is installed AND the live gate is
+    # open, the same process serves the judge-facing MCP surface at /mcp
+    # (streamable-http). The session manager's lifespan MUST run or every /mcp
+    # request 500s.
     mcp_app = None
-    try:
-        from .mcp_server import mcp as _mcp
-        mcp_app = _mcp.streamable_http_app()
-        lifespan = lambda _app: _mcp.session_manager.run()  # noqa: E731
-    except ImportError:
-        lifespan = None
+    lifespan = None
+    if _live_enabled():
+        try:
+            from .mcp_server import mcp as _mcp
+            mcp_app = _mcp.streamable_http_app()
+            lifespan = lambda _app: _mcp.session_manager.run()  # noqa: E731
+        except ImportError:
+            pass
 
     app = fastapi.FastAPI(
         title="Attending Gateway",
@@ -365,6 +386,15 @@ def create_app() -> Any:
     )
     if mcp_app is not None:
         app.mount("/mcp", mcp_app)
+    else:
+
+        @app.api_route(
+            "/mcp{path:path}",
+            methods=["GET", "POST", "DELETE"],
+            include_in_schema=False,
+        )
+        def mcp_disabled(path: str) -> Any:
+            raise HTTPException(status_code=403, detail=_LIVE_DISABLED)
 
     def _bad_request(exc: Exception) -> Any:
         return HTTPException(status_code=400, detail=str(exc))
@@ -400,6 +430,8 @@ def create_app() -> Any:
             raise _bad_request(exc) from exc
         propose: ProposeFn
         if performer == "live":
+            if not _live_enabled():
+                raise HTTPException(status_code=403, detail=_LIVE_DISABLED)
             propose = agent.propose_triage
             max_revisions = 2 if cap is None else cap
         else:
@@ -439,6 +471,8 @@ def create_app() -> Any:
         """The two-surface demo transcript. Replay by default (a pure function
         of the frozen fixture); ``?live=1`` drafts via the live performer
         and needs ANTHROPIC_API_KEY. Read-only in both modes."""
+        if live and not _live_enabled():
+            raise HTTPException(status_code=403, detail=_LIVE_DISABLED)
         try:
             fixture = json.loads(_DEFAULT_FIXTURE.read_text())
             return run_demo(fixture, live=live)

@@ -41,7 +41,7 @@ import os  # noqa: E402
 from attending import coverage as cov  # noqa: E402
 from attending import llm  # noqa: E402
 
-EXHIBIT_MODEL = os.environ.get("EXHIBIT_MODEL", "claude-haiku-4-5-20251001")
+EXHIBIT_MODEL = os.environ.get("EXHIBIT_MODEL") or llm.model_name()
 
 OUT_DIR = REPO / "evaluation" / "exhibit"
 TRACE = OUT_DIR / "trace.jsonl"

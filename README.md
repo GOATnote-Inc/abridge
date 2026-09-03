@@ -1,6 +1,9 @@
 # Attending
 
 **A communication layer that keeps ED patients continuously informed of
+
+> **Maintenance status (2026-09):** passive. This repository is kept available as a reference implementation; CI runs on pushes and pull requests only, Dependabot security alerts remain enabled, and no scheduled jobs or hosted services consume ongoing resources. No active development is planned.
+
 their next step — made deployable by a fail-closed safety supervisor
 underneath.**
 

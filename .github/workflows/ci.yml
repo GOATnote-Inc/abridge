@@ -3,8 +3,6 @@ name: CI
 on:
   push:
   pull_request:
-  schedule:
-    - cron: "0 14 * * 1"  # weekly Monday: catch runner/dependency drift
 
 permissions:
   contents: read
